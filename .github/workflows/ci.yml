@@ -3,7 +3,7 @@
 # Secrets (repo Settings → Secrets and variables → Actions):
 #   CI_MINE_USERNAME   — GitLab Container Registry username
 #   CI_MINE_PASSWORD   — GitLab Container Registry password (token or password)
-#   GITHUB_SSH_KEY     — Private SSH key for GitHub (same role as GitLab CI variable)
+#   GIT_SSH_KEY     — Private SSH key for GitHub (same role as GitLab CI variable)
 
 name: CI
 
@@ -27,10 +27,10 @@ jobs:
 
       - name: Set up SSH for Docker build (private Git deps)
         env:
-          GITHUB_SSH_KEY: ${{ secrets.GITHUB_SSH_KEY }}
+          GIT_SSH_KEY: ${{ secrets.GIT_SSH_KEY }}
         run: |
           mkdir -p ~/.ssh
-          printf '%s\n' "$GITHUB_SSH_KEY" > ~/.ssh/id_rsa
+          printf '%s\n' "$GIT_SSH_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan github.com >> ~/.ssh/known_hosts
           eval "$(ssh-agent -s)"
@@ -62,10 +62,10 @@ jobs:
 
       - name: Set up SSH for Docker build (private Git deps)
         env:
-          GITHUB_SSH_KEY: ${{ secrets.GITHUB_SSH_KEY }}
+          GIT_SSH_KEY: ${{ secrets.GIT_SSH_KEY }}
         run: |
           mkdir -p ~/.ssh
-          printf '%s\n' "$GITHUB_SSH_KEY" > ~/.ssh/id_rsa
+          printf '%s\n' "$GIT_SSH_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan github.com >> ~/.ssh/known_hosts
           eval "$(ssh-agent -s)"
