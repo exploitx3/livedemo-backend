@@ -8,8 +8,6 @@
     "start": ". ./dev.env && node ./src/server.js",
     "start-esbuild": "export ENV=dev && node -r @esbuild-kit/cjs-loader ./src/server.js",
     "debug": "node $NODE_DEBUG_OPTION ./node_modules/.bin/sls offline --config serverless.dev.yml --noPrependStageInUrl",
-    "bundle-inject": "npx webpack-dev-server --progress --mode=development",
-    "bundle": "node configEnv.js && ./node_modules/.bin/webpack --progress --mode=production --config webpack.prod.config.js",
     "config-env": "node configEnv.js",
     "compliance:ffmpeg": "node ./scripts/compliance/prepare-ffmpeg-gpl-notices.mjs"
   },
