@@ -1,0 +1,111 @@
+import helpers from '../helpers/livedemoHelpers.js'
+import ResponseCodes from '../constants/ResponseCodes.js'
+import createWorkspaceValidator from '../helpers/validators/oldLambdaRoutes/workspaces/createWorkspace.js'
+
+const handler = function (req, res) {
+  let { Models, conn } = req.mongo
+
+  let authUserDoc = null
+  let requestBody = null
+
+  return Promise.resolve().then(async () => {
+
+      return helpers.authReq(req, Models)
+    })
+    .then(({ authUser }) => {
+      authUserDoc = authUser
+
+      // Validate request body
+      let validatedBody = helpers.validateBody(req.body, createWorkspaceValidator)
+      requestBody = validatedBody.value
+    })
+    .then(async () => {
+      const workspaceName = requestBody.name
+
+      // Create new workspace
+      return new Models.Workspace({
+        name: workspaceName,
+        adminUser: authUserDoc._id,
+        users: [authUserDoc._id]
+      }).save()
+    })
+    .then((newWorkspaceDoc) => {
+
+      // Add workspace to user's workspaces array
+      return Models.User.findOneAndUpdate(
+        { _id: authUserDoc._id },
+        { $push: { workspaces: newWorkspaceDoc._id } },
+        { new: true }
+      )
+      .populate('workspaces')
+      .then((userData) => {
+
+        let uniqueWorkspaces = {}
+        userData.workspaces.forEach((workspace) => {
+          if(!uniqueWorkspaces[workspace._id]) {
+            uniqueWorkspaces[workspace._id] = workspace
+          }
+        })
+
+        userData.workspaces = Object.values(uniqueWorkspaces)
+
+        return {
+          userData,
+          newWorkspaceDoc
+        }
+      })
+    })
+    .then(({ userData, newWorkspaceDoc }) => {
+      let workspaces = userData.workspaces
+
+      const resultResponse = {
+        statusCode: ResponseCodes['200_OK'],
+        headers: {
+          'Access-Control-Max-Age': 600,
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept', // Required for CORS support to work
+          // Required for CORS support to work
+          'Access-Control-Allow-Credentials': true, // Required for cookies, authorization headers with HTTPS
+        }
+      }
+
+      res.set(resultResponse.headers)
+      res.status(resultResponse.statusCode)
+      res.send(JSON.stringify({
+        workspaces: workspaces,
+        newWorkspace: newWorkspaceDoc
+      }))
+    })
+    .catch((error) => {
+      console.log(error)
+
+      let resultResponse
+      if (error.resultResponse) {
+
+        resultResponse = error.resultResponse
+      } else {
+
+
+        resultResponse = {
+          statusCode: ResponseCodes['500_INTERNAL_SERVER_ERROR'],
+          headers: {
+            'Access-Control-Max-Age': 600,
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept', // Required for CORS support to work
+            // Required for CORS support to work
+            'Access-Control-Allow-Credentials': true, // Required for cookies, authorization headers with HTTPS
+          },
+          body: JSON.stringify({
+            error: error.message
+          })
+        }
+
+      }
+
+      res.set(resultResponse.headers)
+      res.status(resultResponse.statusCode)
+      res.send(resultResponse.body || '')
+    })
+}
+
+export default  handler

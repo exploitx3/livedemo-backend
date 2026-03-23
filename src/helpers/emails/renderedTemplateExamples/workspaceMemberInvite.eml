@@ -1,0 +1,410 @@
+Date: 2022-04-18T04:47:59.011Z
+Subject: Tom invites you to join TellTrail
+MIME-Version: 1.0
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org=
+/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns=3D"http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dutf-8=
+">
+    <meta name=3D"viewport" content=3D"width=3Ddevice-width, initial-scale=
+=3D1.0">
+    <link href=3D"https://fonts.googleapis.com/css?family=3DLato:400,900" r=
+el=3D"stylesheet">
+    <title>LiveDemo: New Account Details</title>
+    <style type=3D"text/css">/* Global Resets */
+    body, .background_main, p, table, td, div {
+        font-family: 'Lato', 'Helvetica Neue', Helvetica, Arial, sans-serif=
+;
+    }
+
+    img {
+        border: none;
+        -ms-interpolation-mode: bicubic;
+        max-width: 100%;
+    }
+
+    p {
+        padding-bottom: 2px;
+    }
+
+    body {
+        background: #fff;
+        font-size: 17px;
+        line-height: 24px;
+        margin: 0;
+        padding: 0;
+        -ms-text-size-adjust: 100%;
+        -webkit-text-size-adjust: 100%;
+    }
+
+    table {
+        border-collapse: collapse;
+        mso-table-lspace: 0pt;
+        mso-table-rspace: 0pt;
+        width: 100%;
+    }
+
+    td {
+        font-size: 17px;
+        line-height: 24px;
+        vertical-align: top;
+    }
+
+    /* Footer */
+    .email_footer td, .email_footer p, .email_footer span, .email_footer a =
+{
+        font-size: 15px;
+        text-align: center;
+    }
+
+    .email_footer td {
+        padding-top: 20px;
+    }
+
+    /* Typography */
+    h1, h2, h3, h4 {
+        color: #434245;
+        font-weight: 400;
+        line-height: 1.4;
+        margin: 0;
+        margin-bottom: 12px;
+    }
+
+    h1 {
+        font-size: 30px;
+        line-height: 36px;
+        font-weight: 900;
+        letter-spacing: -.75px;
+        text-align: left;
+    }
+
+    p, ul, ol {
+        font-size: 17px;
+        line-height: 24px;
+        font-weight: normal;
+        margin: 0;
+        margin-bottom: 15px;
+    }
+
+    p li, ul li, ol li {
+        list-style-position: inside;
+        margin-left: 5px;
+    }
+
+    a {
+        color: #3498db;
+        text-decoration: none;
+    }
+
+    a:hover {
+        text-decoration: underline;
+    }
+
+    .button_link::after {
+        position: absolute;
+        content: '';
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        border-radius: 4px;
+    }
+
+    .button_link:hover::after {
+        box-shadow: inset 0 -2px #237c4a;
+    }
+
+    .preview_text {
+        color: transparent;
+        display: none;
+        height: 0;
+        max-height: 0;
+        max-width: 0;
+        opacity: 0;
+        overflow: hidden;
+        mso-hide: all;
+        visibility: hidden;
+        width: 0;
+        font-size: 1px;
+        line-height: 1px;
+    }
+
+    .preview_text a {
+        color: #3AA3E3 !important;
+        font-weight: bold;
+    }
+
+    /* Responsive and Mobile Friendly Styles */
+    /* Yahoo Mail has a history of rendering all media query styles with cl=
+ass selectors unless class is used as an attribute */
+    @media only screen and (max-width: 600px) {
+        table[class=3D"background_main"] .sm_full_width {
+            width: 100% !important;
+        }
+
+        table[class=3D"background_main"] .sm_align_center {
+            text-align: center !important;
+        }
+
+        table[class=3D"background_main"] .sm_auto_width {
+            width: auto !important;
+        }
+
+        table[class=3D"background_main"] .sm_auto_height {
+            height: auto !important;
+        }
+
+        table[class=3D"background_main"] .sm_border_box {
+            box-sizing: border-box !important;
+        }
+
+        table[class=3D"background_main"] .sm_block {
+            display: block !important;
+        }
+
+        table[class=3D"background_main"] .sm_inline_block {
+            display: inline-block !important;
+        }
+
+        table[class=3D"background_main"] .sm_table {
+            display: table !important;
+        }
+
+        table[class=3D"background_main"] .sm_no_side_padding {
+            padding-right: 0 !important;
+            padding-left: 0 !important;
+        }
+
+        table[class=3D"background_main"] .sm_no_border_radius {
+            border-radius: 0 !important;
+        }
+
+        table[class=3D"background_main"] .sm_no_padding {
+            padding-right: 0 !important;
+            padding-left: 0 !important;
+        }
+
+        table[class=3D"background_main"] .sm_os_icons_height {
+            /* this is to make the parent element the same height as the in=
+line-block img inside */
+            height: 44px;
+        }
+
+        .social_img_bottom_margin {
+            /*this class is for social_user_outreach email only*/
+            margin-bottom: 20px !important;
+        }
+
+        .social_p_bottom_margin {
+            /*this class is for social_user_outreach email only*/
+            margin-bottom: 40px !important;
+        }
+    }
+
+    /* More client-specific styles */
+    @media all {
+        .ExternalClass {
+            width: 100%;
+        }
+
+        .ExternalClass, .ExternalClass p, .ExternalClass span, .ExternalCla=
+ss font, .ExternalClass td, .ExternalClass div {
+            line-height: 100%;
+        }
+
+        .email_footer a {
+            color: #434245 !important;
+            font-family: inherit !important;
+            font-size: inherit !important;
+            font-weight: inherit !important;
+            line-height: inherit !important;
+            text-decoration: none !important;
+        }
+    }
+
+    a:hover {
+        text-decoration: underline !important;
+    }
+    </style>
+</head>
+<body><!--[if mso]>
+<style type=3D"text/css">.background_main, table, table td, p, div, h1, h2,=
+ h3, h4, h5, h6 {
+    font-family: Arial, sans-serif !important;
+}</style><![endif]-->
+<table style=3D"background-color: #ffffff; padding-top: 20px;color: #434245=
+;width: 100%;-webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:gr=
+ayscale;   border: 0; text-align: center; border-collapse: collapse;"
+       class=3D"background_main">
+    <tr>
+        <td style=3D"vertical-align: top; padding: 0">
+            <center>
+                <table id=3D"body" class=3D"card"
+                       style=3D"border: 0; border-collapse: collapse; margi=
+n: 0 auto; background: white; border-radius: 8px; margin-bottom: 16px;">
+                    <tr>
+                        <td style=3D"width: 546px; vertical-align: top; pad=
+ding-top: 32px">
+                            <div style=3D"max-width: 600px; margin: 0 auto;=
+"><!--[if mso]>
+                                <table cellpadding=3D"0" cellspacing=3D"0" =
+border=3D"0"
+                                       style=3D"padding: 0; margin: 0; widt=
+h: 100%;">
+                                    <tr>
+                                        <td colspan=3D"3" style=3D"padding:=
+ 0; margin: 0; font-size: 20px; height: 20px;"
+                                            height=3D"20">&nbsp;
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style=3D"padding: 0; margin: 0;=
+">&nbsp;</td>
+                                        <td style=3D"padding: 0; margin: 0;=
+" width=3D"540">
+                                <![endif]--><img
+                                        style=3D"width: 38px; height: 38px;=
+ margin: 0 0 15px 0; padding-right: 30px; padding-left: 30px;"
+                                        src=3D"http://localhost:5000/logo.p=
+ng"
+                                        alt=3D"" width=3D"38" height=3D"38"=
+>
+                                <h1 style=3D"font-size: 30px; padding-right=
+: 30px; padding-left: 30px;">Hey ,<br> You have been i=
+nvited to join
+                                    LiveDemo!</h1>
+                                <p style=3D"font-size: 17px; padding-right:=
+ 30px; padding-left: 30px;"> Tom Have invited you to join <strong>LiveDemo<=
+/strong>. You only need to register with the same email in the LiveDemo app=
+lication: </p>
+                                <!--[if mso]>
+                                </td>
+                                <td style=3D"padding: 0; margin: 0; font-si=
+ze: 20px; height: 20px;">&nbsp;</td>
+                                </tr>
+                                <tr>
+                                    <td colspan=3D"3"
+                                        style=3D"padding: 0; margin: 0; fon=
+t-size: 20px; height: 20px; height: 20px;">
+                                        &nbsp;
+                                    </td>
+                                </tr>
+                                </table>
+                                <![endif]--><!--[if mso]>
+                                <table cellpadding=3D"0" cellspacing=3D"0" =
+border=3D"0"
+                                       style=3D"padding: 0; margin: 0; widt=
+h: 100%;">
+                                    <tr>
+                                        <td colspan=3D"3" style=3D"padding:=
+ 0; margin: 0; font-size: 20px; height: 20px;"
+                                            height=3D"20">&nbsp;
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style=3D"padding: 0; margin: 0;=
+">&nbsp;</td>
+                                        <td style=3D"padding: 0; margin: 0;=
+" width=3D"540"></td>
+                                    </tr>
+                                    <div style=3D"padding-right: 30px; padd=
+ing-left: 30px;">
+                                        <table style=3D"table-layout: fixed=
+; border: 1px solid #A0A0A2; border-radius: 8px; padding: 40px 0; margin-to=
+p: 20px; width: 100%; border-collapse: separate; text-align: center">
+                                            <tr>
+                                                <td style=3D"vertical-align=
+: middle;"><!--[if mso]>
+                                                <table cellpadding=3D"0" ce=
+llspacing=3D"0" border=3D"0"
+                                                       style=3D"padding: 0;=
+ margin: 0; width: 100%;">
+                                                    <tr>
+                                                        <td colspan=3D"3"
+                                                            style=3D"paddin=
+g: 0; margin: 0; font-size: 20px; height: 20px;"
+                                                            height=3D"20">&=
+nbsp;
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td style=3D"paddin=
+g: 0; margin: 0;">&nbsp;</td>
+                                                        <td style=3D"paddin=
+g: 0; margin: 0;" width=3D"38">
+                                                <![endif]-->
+                                <!--[if mso]>
+                                </td>
+                                <td style=3D"padding: 0; margin: 0; font-si=
+ze: 20px; height: 20px;">
+                                    &nbsp;
+                                </td>
+                                </tr>
+                                <tr>
+                                    <td colspan=3D"3"
+                                        style=3D"padding: 0; margin: 0; fon=
+t-size: 20px; height: 20px; height: 20px;">
+                                        &nbsp;
+                                    </td>
+                                </tr>
+                                </table>
+                                <![endif]-->
+                                <h3 class=3D"plaintext_ignore"
+                                                style=3D"font-weight: 900; =
+padding-top: 10px; margin-bottom: 7px; font-size: 21px; font-size: 21px; ma=
+rgin-top: 0; margin-top: 0;">
+                                    LiveDemo</h3>
+                                <h4
+                                        style=3D"margin-bottom: 2px; font-s=
+ize: 17px; font-weight: 400;">
+                                    Link: <a href=3D"http://localhost:5000/=
+register"
+                                            style=3D"white-space: nowrap;co=
+lor: #0576b9;">Register</a>
+                                </h4>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </center>
+        </td>
+    </tr>
+    <tr>
+        <td class=3D"email_footer"
+            style=3D"font-size: 15px;color: #717274;text-align: center;widt=
+h: 100%; border-top: 1px solid #E1E1E4">
+            <table style=3D"margin-top: 20px; background-color: white; bord=
+er: 0; text-align: center; border-collapse: collapse;">
+                <tr>
+                    <td>=C2=A0</td>
+                    <td><span style=3D"display: block;"> Made by <a href=3D=
+"https://livedemo.ai"
+                                                                  style=3D"=
+text-decoration: none; color: #434245;">DevSecOps, LLC</a>
+                <br/>
+                 </span>
+                    </td>
+                    <td>=C2=A0</td>
+                </tr>
+                <tr>
+                    <td>=C2=A0</td>
+                    <td style=3D"padding: 16px 8px 24px; vertical-align: to=
+p; text-align: center"><span><a
+                            href=3D"https://livedemo.ai" style=3D"text-de=
+coration: none;color: #434245;">LiveDemo</a> <span
+                            style=3D"color: #D8D8D8;">=C2=A0=E2=80=A2=C2=A0=
+</span> <span style=3D"color: #D8D8D8;">=C2=A0=E2=80=A2=C2=A0</span>
+                        <a href=3D"https://livedemo.ai/terms"     style=
+=3D"text-decoration: none;color: #434245;">Policies</a></span>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

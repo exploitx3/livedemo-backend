@@ -1,0 +1,83 @@
+import helpers from '../helpers/livedemoHelpers.js'
+import ResponseCodes from '../constants/ResponseCodes.js'
+import { sendEmail } from '../helpers/emails/emailsSender.js'
+import Templates from '../helpers/emails/templates/index.js'
+import ENV from '../envServer.js'
+import authUtils from '../helpers/authUtils.js'
+
+const handler = function (req, res) {
+  let { Models, conn } = req.mongo
+
+  let authUserDoc = null
+
+  return Promise.resolve().then(async () => {
+
+      return helpers.authReq(req, Models)
+    })
+    .then(({ authUser }) => {
+      authUserDoc = authUser
+    })
+    .then(() => {
+      return authUtils.createTokenForChangePassword(authUserDoc, Models.AuthToken)
+    })
+    .then((newTokenDoc) => {
+
+      return sendEmail(Templates.changePassword, {
+        name: authUserDoc.name,
+        email: authUserDoc.email,
+        changePasswordLink: `${ENV.SERVER_URL}/change-password?token=${newTokenDoc.token}`
+      }, [authUserDoc.email], Models)
+    })
+    .then(() => {
+      const resultResponse = {
+        statusCode: ResponseCodes['200_OK'],
+        headers: {
+          'Access-Control-Max-Age': 600,
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept', // Required for CORS support to work
+          // Required for CORS support to work
+          'Access-Control-Allow-Credentials': true, // Required for cookies, authorization headers with HTTPS
+        }
+      }
+
+      res.set(resultResponse.headers)
+      res.status(resultResponse.statusCode)
+      res.send(JSON.stringify({
+        emailSent: true
+      }))
+    })
+    .catch((error) => {
+      console.log(error)
+
+      let resultResponse
+      if (error.resultResponse) {
+
+        resultResponse = error.resultResponse
+      } else {
+
+
+        resultResponse = {
+          statusCode: ResponseCodes['500_INTERNAL_SERVER_ERROR'],
+          headers: {
+            'Access-Control-Max-Age': 600,
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept', // Required for CORS support to work
+            // Required for CORS support to work
+            'Access-Control-Allow-Credentials': true, // Required for cookies, authorization headers with HTTPS
+          },
+          body: JSON.stringify({
+            message: 'Something wrong happened',
+            error: true,
+            errorMessage: error.message
+          })
+        }
+
+      }
+
+      res.set(resultResponse.headers)
+      res.status(resultResponse.statusCode)
+      res.send(resultResponse.body || '')
+    })
+}
+
+export default  handler

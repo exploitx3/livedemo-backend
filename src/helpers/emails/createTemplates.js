@@ -1,0 +1,30 @@
+import Templates from './templates/index.js'
+
+import { SESClient, CreateTemplateCommand } from '@aws-sdk/client-ses'
+import VARS from '../../envServer.js'
+
+const sesClient = new SESClient({
+  region: 'us-east-1',
+  credentials: {
+    accessKeyId: VARS.SES_ACCESS_KEY_ID,
+    secretAccessKey: VARS.SES_SECRET_ACCESS_KEY
+  }
+})
+
+
+let templateNames = ['storyDemoContentCreated']
+// let templateNames = Object.keys(Templates)
+for (let i = 0; i < templateNames.length; i++) {
+  let template = Templates[templateNames[i]]
+
+  const command = new CreateTemplateCommand({
+    Template: template.data
+  })
+
+  sesClient.send(command).then(
+    (data) => console.log(data)
+  ).catch(
+    (err) => console.log(err, err.stack)
+  )
+
+}

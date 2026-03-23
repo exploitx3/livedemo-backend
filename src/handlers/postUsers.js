@@ -1,0 +1,208 @@
+import ResponseCodes from '../constants/ResponseCodes.js'
+import userValidators from '../helpers/validators/userValidators.js'
+import authUtils from '../helpers/authUtils.js'
+import { sendEmail } from '../helpers/emails/emailsSender.js'
+import Templates from '../helpers/emails/templates/index.js'
+
+const handler = function (req, res) {
+  let { Models, conn } = req.mongo
+
+  let requestBody = req.body
+
+  return Promise.resolve().then(() => {
+      if (!requestBody) {
+        const resultResponse = {
+          statusCode: ResponseCodes['400_BAD_REQUEST'],
+          headers: {
+            'Access-Control-Max-Age': 600,
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept', // Required for CORS support to work
+            // Required for CORS support to work
+            'Access-Control-Allow-Credentials': true, // Required for cookies, authorization headers with HTTPS
+          }
+        }
+
+        let error = new Error('Invalid request body')
+        error.resultResponse = resultResponse
+        throw error
+      }
+
+      // Validate signup form
+      let validationResult = userValidators.validateSignupForm(requestBody)
+
+      if (!validationResult.success) {
+        const resultResponse = {
+          statusCode: ResponseCodes['400_BAD_REQUEST'],
+          headers: {
+            'Access-Control-Max-Age': 600,
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept', // Required for CORS support to work
+            // Required for CORS support to work
+            'Access-Control-Allow-Credentials': true, // Required for cookies, authorization headers with HTTPS
+          },
+          body: JSON.stringify(validationResult)
+        }
+
+        let error = new Error('Validation failed')
+        error.resultResponse = resultResponse
+        throw error
+      }
+    })
+    .then(() => {
+      const email = requestBody.email
+      const password = requestBody.password
+      const name = requestBody.fullName
+
+      const fullNameArray = name ? name.split(' ') : []
+      const firstName = fullNameArray.length ? fullNameArray[0] : name
+
+      const userData = {
+        email,
+        password,
+        name
+      }
+
+      // Save user to database (password will be hashed by User model pre-save hook)
+      return new Models.User(userData).save()
+    })
+    .then((userData) => {
+      let userNameForWorkspace = userData.name.split(' ')[0]
+
+      function capitalizeFirstLetter(str) {
+        return str ? str.charAt(0).toUpperCase() + str.slice(1) : ''
+      }
+
+      // Create workspace for new user
+      return new Models.Workspace({
+        name: `${capitalizeFirstLetter(userNameForWorkspace)}'s workspace`,
+        adminUser: userData._id,
+        users: [userData._id]
+      }).save()
+        .then((newWorkspaceDoc) => {
+          return Models.User.findOneAndUpdate(
+            { _id: userData._id },
+            { $push: { workspaces: newWorkspaceDoc._id } },
+            { new: true }
+          )
+        })
+    })
+    .then((userData) => {
+      // Check for workspaces with invited emails
+      return Models.Workspace.find({}, { _id: 1, invitedEmails: 1 }).lean()
+        .then((allWorkspaces) => {
+          let userWorkspaces = []
+          for (let i = 0; i < allWorkspaces.length; i++) {
+            let currentWorkspace = allWorkspaces[i]
+            if (currentWorkspace.invitedEmails && currentWorkspace.invitedEmails.includes(userData.email)) {
+              userWorkspaces.push(currentWorkspace._id)
+            }
+          }
+
+          if (userWorkspaces.length > 0) {
+            return Models.User.findOneAndUpdate(
+              { _id: userData._id },
+              { $push: { workspaces: { $each: userWorkspaces } } },
+              { new: true }
+            )
+          } else {
+            return userData
+          }
+        })
+    })
+    .then((newUserData) => {
+      // Send welcome email (if template exists)
+      const fullNameArray = requestBody.fullName ? requestBody.fullName.split(' ') : []
+      const firstName = fullNameArray.length ? fullNameArray[0] : requestBody.fullName
+
+      if (Templates.newAutoGenAccountCreated) {
+        return sendEmail(Templates.newAutoGenAccountCreated, {
+          name: firstName,
+        }, [requestBody.email], Models)
+          .then(() => {
+            return newUserData
+          })
+          .catch((err) => {
+            console.log('Email send error:', err)
+            return newUserData
+          })
+      } else {
+        return Promise.resolve(newUserData)
+      }
+    })
+    .then((newUserData) => {
+      // Convert to JSON for token creation
+      const savedUserData = newUserData.toJSON ? newUserData.toJSON() : newUserData
+
+      // Create auth token
+      return authUtils.createTokenForUser(savedUserData, Models.AuthToken)
+        .then((authTokenData) => {
+          return {
+            savedUserData,
+            authTokenData
+          }
+        })
+    })
+    .then(({ savedUserData, authTokenData }) => {
+      const resultResponse = {
+        statusCode: ResponseCodes['200_OK'],
+        headers: {
+          'Access-Control-Max-Age': 600,
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept', // Required for CORS support to work
+          // Required for CORS support to work
+          'Access-Control-Allow-Credentials': true, // Required for cookies, authorization headers with HTTPS
+        }
+      }
+
+      res.set(resultResponse.headers)
+      res.status(resultResponse.statusCode)
+      res.send(JSON.stringify({
+        id: savedUserData._id.toString(),
+        name: savedUserData.name,
+        email: savedUserData.email,
+        timezone: savedUserData.timezone,
+        token: authTokenData.token
+      }))
+    })
+    .catch((error) => {
+      console.log(error)
+
+      let resultResponse
+      let checkForDuplicateError = userValidators.handleMongoDuplicateError(error)
+      
+      if (checkForDuplicateError.error) {
+        resultResponse = {
+          statusCode: ResponseCodes['400_BAD_REQUEST'],
+          headers: {
+            'Access-Control-Max-Age': 600,
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept', // Required for CORS support to work
+            // Required for CORS support to work
+            'Access-Control-Allow-Credentials': true, // Required for cookies, authorization headers with HTTPS
+          },
+          body: JSON.stringify({
+            errors: checkForDuplicateError
+          })
+        }
+      } else if (error.resultResponse) {
+        resultResponse = error.resultResponse
+      } else {
+        resultResponse = {
+          statusCode: ResponseCodes['500_INTERNAL_SERVER_ERROR'],
+          headers: {
+            'Access-Control-Max-Age': 600,
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept', // Required for CORS support to work
+            // Required for CORS support to work
+            'Access-Control-Allow-Credentials': true, // Required for cookies, authorization headers with HTTPS
+          }
+        }
+      }
+
+      res.set(resultResponse.headers)
+      res.status(resultResponse.statusCode)
+      res.send(resultResponse.body || '')
+    })
+}
+
+export default  handler

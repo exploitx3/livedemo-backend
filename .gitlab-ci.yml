@@ -1,0 +1,86 @@
+image: node:14
+
+cache:
+  paths:
+    - node_modules/
+
+stages:
+  - build
+  - deploy
+
+build-story-api-image:
+  image: docker:27
+  services:
+    - docker:dind
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+  stage: build
+  only:
+    - develop
+  before_script:
+    - # 1. Ensure .ssh directory exists
+      - mkdir -p ~/.ssh
+
+      # 2. Copy the private key from the CI/CD variable to a file
+      # The variable content is available at the path stored in the environment variable
+      - cat $GITHUB_SSH_KEY > ~/.ssh/id_rsa
+
+      # 3. Set correct permissions for the private key file
+      - chmod 600 ~/.ssh/id_rsa
+
+      # 4. Add github.com to the list of known hosts to bypass authenticity prompts
+      - ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+      # 5. Start the ssh-agent and add the key (optional, useful if multiple keys are needed)
+      - eval $(ssh-agent -s)
+      - ssh-add ~/.ssh/id_rsa
+  script:
+    - docker login registry.gitlab.com --username $CI_MINE_USERNAME --password $CI_MINE_PASSWORD
+    - docker build -f ./tools/docker/Dockerfile -t registry.gitlab.com/georgi.apostolov/story-api:latest .
+    - docker tag registry.gitlab.com/georgi.apostolov/story-api:latest registry.gitlab.com/georgi.apostolov/story-api:$CI_COMMIT_SHA
+    - docker push registry.gitlab.com/georgi.apostolov/story-api:$CI_COMMIT_SHA
+    - docker push registry.gitlab.com/georgi.apostolov/story-api:latest
+
+
+build-story-api-monq-image:
+  image: docker:27
+  services:
+    - docker:dind
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+  stage: build
+  only:
+    - develop
+  before_script:
+    - # 1. Ensure .ssh directory exists
+      - mkdir -p ~/.ssh
+
+      # 2. Copy the private key from the CI/CD variable to a file
+      # The variable content is available at the path stored in the environment variable
+      - cat $GITHUB_SSH_KEY > ~/.ssh/id_rsa
+
+      # 3. Set correct permissions for the private key file
+      - chmod 600 ~/.ssh/id_rsa
+
+      # 4. Add github.com to the list of known hosts to bypass authenticity prompts
+      - ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+      # 5. Start the ssh-agent and add the key (optional, useful if multiple keys are needed)
+      - eval $(ssh-agent -s)
+      - ssh-add ~/.ssh/id_rsa
+  script:
+    - docker login registry.gitlab.com --username $CI_MINE_USERNAME --password $CI_MINE_PASSWORD
+    - docker build -f ./tools/docker/Dockerfile_monq -t registry.gitlab.com/georgi.apostolov/story-api:monq-latest .
+    - docker tag registry.gitlab.com/georgi.apostolov/story-api:monq-latest registry.gitlab.com/georgi.apostolov/story-api:monq-$CI_COMMIT_SHA
+    - docker push registry.gitlab.com/georgi.apostolov/story-api:monq-$CI_COMMIT_SHA
+    - docker push registry.gitlab.com/georgi.apostolov/story-api:monq-latest
+
+build:
+  stage: build
+  when: manual
+  only:
+    - develop
+  script:
+    - npm install
