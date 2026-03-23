@@ -1,0 +1,105 @@
+# Equivalent to .gitlab-ci.yml (build stage jobs).
+#
+# Secrets (repo Settings → Secrets and variables → Actions):
+#   CI_MINE_USERNAME   — GitLab Container Registry username
+#   CI_MINE_PASSWORD   — GitLab Container Registry password (token or password)
+#   GITHUB_SSH_KEY     — Private SSH key for GitHub (same role as GitLab CI variable)
+
+name: CI
+
+on:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+
+env:
+  GITLAB_IMAGE_PREFIX: docker.io/livedemo/livedemo-backend
+
+jobs:
+  # Mirrors: build-story-api-image (automatic on develop)
+  build-story-api-image:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up SSH for Docker build (private Git deps)
+        env:
+          GITHUB_SSH_KEY: ${{ secrets.GITHUB_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$GITHUB_SSH_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          eval "$(ssh-agent -s)"
+          ssh-add ~/.ssh/id_rsa
+
+      - name: Log in to GitLab Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: docker.io
+          username: ${{ secrets.CI_MINE_USERNAME }}
+          password: ${{ secrets.CI_MINE_PASSWORD }}
+
+      - name: Build and push story-api image
+        env:
+          TAG_SHA: ${{ github.sha }}
+        run: |
+          docker build -f ./tools/docker/Dockerfile -t "${{ env.GITLAB_IMAGE_PREFIX }}:latest" .
+          docker tag "${{ env.GITLAB_IMAGE_PREFIX }}:latest" "${{ env.GITLAB_IMAGE_PREFIX }}:${TAG_SHA}"
+          docker push "${{ env.GITLAB_IMAGE_PREFIX }}:${TAG_SHA}"
+          docker push "${{ env.GITLAB_IMAGE_PREFIX }}:latest"
+
+  # Mirrors: build-story-api-monq-image (automatic on develop)
+  build-story-api-monq-image:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up SSH for Docker build (private Git deps)
+        env:
+          GITHUB_SSH_KEY: ${{ secrets.GITHUB_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$GITHUB_SSH_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          eval "$(ssh-agent -s)"
+          ssh-add ~/.ssh/id_rsa
+
+      - name: Log in to GitLab Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: docker.io
+          username: ${{ secrets.CI_MINE_USERNAME }}
+          password: ${{ secrets.CI_MINE_PASSWORD }}
+
+      - name: Build and push story-api monq image
+        env:
+          TAG_SHA: ${{ github.sha }}
+        run: |
+          docker build -f ./tools/docker/Dockerfile_monq -t "${{ env.GITLAB_IMAGE_PREFIX }}:monq-latest" .
+          docker tag "${{ env.GITLAB_IMAGE_PREFIX }}:monq-latest" "${{ env.GITLAB_IMAGE_PREFIX }}:monq-${TAG_SHA}"
+          docker push "${{ env.GITLAB_IMAGE_PREFIX }}:monq-${TAG_SHA}"
+          docker push "${{ env.GITLAB_IMAGE_PREFIX }}:monq-latest"
+
+  # Mirrors: build (manual only; GitLab: when: manual, only develop)
+  build:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
