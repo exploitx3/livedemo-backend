@@ -1,3 +1,17 @@
 onlyBuiltDependencies:
-  - "react-joyride"
+  - react-joyride
 
+overrides:
+  '@babel/runtime@<7.26.10': '>=7.26.10'
+  bson@<1.1.4: '>=1.1.4'
+  cross-spawn@<6.0.6: '>=6.0.6'
+  esbuild@<=0.24.2: '>=0.25.0'
+  fast-xml-parser@>=4.0.0-beta.3 <=5.5.5: '>=5.5.6'
+  fast-xml-parser@>=4.0.0-beta.3 <=5.5.6: '>=5.5.7'
+  fast-xml-parser@>=5.0.0 <5.3.8: '>=5.3.8'
+  json5@<1.0.2: '>=1.0.2'
+  loader-utils@<1.4.1: '>=1.4.1'
+  mongodb@<3.1.13: '>=3.1.13'
+  serialize-javascript@<=7.0.2: '>=7.0.3'
+  underscore@<=1.13.7: '>=1.13.8'
+  underscore@>=1.3.2 <1.12.1: '>=1.12.1'

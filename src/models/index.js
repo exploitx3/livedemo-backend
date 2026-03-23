@@ -108,16 +108,11 @@ export const connect = () => {
     // Buffering means mongoose will queue up operations if it gets
     // disconnected from MongoDB and send them when it reconnects.
     // With serverless, better to fail fast if not connected.
-    bufferCommands: false, // Disable mongoose buffering
-    bufferMaxEntries: 0, // and MongoDB driver buffering
-    useFindAndModify: false,
-    useCreateIndex: true, // Use createIndex instead of deprecated ensureIndex
-    useNewUrlParser: true, // Use new URL parser
-    useUnifiedTopology: true // Use new Server Discovery and Monitoring engine
+    bufferCommands: false // Disable mongoose buffering
   })
 
 
-  return conn
+  return Promise.resolve(conn)
 
 }
 
