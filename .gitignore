@@ -29,3 +29,5 @@ staging.env
 
 src/injectScript/injectScript.bundle.js
 ./src/injectScript/injectScript.bundle.js
+
+*.env

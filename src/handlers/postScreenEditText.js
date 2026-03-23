@@ -8,7 +8,7 @@ import * as parse5Obj from 'parse5'
 const {parse5} = parse5Obj
 import parse5Helper from 'parse5-helper'
 
-import { DOMParser, XMLSerializer } from 'xmldom'
+import { DOMParser, XMLSerializer } from '@xmldom/xmldom'
 import xpath from 'xpath'
 import jsdom from 'jsdom'
 const { JSDOM } = jsdom
