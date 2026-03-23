@@ -1,4 +1,4 @@
-FROM registry.gitlab.com/georgi.apostolov/story-api:monq-base
+FROM docker.io/livedemo/livedemo-backend:monq-base
 
 ENV CI=true
 

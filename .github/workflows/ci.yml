@@ -1,9 +1,9 @@
 # Equivalent to .gitlab-ci.yml (build stage jobs).
 #
 # Secrets (repo Settings → Secrets and variables → Actions):
-#   CI_MINE_USERNAME   — GitLab Container Registry username
-#   CI_MINE_PASSWORD   — GitLab Container Registry password (token or password)
-#   GIT_SSH_KEY     — Private SSH key for GitHub (same role as GitLab CI variable)
+#   CI_MINE_USERNAME   — Docker Container Registry username
+#   CI_MINE_PASSWORD   — Docker Container Registry password (token or password)
+#   GIT_SSH_KEY     — Private SSH key for GitHub (same role as Docker CI variable)
 
 name: CI
 
@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
 
 env:
-  GITLAB_IMAGE_PREFIX: docker.io/livedemo/livedemo-backend
+  DOCKER_IMAGE_PREFIX: docker.io/livedemo/livedemo-backend
 
 jobs:
   # Mirrors: build-story-api-image (automatic on develop)
@@ -36,7 +36,7 @@ jobs:
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/id_rsa
 
-      - name: Log in to GitLab Container Registry
+      - name: Log in to Docker Container Registry
         uses: docker/login-action@v3
         with:
           registry: docker.io
@@ -47,10 +47,10 @@ jobs:
         env:
           TAG_SHA: ${{ github.sha }}
         run: |
-          docker build -f ./tools/docker/Dockerfile -t "${{ env.GITLAB_IMAGE_PREFIX }}:latest" .
-          docker tag "${{ env.GITLAB_IMAGE_PREFIX }}:latest" "${{ env.GITLAB_IMAGE_PREFIX }}:${TAG_SHA}"
-          docker push "${{ env.GITLAB_IMAGE_PREFIX }}:${TAG_SHA}"
-          docker push "${{ env.GITLAB_IMAGE_PREFIX }}:latest"
+          docker build -f ./tools/docker/Dockerfile -t "${{ env.DOCKER_IMAGE_PREFIX }}:latest" .
+          docker tag "${{ env.DOCKER_IMAGE_PREFIX }}:latest" "${{ env.DOCKER_IMAGE_PREFIX }}:${TAG_SHA}"
+          docker push "${{ env.DOCKER_IMAGE_PREFIX }}:${TAG_SHA}"
+          docker push "${{ env.DOCKER_IMAGE_PREFIX }}:latest"
 
   # Mirrors: build-story-api-monq-image (automatic on develop)
   build-story-api-monq-image:
@@ -71,7 +71,7 @@ jobs:
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/id_rsa
 
-      - name: Log in to GitLab Container Registry
+      - name: Log in to Docker Container Registry
         uses: docker/login-action@v3
         with:
           registry: docker.io
@@ -82,12 +82,12 @@ jobs:
         env:
           TAG_SHA: ${{ github.sha }}
         run: |
-          docker build -f ./tools/docker/Dockerfile_monq -t "${{ env.GITLAB_IMAGE_PREFIX }}:monq-latest" .
-          docker tag "${{ env.GITLAB_IMAGE_PREFIX }}:monq-latest" "${{ env.GITLAB_IMAGE_PREFIX }}:monq-${TAG_SHA}"
-          docker push "${{ env.GITLAB_IMAGE_PREFIX }}:monq-${TAG_SHA}"
-          docker push "${{ env.GITLAB_IMAGE_PREFIX }}:monq-latest"
+          docker build -f ./tools/docker/Dockerfile_monq -t "${{ env.DOCKER_IMAGE_PREFIX }}:monq-latest" .
+          docker tag "${{ env.DOCKER_IMAGE_PREFIX }}:monq-latest" "${{ env.DOCKER_IMAGE_PREFIX }}:monq-${TAG_SHA}"
+          docker push "${{ env.DOCKER_IMAGE_PREFIX }}:monq-${TAG_SHA}"
+          docker push "${{ env.DOCKER_IMAGE_PREFIX }}:monq-latest"
 
-  # Mirrors: build (manual only; GitLab: when: manual, only develop)
+  # Mirrors: build (manual only; Docker: when: manual, only develop)
   build:
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
