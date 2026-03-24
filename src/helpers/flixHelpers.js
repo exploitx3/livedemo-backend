@@ -14,7 +14,10 @@ import monq from 'monq'
 import Mux from '@mux/mux-node'
 import he from 'he'
 
-const { Video: muxVideo, Data: muxData } = new Mux(ENV.MUX_TOKEN_ID, ENV.MUX_TOKEN_SECRET)
+const mux = new Mux({
+  tokenId: ENV.MUX_TOKEN_ID,
+  tokenSecret: ENV.MUX_TOKEN_SECRET
+})
 
 function waitUntilAssetRenditionsAreReady(assetId, pollTime, count) {
 
@@ -24,7 +27,7 @@ function waitUntilAssetRenditionsAreReady(assetId, pollTime, count) {
     for (let i = 0; i < count; i++) {
       promiseChain = promiseChain.then(() => {
 
-        return muxVideo.Assets.get(assetId)
+        return mux.video.assets.retrieve(assetId)
             .then((assetInfo) => {
 
               if (assetInfo.static_renditions && assetInfo.static_renditions.status === 'ready') {
@@ -67,7 +70,7 @@ function waitUntilAssetIsReady(assetId, pollTime, count) {
     for (let i = 0; i < count; i++) {
       promiseChain = promiseChain.then(() => {
 
-        return muxVideo.Assets.get(assetId)
+        return mux.video.assets.retrieve(assetId)
             .then((assetInfo) => {
 
               if (assetInfo.status !== 'ready') {
@@ -114,7 +117,7 @@ function waitUntilAssetIsUploaded(uploadId, pollTime, count) {
     for (let i = 0; i < count; i++) {
       promiseChain = promiseChain.then(() => {
 
-        return muxVideo.Uploads.get(uploadId)
+        return mux.video.uploads.retrieve(uploadId)
             .then((assetInfo) => {
 
               if (assetInfo.status !== 'asset_created') {
@@ -156,19 +159,19 @@ function createMuxClips(videoAssetId, renderEvents) {
 
   let videoUploads = videoEvents.map((event) => {
 
-    return muxVideo.Assets.create({
+    return mux.video.assets.create({
       input: [
         {
-          "url": `mux://assets/${videoAssetId}`,
-          "start_time": event.startMillis,
-          "end_time": event.endMillis
+          url: `mux://assets/${videoAssetId}`,
+          start_time: event.startMillis,
+          end_time: event.endMillis
         }
       ],
-      playback_policy: 'public',
-      "mp4_support": "standard",
-      "max_resolution_tier": "2160p",
-      "normalize_audio": false,
-      "video_quality": "plus"
+      playback_policy: ['public'],
+      mp4_support: 'standard',
+      max_resolution_tier: '2160p',
+      normalize_audio: false,
+      video_quality: 'plus'
     })
         .then((assetObj) => {
 
@@ -206,14 +209,15 @@ function uploadMuxVideo(videoData) {
     videoBuff = Buffer.from(videoData.replace(/^data:video\/\w+;base64,/, ''), 'base64')
   }
 
-  return muxVideo.Uploads.create({
+  return mux.video.uploads.create({
     new_asset_settings: {
-      "max_resolution_tier": "2160p",
-      "normalize_audio": false,
-      playback_policy: 'public',
-      "mp4_support": "standard",
-      "video_quality": "plus"
+      max_resolution_tier: '2160p',
+      normalize_audio: false,
+      playback_policy: ['public'],
+      mp4_support: 'standard',
+      video_quality: 'plus'
     },
+    cors_origin: '*',
   })
       .then((uploadObj) => {
 

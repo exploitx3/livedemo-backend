@@ -61,7 +61,7 @@ const handler = function (req, res) {
                             model: 'Audio',
                         }
                     ],
-                    select: '_id name steps customTransitions width height imageUrl index imageUrl asset playbackRate popups zoomSpans startTime endTime playbackRate',
+                    select: '_id name steps type customTransitions width height imageUrl index imageUrl asset playbackRate popups zoomSpans startTime endTime playbackRate',
                     options: {sort: {'index': 1}}
                 })
                 .lean()

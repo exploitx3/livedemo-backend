@@ -53,7 +53,7 @@ const handler = function (req, res) {
                   model: 'Form',
                 },
               ],
-              select: '_id name steps customTransitions imageUrl index imageUrl asset',
+              select: '_id name type steps customTransitions imageUrl index imageUrl asset',
               options: { sort: { 'index': 1 } }
             })
         })

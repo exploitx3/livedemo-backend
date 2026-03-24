@@ -52,7 +52,7 @@ const handler = function (req, res) {
               model: 'Audio',
             },
           ],
-          select: '_id name steps customTransitions width height imageUrl index imageUrl asset playbackRate',
+          select: '_id name type steps customTransitions width height imageUrl index imageUrl asset playbackRate',
           options: { sort: { 'index': 1 } }
         })
         .lean()

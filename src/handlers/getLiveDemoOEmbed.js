@@ -112,7 +112,7 @@ const handler = function (req, res) {
               model: 'Audio',
             }
           ],
-          select: '_id name steps customTransitions imageUrl index imageUrl asset',
+          select: '_id name type steps customTransitions imageUrl index imageUrl asset',
           options: { sort: { 'index': 1 } }
         })
         .populate('workspaceId', '_id name')

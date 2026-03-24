@@ -92,7 +92,7 @@ const handler = async function (req, res) {
                             model: 'StepAudio',
                         }
                     ],
-                    select: '_id name steps customTransitions imageUrl index imageUrl asset zoomSpans startTime endTime playbackRate',
+                    select: '_id name steps type customTransitions imageUrl index imageUrl asset zoomSpans startTime endTime playbackRate',
                     options: {sort: {'index': 1}}
                 })
                 .populate('workspaceId', '_id name')
