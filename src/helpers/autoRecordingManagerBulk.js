@@ -101,8 +101,7 @@ import OpenAI from "openai"
 const model = 'gpt-5.1'
 
 const openai = new OpenAI({
-    apiKey: "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",
-    // apiKey: process.env.OPENAI_API_KEY,
+    apiKey: process.env.OPENAI_API_KEY,
 })
 
 /**
