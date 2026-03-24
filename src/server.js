@@ -146,7 +146,6 @@ import * as https from 'https'
 import * as http from 'http'
 import axios from "axios";
 
-const {JSDOM} = jsdom
 
 // import axios from 'axios'
 const privateAuthToken = ENV.PRIVATE_AUTH_TOKEN

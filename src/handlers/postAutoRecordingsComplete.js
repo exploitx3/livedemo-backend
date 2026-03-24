@@ -40,7 +40,7 @@ const handler = function (req, res) {
                     }
                 },
                 {
-                    $new: true
+                    new: true
                 })
             //
             // while(autoRecordingDoc.status === AutoRecordingStatuses.recording) {

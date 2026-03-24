@@ -94,7 +94,7 @@ const handler = function (req, res) {
         expiresAt: expiresAt,
         hubspotUserId: hubspotUserId,
         hubspotUserEmail: hubspotUserEmail,
-        workspaceId: workspaceId ? ObjectId(workspaceId) : null,
+        workspaceId: workspaceId ? new ObjectId(workspaceId) : null,
         hubspotUserFirstName: userInfo.firstName || userInfo.first_name || '',
         hubspotUserLastName: userInfo.lastName || userInfo.last_name || '',
         hubspotUserPhone: userInfo.phone || '',
@@ -126,7 +126,7 @@ const handler = function (req, res) {
       // Update workspace integration status if workspaceId is provided
       if (workspaceId) {
         await Models.Workspace.findOneAndUpdate(
-          { _id: ObjectId(workspaceId) },
+          { _id: new ObjectId(workspaceId) },
           { 'integrations.hubspot': true }
         )
       }

@@ -49,8 +49,8 @@ const handler = function (req, res) {
                 .then((newZoomSpanScreenshotDoc) => {
 
                     return Models.Screen_Screenshot.findOneAndUpdate({
-                        _id: ObjectId(screenDoc._id),
-                        'steps._id': ObjectId(stepId)
+                        _id: new ObjectId(screenDoc._id),
+                        'steps._id': new ObjectId(stepId)
                     }, {
                         $set: {
                             "steps.$.zoomSpan": newZoomSpanScreenshotDoc

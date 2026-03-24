@@ -59,8 +59,8 @@ const handler = function (req, res) {
         updateObj.name = name
       }
 
-      return Models.Screen.db.collection('screens').findOneAndUpdate({ _id: ObjectId(screenId) },  { $set: updateObj }, {
-        returnOriginal: false
+      return Models.Screen.db.collection('screens').findOneAndUpdate({ _id: new ObjectId(screenId) },  { $set: updateObj }, {
+        returnDocument: 'after'
       })
     })
     .then((screenDoc) => {

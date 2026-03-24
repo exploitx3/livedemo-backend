@@ -36,7 +36,7 @@ const handler = function (req, res) {
 
             return Models.Screen.find(
                 {
-                    storyId: ObjectId(storyId),
+                    storyId: new ObjectId(storyId),
                     $or: [{steps: {$elemMatch: {"view.viewType": 'hotspot'}}}, {steps: {$elemMatch: {"view.viewType": 'tooltip'}}}]
                 })
                 .lean()
@@ -106,8 +106,8 @@ Rephrase them to be numbered, consequential and coherent like a  guide `
                     updateOps.push({
                         updateOne: {
                             filter: {
-                                _id: ObjectId(step.screenId),
-                                "steps": {$elemMatch: {_id: ObjectId(step._id)}}
+                                _id: new ObjectId(step.screenId),
+                                "steps": {$elemMatch: {_id: new ObjectId(step._id)}}
                             },
                             update: {
                                 $set: {

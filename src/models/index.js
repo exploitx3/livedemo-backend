@@ -91,7 +91,7 @@ import HubspotTokenSchema from './HubspotToken.js'
 // const ActivitySchema = require('./Activity')
 // const GroupActivitySchema = require('./GroupActivity')
 
-import mongoosePaginate from 'mongoose-paginate'
+import mongoosePaginate from 'mongoose-paginate-v2'
 import mongooseAggregatePaginate from 'mongoose-aggregate-paginate-v2'
 
 /**

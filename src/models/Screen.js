@@ -12,7 +12,7 @@ import ScreenStepSchema from './ScreenStep.js'
 
 const Screen = new mongoose.Schema({
 
-    name: { type: String },
+    name: { type: String, default: '' },
     storyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Story' },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     workspaceId: { type: mongoose.Schema.Types.ObjectId, ref: 'Workspace' },

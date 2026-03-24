@@ -176,8 +176,8 @@ const handler = function (req, res) {
                     updateOps.push({
                         updateOne: {
                             filter: {
-                                _id: ObjectId(resultObj.step.screenId),
-                                "steps": {$elemMatch: {_id: ObjectId(resultObj.step._id)}}
+                                _id: new ObjectId(resultObj.step.screenId),
+                                "steps": {$elemMatch: {_id: new ObjectId(resultObj.step._id)}}
                             },
                             update: {
                                 $set: {

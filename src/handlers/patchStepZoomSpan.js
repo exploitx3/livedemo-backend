@@ -76,8 +76,8 @@ const handler = function (req, res) {
             if (Object.keys(updateObj).length !== 0) {
 
                 return Models.Screen_Screenshot.findOneAndUpdate({
-                    _id: ObjectId(screenId),
-                    'steps._id': ObjectId(stepId)
+                    _id: new ObjectId(screenId),
+                    'steps._id': new ObjectId(stepId)
                 }, {
                     $set: updateObj
                 }, {new: true, overwrite: false})

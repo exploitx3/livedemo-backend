@@ -29,6 +29,6 @@ RUN npm install -g pnpm
 RUN pnpm install
 
 RUN timeout -s 9 30 npx puppeteer browsers install chrome-headless-shell || true
-RUN npx puppeteer browsers install chrome-headless-shell || true
+RUN npx puppeteer browsers install chrome-headless-shell
 
 ENTRYPOINT ./start.sh

@@ -45,13 +45,14 @@ const handler = function (req, res) {
               model: 'Screen',
             }
           ],
-          select: '_id name steps customTransitions width height imageUrl index imageUrl asset playbackRate popups zoomSpans zoomSpan startTime endTime playbackRate',
-          options: { sort: { 'index': 1 } }
+          select: '_id name type steps customTransitions width height imageUrl index asset playbackRate popups zoomSpans zoomSpan startTime endTime',
         })
-          .populate('content.contentId')
-      // .populate('screens', ['_id', 'name', 'steps', 'customTransitions', 'imageUrl', 'index', 'imageUrl'], null, { sort: { 'index': 1 } })
+        .populate('content.contentId')
     })
     .then((foundStory) => {
+      if (foundStory && Array.isArray(foundStory.screens)) {
+        foundStory.screens.sort((a, b) => a.index - b.index)
+      }
 
       const resultResponse = {
         statusCode: ResponseCodes['200_OK'],

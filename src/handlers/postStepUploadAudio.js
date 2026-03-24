@@ -53,7 +53,7 @@ const handler = function (req, res) {
         })
         .then((audioDoc) => {
 
-            return Models.Screen.findOneAndUpdate({_id: ObjectId(screenId), 'steps._id': ObjectId(stepId)}, {
+            return Models.Screen.findOneAndUpdate({_id: new ObjectId(screenId), 'steps._id': new ObjectId(stepId)}, {
                 $set: {
                     "steps.$.stepAudioId": audioDoc._id
                 }

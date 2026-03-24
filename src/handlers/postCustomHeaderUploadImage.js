@@ -43,7 +43,7 @@ const handler = function (req, res) {
           $set: {
             'custom.header.imageUrl': imageUrl,
           }
-        }, { $new: true })
+        }, { new: true })
         .then(() => {
 
           return imageUrl
