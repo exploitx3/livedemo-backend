@@ -35,7 +35,7 @@ const UserSchema = new mongoose.Schema({
     },
     password: String,
     name: { type: String, default: '' },
-  // workspaceMembers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'WorkspaceMember' }],
+  workspaceMembers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'WorkspaceMember' }],
     stripeCustomerId: { type: String },
     defaultCardId: { type: mongoose.Schema.Types.ObjectId, ref: 'Card' },
     cards: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Card' }],

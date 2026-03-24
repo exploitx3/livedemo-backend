@@ -12,6 +12,7 @@ import AuthToken_DirectInstallSchema from './AuthToken_UserDirectInstall.js'
 import AuthToken_UserChangePassword from './AuthToken_UserChangePassword.js'
 
 import WorkspaceSchema from './Workspace.js'
+import WorkspaceMemberSchema from './WorkspaceMember.js'
 import SubscriptionSchema from './Subscription.js'
 import EmailSchema from './Email.js'
 import CardSchema from './Card.js'
@@ -98,30 +99,26 @@ import mongooseAggregatePaginate from 'mongoose-aggregate-paginate-v2'
  *
  * @returns {Connection}
  */
-export const connect = () => {
-
+export const connect = async () => {
   // Because `conn` is in the global scope, Lambda may retain it between
   // function calls thanks to `callbackWaitsForEmptyEventLoop`.
   // This means your Lambda function doesn't have to go through the
   // potentially expensive process of connecting to MongoDB every time.
-  let conn = mongoose.createConnection(uri, {
+  const conn = mongoose.createConnection(uri, {
     // Buffering means mongoose will queue up operations if it gets
     // disconnected from MongoDB and send them when it reconnects.
     // With serverless, better to fail fast if not connected.
     bufferCommands: false // Disable mongoose buffering
   })
 
-
-  return Promise.resolve(conn)
-
+  await conn.asPromise()
+  return conn
 }
 
-export const setupDB = () => {
-  return connect().then(connResolved => {
-   initModels(connResolved)
-
-    return connResolved
-  })
+export const setupDB = async () => {
+  const connResolved = await connect()
+  initModels(connResolved)
+  return connResolved
 }
 
 /**
@@ -148,6 +145,7 @@ export const initModels = (conn) => {
 
   conn.model('Config', ConfigSchema)
   conn.model('Card', CardSchema)
+  conn.model('WorkspaceMember', WorkspaceMemberSchema)
   conn.model('User', UserSchema)
 
   // init a discriminator for AuthToken different types(functionalities)
@@ -167,7 +165,6 @@ export const initModels = (conn) => {
   // conn.model('Channel', ChannelSchema)
   // conn.model('InstantMessagesChannel', InstantMessagesChannelSchema)
   conn.model('Workspace', WorkspaceSchema)
-  // conn.model('WorkspaceMember', WorkspaceMemberSchema)
   // conn.model('Message', MessageSchema)
   // conn.model('InstantMessage', InstantMessageSchema)
   // conn.model('File', FileMessageSchema)
@@ -254,6 +251,7 @@ export const getModels = (conn) => {
     Card: conn.model('Card'),
     User: conn.model('User'),
     Workspace: conn.model('Workspace'),
+    WorkspaceMember: conn.model('WorkspaceMember'),
     Charge: conn.model('Charge'),
     Subscription: conn.model('Subscription'),
     Job: conn.model('Job'),
@@ -293,7 +291,6 @@ export const getModels = (conn) => {
 
     // Channel: conn.model('Channel'),
     // InstantMessagesChannel: conn.model('InstantMessagesChannel'),
-    // WorkspaceMember: conn.model('WorkspaceMember'),
     // Message: conn.model('Message'),
     // InstantMessage: conn.model('InstantMessage'),
     // File: conn.model('File'),
