@@ -52,7 +52,7 @@ refactor: extract shared pagination helper
 
 ## Code conventions
 
-- ESM (`import`/`export`) throughout — no `require()`
+- ESM (`import`/`export`) throughout - no `require()`
 - Handler files are named after the HTTP operation they serve (e.g. `getStories.js`, `createStory.js`)
 - One handler per file in `src/handlers/`
 - Shared logic goes in `src/helpers/`

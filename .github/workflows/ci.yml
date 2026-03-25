@@ -1,9 +1,9 @@
 # Equivalent to .gitlab-ci.yml (build stage jobs).
 #
 # Secrets (repo Settings → Secrets and variables → Actions):
-#   CI_MINE_USERNAME   — Docker Container Registry username
-#   CI_MINE_PASSWORD   — Docker Container Registry password (token or password)
-#   GIT_SSH_KEY     — Private SSH key for GitHub (same role as Docker CI variable)
+#   CI_MINE_USERNAME   - Docker Container Registry username
+#   CI_MINE_PASSWORD   - Docker Container Registry password (token or password)
+#   GIT_SSH_KEY     - Private SSH key for GitHub (same role as Docker CI variable)
 
 name: CI
 

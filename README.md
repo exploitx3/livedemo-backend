@@ -4,15 +4,15 @@ Node.js / Express backend API for the livedemo platform. Handles demos, stories,
 
 ## Stack
 
-- **Runtime** — Node.js (ESM)
-- **Framework** — Express
-- **Database** — MongoDB via Mongoose
-- **Queue** — monq (MongoDB-backed job queue)
-- **Media** — FFmpeg, Mux, Puppeteer
-- **Auth** — JWT, Google OAuth2
-- **Billing** — Stripe
-- **Storage** — AWS S3 / SES
-- **AI** — OpenAI, ElevenLabs
+- **Runtime** - Node.js (ESM)
+- **Framework** - Express
+- **Database** - MongoDB via Mongoose
+- **Queue** - monq (MongoDB-backed job queue)
+- **Media** - FFmpeg, Mux, Puppeteer
+- **Auth** - JWT, Google OAuth2
+- **Billing** - Stripe
+- **Storage** - AWS S3 / SES
+- **AI** - OpenAI, ElevenLabs
 
 ---
 
@@ -40,7 +40,7 @@ pnpm install
 cp local.env dev.env
 ```
 
-> `dev.env` is listed in `.gitignore` — your secrets will never be committed.
+> `dev.env` is listed in `.gitignore` - your secrets will never be committed.
 
 Key variables to update in `dev.env`:
 

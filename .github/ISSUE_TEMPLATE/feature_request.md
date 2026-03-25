@@ -16,7 +16,7 @@ Why is this needed? What problem does it solve, or what use case does it enable?
 
 ## Proposed solution
 
-Describe the change you'd like to see — new endpoint, new field on an existing model, new integration, etc.
+Describe the change you'd like to see - new endpoint, new field on an existing model, new integration, etc.
 
 ## API design (if applicable)
 

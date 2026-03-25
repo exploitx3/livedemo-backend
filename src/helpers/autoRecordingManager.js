@@ -172,7 +172,7 @@ Each step must:
 - Include:
   - 'x coordinate (number)
   - 'y' coordinate (number)
-  - 'explanation' — a short imperative instruction (e.g. “Click the Create Demo button”)
+  - 'explanation' - a short imperative instruction (e.g. “Click the Create Demo button”)
   - The corresponding 'image' from the uploaded images
 
 CONSTRAINTS

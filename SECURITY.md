@@ -36,7 +36,7 @@ Security concerns particularly relevant to this project:
 
 ## Out of scope
 
-- Vulnerabilities in upstream services (MongoDB, Stripe, OpenAI, Mux, AWS) — report those to the respective vendors.
+- Vulnerabilities in upstream services (MongoDB, Stripe, OpenAI, Mux, AWS) - report those to the respective vendors.
 - Issues that only affect local development environments with no network exposure.
 
 ## Security best practices for contributors
