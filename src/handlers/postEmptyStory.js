@@ -6,8 +6,8 @@ import StoryStatuses from '../constants/StoryStatuses.js'
 import ScreenTypes from '../constants/ScreenTypes.js'
 import ENV from '../envServer.js'
 const { STORY_REQUESTS_FOLDER } = ENV
-import pkg from 'mongodb';
-const { ObjectId } = pkg;
+import mongoose from 'mongoose';
+const { ObjectId } = mongoose.Types;
 import short from 'short-uuid'
 import stringify from 'stream-json-stringify'
 

@@ -7,8 +7,8 @@ import AudioTypes from '../constants/AudioTypes.js'
 
 // const ENV = require('../envServer')
 import ENV from '../envServer.js'
-import pkg from 'mongodb';
-const { ObjectId } = pkg;
+import mongoose from 'mongoose';
+const { ObjectId } = mongoose.Types;
 import short from 'short-uuid'
 
 import * as parse5 from 'parse5'

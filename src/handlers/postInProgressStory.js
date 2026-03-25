@@ -3,8 +3,8 @@ import postStoriesValidator from '../helpers/validators/stories/postInProgressSt
 import ResponseCodes from '../constants/ResponseCodes.js'
 import StoryStatuses from '../constants/StoryStatuses.js'
 // const {STORY_REQUESTS_FOLDER} = ENV
-import pkg from 'mongodb';
-const { ObjectId } = pkg;
+import mongoose from 'mongoose';
+const { ObjectId } = mongoose.Types;
 
 
 const handler = function (req, res) {

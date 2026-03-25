@@ -4,8 +4,8 @@ import postStoryAITextValidator from '../helpers/validators/stories/postStoryAIT
 import ResponseCodes from '../constants/ResponseCodes.js'
 
 import ENV from '../envServer.js'
-import pkg from 'mongodb';
-const { ObjectId } = pkg;
+import mongoose from 'mongoose';
+const { ObjectId } = mongoose.Types;
 import livedemoHelpers from "../helpers/livedemoHelpers.js";
 
 const {STORY_REQUESTS_FOLDER} = ENV

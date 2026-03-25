@@ -2,8 +2,8 @@ import postScreensValidator from '../helpers/validators/stories/screens/postScre
 import helpers from '../helpers/livedemoHelpers.js'
 import short from 'short-uuid'
 import ResponseCodes from '../constants/ResponseCodes.js'
-import pkg from 'mongodb';
-const { ObjectId } = pkg;
+import mongoose from 'mongoose';
+const { ObjectId } = mongoose.Types;
 import ENV from '../envServer.js'
 import fsp from 'fs/promises'
 

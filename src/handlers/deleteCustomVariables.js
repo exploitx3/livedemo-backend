@@ -1,8 +1,8 @@
 import helpers from '../helpers/livedemoHelpers.js'
 import patchCustomVariablesValidator from '../helpers/validators/stories/custom/variables/patchCustomVariablesValidator.js'
 import ResponseCodes from '../constants/ResponseCodes.js'
-import pkg from 'mongodb';
-const { ObjectId } = pkg;
+import mongoose from 'mongoose';
+const { ObjectId } = mongoose.Types;
 
 const handler = function (req, res) {
     let {Models, conn} = req.mongo

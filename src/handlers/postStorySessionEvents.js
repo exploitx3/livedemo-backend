@@ -1,8 +1,8 @@
 import helpers from '../helpers/livedemoHelpers.js'
 import postStorySessionEventsValidator from '../helpers/validators/stories/sessions/events/postStorySessionEventsValidator.js'
 import ResponseCodes from '../constants/ResponseCodes.js'
-import pkg from 'mongodb'
-const {ObjectId} = pkg
+import mongoose from 'mongoose';
+const { ObjectId } = mongoose.Types;
 import monq from 'monq'
 import ENV from '../envServer.js'
 

@@ -2,8 +2,8 @@ import helpers from '../helpers/livedemoHelpers.js'
 import ResponseCodes from '../constants/ResponseCodes.js'
 
 import ENV from '../envServer.js'
-import pkg from 'mongodb'
-const { ObjectId } = pkg
+import mongoose from 'mongoose';
+const { ObjectId } = mongoose.Types;
 import fsp from 'fs/promises'
 
 const {STORY_REQUESTS_FOLDER} = ENV

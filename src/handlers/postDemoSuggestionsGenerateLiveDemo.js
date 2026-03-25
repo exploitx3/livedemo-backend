@@ -1,6 +1,6 @@
 import ResponseCodes from '../constants/ResponseCodes.js'
-import pkg from 'mongodb';
-const { ObjectId } = pkg;
+import mongoose from 'mongoose';
+const { ObjectId } = mongoose.Types;
 import helpers from '../helpers/livedemoHelpers.js'
 import StoryStatuses from '../constants/StoryStatuses.js'
 import ScreenTypes from '../constants/ScreenTypes.js'

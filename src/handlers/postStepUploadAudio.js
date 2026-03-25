@@ -4,8 +4,8 @@ import path from 'path'
 import short from 'short-uuid'
 import ENV from "../envServer.js";
 import AudioTypes from "../constants/AudioTypes.js";
-import pkg from 'mongodb';
-const { ObjectId } = pkg;
+import mongoose from 'mongoose';
+const { ObjectId } = mongoose.Types;
 
 
 const handler = function (req, res) {

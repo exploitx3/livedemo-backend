@@ -1,8 +1,8 @@
 import helpers from '../helpers/livedemoHelpers.js'
 import ResponseCodes from '../constants/ResponseCodes.js'
 import ScreenTypes from "../constants/ScreenTypes.js";
-import pkg from 'mongodb';
-const { ObjectId } = pkg;
+import mongoose from 'mongoose';
+const { ObjectId } = mongoose.Types;
 
 const handler = function (req, res) {
     let {Models, conn} = req.mongo

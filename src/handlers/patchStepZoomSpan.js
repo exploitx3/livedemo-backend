@@ -2,8 +2,8 @@ import helpers from '../helpers/livedemoHelpers.js'
 import patchStepZoomSpanValidator
     from '../helpers/validators/stories/screens/steps/zoomSpans/patchStepZoomSpanValidator.js'
 import ResponseCodes from '../constants/ResponseCodes.js'
-import pkg from 'mongodb';
-const { ObjectId } = pkg;
+import mongoose from 'mongoose';
+const { ObjectId } = mongoose.Types;
 
 const handler = function (req, res) {
     let {Models, conn} = req.mongo

@@ -1,8 +1,8 @@
 import ResponseCodes from '../constants/ResponseCodes.js'
 import ENV from '../envServer.js'
 import axios from 'axios'
-import pkg from "mongodb"
-const {ObjectId} = pkg
+import mongoose from 'mongoose';
+const { ObjectId } = mongoose.Types;
 
 const handler = function (req, res) {
   let { Models, conn } = req.mongo

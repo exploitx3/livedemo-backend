@@ -3,8 +3,8 @@ import postStepZoomSpansValidator
     from '../helpers/validators/stories/screens/steps/zoomSpans/postStepZoomSpansValidator.js'
 import ResponseCodes from '../constants/ResponseCodes.js'
 
-import pkg from 'mongodb';
-const { ObjectId } = pkg;
+import mongoose from 'mongoose';
+const { ObjectId } = mongoose.Types;
 
 const handler = function (req, res) {
     let {Models, conn} = req.mongo

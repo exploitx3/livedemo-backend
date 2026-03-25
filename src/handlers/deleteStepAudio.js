@@ -5,8 +5,8 @@ import ResponseCodes from '../constants/ResponseCodes.js'
 import VoiceTypes from '../constants/VoiceTypes.js'
 import short from 'short-uuid'
 import ENV from '../envServer.js'
-import pkg from 'mongodb';
-const { ObjectId } = pkg;
+import mongoose from 'mongoose';
+const { ObjectId } = mongoose.Types;
 
 const handler = async function (req, res) {
     let {Models, conn} = req.mongo
