@@ -4,6 +4,9 @@ import authUtils from '../helpers/authUtils.js'
 import { sendEmail } from '../helpers/emails/emailsSender.js'
 import Templates from '../helpers/emails/templates/index.js'
 import axios from 'axios'
+import mongoose from 'mongoose'
+const { ObjectId } = mongoose.Types
+
 
 const handler = function (req, res) {
   let { Models, conn } = req.mongo
@@ -100,6 +103,54 @@ const handler = function (req, res) {
           { $push: { workspaces: newWorkspaceDoc._id } },
           { new: true }
         ).lean()
+
+        // Clone onboarding demo into the new workspace
+        const demoStoryId = ENV.ONBOARDING_DEMO_STORY_ID
+        const demoWorkspaceId = ENV.ONBOARDING_DEMO_WORKSPACE_ID
+
+        if (demoStoryId && demoWorkspaceId) {
+          const localUserId = userObj._id
+          const localWorkspaceId = newWorkspaceDoc._id
+
+          const storyDemoFullDoc = await Models.Story.findOne({
+            _id: demoStoryId,
+            workspaceId: demoWorkspaceId
+          }).populate('screens').lean()
+
+          if (storyDemoFullDoc) {
+            await Promise.resolve(storyDemoFullDoc)
+              .then((storyDemoFullDoc) => {
+
+                let uniqueObjId = new ObjectId()
+                let newStoryId = uniqueObjId
+
+                let promisesArray = []
+
+                for (let i = 0; i < storyDemoFullDoc.screens.length; i++) {
+                  let screen = storyDemoFullDoc.screens[i]
+                  screen._id = new ObjectId()
+
+                  promisesArray.push(new Models.Screen({
+                    ...screen,
+                    storyId: newStoryId
+                  }).save())
+                }
+
+                return Promise.all(promisesArray)
+                  .then((screensArray) => {
+                    let screenIds = screensArray.map(scr => scr._id)
+
+                    return new Models.Story({
+                      ...storyDemoFullDoc,
+                      _id: newStoryId,
+                      userId: localUserId,
+                      workspaceId: localWorkspaceId,
+                      screens: screenIds
+                    }).save()
+                  })
+              })
+          }
+        }
 
         // Send welcome email (if template exists)
         try {

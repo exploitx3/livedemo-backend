@@ -53,5 +53,7 @@ export default {
   'TMP_FOLDER': process.env.TMP_FOLDER ? process.env.TMP_FOLDER : "",
   'PROCESS_DEMO_ACTIVITY_EVENTS': process.env.PROCESS_DEMO_ACTIVITY_EVENTS
     ? ['true', '1', 'yes'].includes(process.env.PROCESS_DEMO_ACTIVITY_EVENTS.toLowerCase())
-    : ""
+    : "",
+  'ONBOARDING_DEMO_STORY_ID': process.env.ONBOARDING_DEMO_STORY_ID ? process.env.ONBOARDING_DEMO_STORY_ID : "",
+  'ONBOARDING_DEMO_WORKSPACE_ID': process.env.ONBOARDING_DEMO_WORKSPACE_ID ? process.env.ONBOARDING_DEMO_WORKSPACE_ID : "",
 }
