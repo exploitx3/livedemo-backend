@@ -1,8 +1,11 @@
 import ResponseCodes from '../constants/ResponseCodes.js'
+import ENV from '../envServer.js'
 import userValidators from '../helpers/validators/userValidators.js'
 import authUtils from '../helpers/authUtils.js'
 import { sendEmail } from '../helpers/emails/emailsSender.js'
 import Templates from '../helpers/emails/templates/index.js'
+import mongoose from 'mongoose'
+const { ObjectId } = mongoose.Types
 
 const handler = function (req, res) {
   let { Models, conn } = req.mongo
@@ -65,26 +68,65 @@ const handler = function (req, res) {
       // Save user to database (password will be hashed by User model pre-save hook)
       return new Models.User(userData).save()
     })
-    .then((userData) => {
-      let userNameForWorkspace = userData.name.split(' ')[0]
+    .then(async (userData) => {
+      const userNameForWorkspace = userData.name.split(' ')[0]
 
       function capitalizeFirstLetter(str) {
         return str ? str.charAt(0).toUpperCase() + str.slice(1) : ''
       }
 
       // Create workspace for new user
-      return new Models.Workspace({
+      const newWorkspaceDoc = await new Models.Workspace({
         name: `${capitalizeFirstLetter(userNameForWorkspace)}'s workspace`,
         adminUser: userData._id,
         users: [userData._id]
       }).save()
-        .then((newWorkspaceDoc) => {
-          return Models.User.findOneAndUpdate(
-            { _id: userData._id },
-            { $push: { workspaces: newWorkspaceDoc._id } },
-            { new: true }
+
+      const updatedUser = await Models.User.findOneAndUpdate(
+        { _id: userData._id },
+        { $push: { workspaces: newWorkspaceDoc._id } },
+        { new: true }
+      )
+
+      // Clone onboarding demo into the new workspace
+      const demoStoryId = ENV.ONBOARDING_DEMO_STORY_ID
+      const demoWorkspaceId = ENV.ONBOARDING_DEMO_WORKSPACE_ID
+
+      if (demoStoryId && demoWorkspaceId) {
+        const localUserId = userData._id
+        const localWorkspaceId = newWorkspaceDoc._id
+
+        const storyDemoFullDoc = await Models.Story.findOne({
+          _id: demoStoryId,
+          workspaceId: demoWorkspaceId
+        }).populate('screens').lean()
+
+        if (storyDemoFullDoc) {
+          const newStoryId = new ObjectId()
+
+          const screensArray = await Promise.all(
+            storyDemoFullDoc.screens.map((screen) => {
+              screen._id = new ObjectId()
+              return new Models.Screen({
+                ...screen,
+                storyId: newStoryId
+              }).save()
+            })
           )
-        })
+
+          const screenIds = screensArray.map(scr => scr._id)
+
+          await new Models.Story({
+            ...storyDemoFullDoc,
+            _id: newStoryId,
+            userId: localUserId,
+            workspaceId: localWorkspaceId,
+            screens: screenIds
+          }).save()
+        }
+      }
+
+      return updatedUser
     })
     .then((userData) => {
       // Check for workspaces with invited emails
