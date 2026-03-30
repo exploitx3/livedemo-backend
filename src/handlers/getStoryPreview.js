@@ -266,10 +266,10 @@ const handler = function (req, res) {
 
             if (ENV.ENV === 'dev') {
 
-                htmlString += '\n<script src="http://localhost.mine:8080/injectScript.bundle.js" type="text/javascript"></script>\n'
+                htmlString += '\n<script src="http://localhost.mine:8080/injectScript.bundle.js" type="text/javascript" async></script>\n'
             } else {
 
-                htmlString += '\n<script src="https://livedemo-cdn.s3.us-east-1.amazonaws.com/static/injectScript.bundle.js" type="text/javascript"></script>\n'
+                htmlString += '\n<script src="https://livedemo-cdn.s3.us-east-1.amazonaws.com/static/injectScript.bundle.js" type="text/javascript" async></script>\n'
 
                 // await fsp.readFile('./src/injectScript/injectScript.bundle.js', { encoding: 'utf-8' })
                 //   .then((injectScriptString) => {
@@ -285,7 +285,7 @@ const handler = function (req, res) {
                     '  rel="stylesheet"\n' +
                     '  href="https://cdn.jsdelivr.net/npm/rrweb@latest/dist/rrweb.min.css"\n' +
                     '/>\n' +
-                    '<script src="https://cdn.jsdelivr.net/npm/rrweb@latest/dist/rrweb.min.js"></script>\n'
+                    '<script src="https://cdn.jsdelivr.net/npm/rrweb@latest/dist/rrweb.min.js" async></script>\n'
             }
 
 
