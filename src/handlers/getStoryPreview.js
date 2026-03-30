@@ -7,7 +7,7 @@ import * as sanitezeLib from '@braintree/sanitize-url'
 const sanitize = sanitezeLib.sanitizeUrl
 
 const handler = function (req, res) {
-    let {Models, conn} = req.mongo
+    let { Models, conn } = req.mongo
 
     let requestBody = null
 
@@ -62,14 +62,14 @@ const handler = function (req, res) {
                         }
                     ],
                     select: '_id name steps type customTransitions width height imageUrl index imageUrl asset playbackRate popups zoomSpans startTime endTime playbackRate',
-                    options: {sort: {'index': 1}}
+                    options: { sort: { 'index': 1 } }
                 })
                 .lean()
         })
         .then(storyDoc => {
 
             if (link) {
-                return Models.Link.findOne({_id: link}).lean()
+                return Models.Link.findOne({ _id: link }).lean()
                     .then(linkDoc => {
                         if (!linkDoc || !linkDoc.variables) {
                             throw new Error('Cannot find link')
@@ -81,7 +81,7 @@ const handler = function (req, res) {
                     })
             } else {
 
-                storyDoc = livedemoHelpers.processLiveDemoLinkUpdates(storyDoc, {variables: storyDoc.custom.variables || []})
+                storyDoc = livedemoHelpers.processLiveDemoLinkUpdates(storyDoc, { variables: storyDoc.custom.variables || [] })
 
                 return storyDoc
 
@@ -263,38 +263,43 @@ const handler = function (req, res) {
 
                 '</script>\n'
 
-            await new Promise(async (resolve, reject) => {
 
-                if (ENV.ENV === 'dev') {
+            if (ENV.ENV === 'dev') {
 
-                    htmlString += '\n<script src="http://localhost.mine:8080/injectScript.bundle.js" type="text/javascript"></script>\n'
-                    resolve()
-                } else {
+                htmlString += '\n<script src="http://localhost.mine:8080/injectScript.bundle.js" type="text/javascript"></script>\n'
+            } else {
 
-                    htmlString += '\n<script src="https://livedemo-cdn.s3.us-east-1.amazonaws.com/static/injectScript.bundle.js" type="text/javascript"></script>\n'
-                    resolve()
+                htmlString += '\n<script src="https://livedemo-cdn.s3.us-east-1.amazonaws.com/static/injectScript.bundle.js" type="text/javascript"></script>\n'
 
-                    // await fsp.readFile('./src/injectScript/injectScript.bundle.js', { encoding: 'utf-8' })
-                    //   .then((injectScriptString) => {
-                    //
-                    //
-                    //     htmlString += `<script>\n ${injectScriptString} \n</script>`
-                    //     resolve()
-                    //   })
-                }
+                // await fsp.readFile('./src/injectScript/injectScript.bundle.js', { encoding: 'utf-8' })
+                //   .then((injectScriptString) => {
+                //
+                //
+                //     htmlString += `<script>\n ${injectScriptString} \n</script>`
+                //     resolve()
+                //   })
+            }
 
-                if (!isSessionRecordingDisabled) {
-                    htmlString += '\n<link\n' +
-                        '  rel="stylesheet"\n' +
-                        '  href="https://cdn.jsdelivr.net/npm/rrweb@latest/dist/rrweb.min.css"\n' +
-                        '/>\n' +
-                        '<script src="https://cdn.jsdelivr.net/npm/rrweb@latest/dist/rrweb.min.js"></script>\n'
-                }
+            if (!isSessionRecordingDisabled) {
+                htmlString += '\n<link\n' +
+                    '  rel="stylesheet"\n' +
+                    '  href="https://cdn.jsdelivr.net/npm/rrweb@latest/dist/rrweb.min.css"\n' +
+                    '/>\n' +
+                    '<script src="https://cdn.jsdelivr.net/npm/rrweb@latest/dist/rrweb.min.js"></script>\n'
+            }
 
-            })
+
 
             htmlString += '</head><body><div id="demoWrapper"></div>'
-            htmlString += '<div id="reactInjectTourApp"></div></body><html>'
+            htmlString += '<style>' +
+                '@keyframes ld-spinner-rotate{100%{transform:rotate(360deg)}}' +
+                '@keyframes ld-spinner-dash{0%{stroke-dasharray:1,150;stroke-dashoffset:0}50%{stroke-dasharray:90,150;stroke-dashoffset:-35}100%{stroke-dasharray:90,150;stroke-dashoffset:-124}}' +
+                '#ld-spinner{position:fixed;top:50%;left:50%;margin:-25px 0 0 -25px;width:50px;height:50px;animation:ld-spinner-rotate 2s linear infinite;z-index:9999;will-change:transform;}' +
+                '#ld-spinner .path{stroke:#1070ff;stroke-linecap:round;fill:none;stroke-width:5;animation:ld-spinner-dash 1.5s ease-in-out infinite;will-change:transform;}' +
+                '</style>' +
+                '<div id="reactInjectTourApp">' +
+                '<svg id="ld-spinner" viewBox="0 0 50 50"><circle class="path" cx="25" cy="25" r="20"></circle></svg>' +
+                '</div></body><html>'
 
             return htmlString
         })
@@ -316,7 +321,7 @@ connect-src 'self'
   ${ENV.INJECT_BUNDLE_HOST} 
   ${ENV.STORIES_API} 
   ${ENV.ENV === 'dev' ? '  ws://localhost.mine:8080\n' +
-                '  ws://localhost.mine:3005' : ''} ; 
+                    '  ws://localhost.mine:3005' : ''} ; 
 
 script-src 'self' 'unsafe-eval' 'unsafe-inline'
   http://localhost.mine:8080
