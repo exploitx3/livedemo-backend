@@ -3,6 +3,9 @@ import postStepValidator from '../helpers/validators/stories/screens/steps/postS
 import ResponseCodes from '../constants/ResponseCodes.js'
 import StepViewTypes from '../constants/StepViewTypes.js'
 import ScreenPopupTypes from '../constants/ScreenPopupTypes.js'
+import mongoose from 'mongoose'
+
+const { ObjectId } = mongoose.Types
 
 const handler = function (req, res) {
     let { Models, conn } = req.mongo
@@ -30,17 +33,14 @@ const handler = function (req, res) {
 
             // Find all screens in the current workspace and story, ordered by index ascending
             return Models.Screen.find({
-                workspaceId: workspaceId,
-                storyId: storyId
+                storyId: storyId,
+                workspaceId: workspaceId
             })
                 .sort({ index: 1 })
                 .then((screens) => {
-                    // .find returns a Mongoose query result array, not a JS array (in some configs), so make sure it's a plain array
-                    const screensArr = Array.isArray(screens) ? screens : screens.toArray ? screens.toArray() : [];
-
-                    let currentScreen = screensArr.find(s => s._id.toString(16) === screenId.toString());
-                    let nextScreen = screensArr[currentScreen.index + 1] || currentScreen
-                    return { screens: screensArr, nextScreen };
+                    let currentScreen = screens.find(s => s._id.toString() === screenId.toString());
+                    let nextScreen = screens[currentScreen.index + 1] || currentScreen
+                    return { screens, nextScreen };
                 })
         })
         .then(({ screens, nextScreen }) => {

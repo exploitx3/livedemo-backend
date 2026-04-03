@@ -109,7 +109,8 @@ const handler = function (req, res) {
               screen._id = new ObjectId()
               return new Models.Screen({
                 ...screen,
-                storyId: newStoryId
+                storyId: newStoryId,
+                workspaceId: localWorkspaceId
               }).save()
             })
           )

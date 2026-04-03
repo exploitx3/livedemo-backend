@@ -132,7 +132,8 @@ const handler = function (req, res) {
             screen._id = new ObjectId()
             promisesArray.push(new Models.Screen({
               ...screen,
-              storyId: newStoryId
+              storyId: newStoryId,
+              workspaceId: localWorkspaceId,
             }).save())
           }
 
