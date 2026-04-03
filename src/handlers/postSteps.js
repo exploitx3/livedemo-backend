@@ -34,7 +34,7 @@ const handler = function (req, res) {
             // Find all screens in the current workspace and story, ordered by index ascending
             return Models.Screen.find({
                 storyId: storyId,
-                workspaceId: workspaceId
+                // workspaceId: workspaceId
             })
                 .sort({ index: 1 })
                 .then((screens) => {
