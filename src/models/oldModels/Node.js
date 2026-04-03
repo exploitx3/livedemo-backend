@@ -49,7 +49,7 @@ export default  Node
 /*
 db.messages.aggregate([
     {$match: {
-        workspaceId: ObjectId('5f769c62881a65ad57d31e14'),
+        workspaceId: new ObjectId('5f769c62881a65ad57d31e14'),
         subtype: {$eq: undefined}
     }},
        {
@@ -82,7 +82,7 @@ db.messages.aggregate([
 
         db.messages.aggregate([
     {$match: {
-        workspaceId: ObjectId('5f769c62881a65ad57d31e14'),
+        workspaceId: new ObjectId('5f769c62881a65ad57d31e14'),
         subtype: {$ne: 'channel_join'},
         // memberMentions: {$ne: []}
     }},

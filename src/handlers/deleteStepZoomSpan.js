@@ -31,7 +31,7 @@ const handler = function (req, res) {
 
             return Models.Screen_Screenshot.findOneAndUpdate({
                 _id: screenId,
-                'steps._id': ObjectId(stepId)
+                'steps._id': new ObjectId(stepId)
             }, {
               $set: {
                 ['steps.$.zoomSpan']: null

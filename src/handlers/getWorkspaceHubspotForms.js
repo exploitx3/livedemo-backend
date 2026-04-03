@@ -60,7 +60,7 @@ const handler = function (req, res) {
 
       // Get HubSpot token for this workspace
       const hubspotToken = await Models.HubspotToken.findOne({
-        workspaceId: ObjectId(workspaceId)
+        workspaceId: new ObjectId(workspaceId)
       }).lean()
 
       if (!hubspotToken || !hubspotToken.accessToken) {
