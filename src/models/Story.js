@@ -17,9 +17,10 @@ const Story = new mongoose.Schema({
         // },
         workspaceId: {type: mongoose.Schema.Types.ObjectId, ref: 'Workspace'},
         userId: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
-        screens: [
-            {type: mongoose.Schema.Types.ObjectId, ref: 'Screen'}
-        ],
+        screens: {
+            type: [{type: mongoose.Schema.Types.ObjectId, ref: 'Screen'}],
+            default: []
+        },
         filePath: {type: String, default: ''},
         status: {type: String, default: StoryStatuses.UPLOADING},
         demoSuggestionId: { type: mongoose.Schema.Types.ObjectId, ref: 'DemoSuggestion' },

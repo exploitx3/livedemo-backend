@@ -45,7 +45,7 @@ const handler = function (req, res) {
               model: 'Screen',
             }
           ],
-          select: '_id name type steps customTransitions width height imageUrl index asset playbackRate popups zoomSpans zoomSpan startTime endTime',
+          select: '_id name type screens steps customTransitions width height imageUrl index asset playbackRate popups zoomSpans zoomSpan startTime endTime',
         })
         .populate('content.contentId')
     })

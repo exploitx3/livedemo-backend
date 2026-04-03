@@ -104,11 +104,13 @@ export const connect = async () => {
   // function calls thanks to `callbackWaitsForEmptyEventLoop`.
   // This means your Lambda function doesn't have to go through the
   // potentially expensive process of connecting to MongoDB every time.
+  mongoose.set('strictPopulate', false)
+
   const conn = mongoose.createConnection(uri, {
     // Buffering means mongoose will queue up operations if it gets
     // disconnected from MongoDB and send them when it reconnects.
     // With serverless, better to fail fast if not connected.
-    bufferCommands: false // Disable mongoose buffering
+    bufferCommands: false, // Disable mongoose buffering
   })
 
   await conn.asPromise()
