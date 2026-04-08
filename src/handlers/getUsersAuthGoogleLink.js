@@ -2,6 +2,7 @@ import ResponseCodes from '../constants/ResponseCodes.js'
 import ENV from '../envServer.js'
 import limiter from '../helpers/rateLimiter.js'
 import userValidators from '../helpers/validators/userValidators.js'
+import { encodeReturnPathForOAuthState, sanitizeReturnPath } from '../helpers/sanitizeReturnPath.js'
 
 // Dynamic import for googleapis
 let Google = null
@@ -58,13 +59,21 @@ const handler = function (req, res) {
       const { OAuth2: OAuth2Class } = await getGoogleOAuth2()
       const oauth2Client = new OAuth2Class(GoogleCreds.client_id, GoogleCreds.client_secret, GoogleCreds.redirect_uris[0])
 
+      const rawReturnTo = req.query.returnTo
+      const safeReturn =
+        rawReturnTo != null && rawReturnTo !== ''
+          ? sanitizeReturnPath(typeof rawReturnTo === 'string' ? rawReturnTo : String(rawReturnTo))
+          : '/'
+      const oauthState = encodeReturnPathForOAuthState(safeReturn)
+
       const loginLink = oauth2Client.generateAuthUrl({
         client_id: GoogleCreds.client_id,
         redirect_uri: GoogleCreds.redirect_uris[0],
         response_type: 'code',
         access_type: 'offline',
         prompt: 'consent',
-        scope: GoogleCreds.scopes
+        scope: GoogleCreds.scopes,
+        state: oauthState
       })
 
       console.log('google link - ' + loginLink)

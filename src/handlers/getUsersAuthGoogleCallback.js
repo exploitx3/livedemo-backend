@@ -1,5 +1,6 @@
 import ResponseCodes from '../constants/ResponseCodes.js'
 import ENV from '../envServer.js'
+import { decodeReturnPathFromOAuthState } from '../helpers/sanitizeReturnPath.js'
 import authUtils from '../helpers/authUtils.js'
 import {sendEmail} from '../helpers/emails/emailsSender.js'
 import Templates from '../helpers/emails/templates/index.js'
@@ -206,8 +207,10 @@ const handler = function (req, res) {
         const userDocForToken = await Models.User.findOne({_id: userDoc._id})
         const authTokenDoc = await authUtils.createTokenForUser(userDocForToken, Models.AuthToken)
 
-        // Redirect to frontend with token
-        const redirectUrl = `${ENV.SERVER_URL}/auth/?page=/&token=${authTokenDoc.token}`
+        // Redirect to frontend with token (return path from OAuth state set at google-link)
+        const returnPath = decodeReturnPathFromOAuthState(req.query.state)
+        const encodedPage = encodeURIComponent(returnPath)
+        const redirectUrl = `${ENV.SERVER_URL}/auth/?page=${encodedPage}&token=${authTokenDoc.token}`
 
         const resultResponse = {
             statusCode: ResponseCodes['302_FOUND'],
