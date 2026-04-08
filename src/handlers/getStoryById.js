@@ -22,6 +22,7 @@ const handler = function (req, res) {
 
       return Models.Story.findOne({
           _id: storyId,
+          workspaceId: workspaceId,
           deletedAt: null
         })
         .populate({
