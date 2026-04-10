@@ -187,19 +187,8 @@ const app = express()
 let conn = null
 let Models = null
 
-async function setupMongo(req, res, next) {
-
-    if (conn === null) {
-        conn = await setupDB()
-
-        Models = getModels(conn)
-    }
-
-    req.mongo = {
-        conn: conn,
-        Models: Models
-    }
-
+function setupMongo(req, res, next) {
+    req.mongo = { conn, Models }
     next()
 }
 
@@ -314,7 +303,7 @@ app.post('/users/sendChangePasswordEmail', [setupMongo], postSendChangePasswordE
 
 app.post('/users/changePassword', [setupMongo], postChangePasswordHandler)
 
-app.get('/users/auth/google-link', [setupMongo], getUsersAuthGoogleLinkHandler)
+app.get('/users/auth/google-link', getUsersAuthGoogleLinkHandler)
 
 app.get('/users/auth/google-callback', [setupMongo], getUsersAuthGoogleCallbackHandler)
 
@@ -587,16 +576,16 @@ if (ENV.ENV === 'dev1') {
 }
 
 async function setup() {
+    conn = await setupDB()
+    Models = getModels(conn)
 
-    await new Promise((resolve, reject) => {
-        let port = 3005
+    await new Promise((resolve) => {
+        const port = 3005
         server.listen(port, () => {
             console.log('Story server started on port ', port)
             resolve()
         })
-
     })
-
 }
 
 

@@ -1,25 +1,33 @@
 import ResponseCodes from '../constants/ResponseCodes.js'
 import ENV from '../envServer.js'
 import limiter from '../helpers/rateLimiter.js'
-import userValidators from '../helpers/validators/userValidators.js'
 import { encodeReturnPathForOAuthState, sanitizeReturnPath } from '../helpers/sanitizeReturnPath.js'
 
-// Dynamic import for googleapis
-let Google = null
-let OAuth2 = null
-
-async function getGoogleOAuth2() {
-  if (!Google) {
-    const googleapis = await import('googleapis')
-    Google = googleapis.google
-    OAuth2 = Google.auth.OAuth2
+function corsHeaders() {
+  return {
+    'Access-Control-Max-Age': 600,
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept',
+    'Access-Control-Allow-Credentials': true
   }
-  return { Google, OAuth2 }
+}
+
+/** Same URL as `google.auth.OAuth2#generateAuthUrl` for this app’s params — avoids loading googleapis. */
+function buildGoogleAuthorizeUrl(creds, state) {
+  const redirectUri = creds.redirect_uris?.[0] ?? ''
+  const scope = Array.isArray(creds.scopes) ? creds.scopes.join(' ') : creds.scopes ?? ''
+  const u = new URL('https://accounts.google.com/o/oauth2/v2/auth')
+  u.searchParams.set('client_id', creds.client_id)
+  u.searchParams.set('redirect_uri', redirectUri)
+  u.searchParams.set('response_type', 'code')
+  u.searchParams.set('scope', scope)
+  u.searchParams.set('access_type', 'offline')
+  u.searchParams.set('prompt', 'consent')
+  u.searchParams.set('state', state)
+  return u.toString()
 }
 
 const handler = function (req, res) {
-  let { Models, conn } = req.mongo
-
   return Promise.resolve()
     .then(() => {
       const clientId = req.headers?.clientid || 'publicClient'
@@ -29,35 +37,23 @@ const handler = function (req, res) {
         clientId,
         token,
         (errorResponse) => {
-          let failedRateLimitError = new Error('Rate limit exceeded')
+          const failedRateLimitError = new Error('Rate limit exceeded')
           failedRateLimitError.resultResponse = errorResponse
           throw failedRateLimitError
         }
       )
     })
-    .then(async () => {
+    .then(() => {
       const GoogleCreds = ENV.OAUTH2Credentials?.Google
 
       if (!GoogleCreds) {
-        const resultResponse = {
+        const error = new Error('Google OAuth not configured')
+        error.resultResponse = {
           statusCode: ResponseCodes['500_INTERNAL_SERVER_ERROR'],
-          headers: {
-            'Access-Control-Max-Age': 600,
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept', // Required for CORS support to work
-            // Required for CORS support to work
-            'Access-Control-Allow-Credentials': true, // Required for cookies, authorization headers with HTTPS
-          }
+          headers: corsHeaders()
         }
-
-        let error = new Error('Google OAuth not configured')
-        error.resultResponse = resultResponse
         throw error
       }
-
-      // Use googleapis library to generate auth URL (matching the source implementation)
-      const { OAuth2: OAuth2Class } = await getGoogleOAuth2()
-      const oauth2Client = new OAuth2Class(GoogleCreds.client_id, GoogleCreds.client_secret, GoogleCreds.redirect_uris[0])
 
       const rawReturnTo = req.query.returnTo
       const safeReturn =
@@ -65,28 +61,13 @@ const handler = function (req, res) {
           ? sanitizeReturnPath(typeof rawReturnTo === 'string' ? rawReturnTo : String(rawReturnTo))
           : '/'
       const oauthState = encodeReturnPathForOAuthState(safeReturn)
-
-      const loginLink = oauth2Client.generateAuthUrl({
-        client_id: GoogleCreds.client_id,
-        redirect_uri: GoogleCreds.redirect_uris[0],
-        response_type: 'code',
-        access_type: 'offline',
-        prompt: 'consent',
-        scope: GoogleCreds.scopes,
-        state: oauthState
-      })
-
-      console.log('google link - ' + loginLink)
+      const loginLink = buildGoogleAuthorizeUrl(GoogleCreds, oauthState)
 
       const resultResponse = {
         statusCode: ResponseCodes['302_FOUND'],
         headers: {
-          "Location": loginLink,
-          'Access-Control-Max-Age': 600,
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept', // Required for CORS support to work
-          // Required for CORS support to work
-          'Access-Control-Allow-Credentials': true, // Required for cookies, authorization headers with HTTPS
+          ...corsHeaders(),
+          Location: loginLink
         }
       }
 
@@ -97,43 +78,13 @@ const handler = function (req, res) {
     .catch((err) => {
       console.log(err)
 
-      // Check for MongoDB duplicate error (matching the source implementation)
-      let checkForDuplicateError = userValidators.handleMongoDuplicateError(err)
-      if (checkForDuplicateError.error) {
-        const resultResponse = {
-          statusCode: ResponseCodes['400_BAD_REQUEST'],
-          headers: {
-            'Access-Control-Max-Age': 600,
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept', // Required for CORS support to work
-            // Required for CORS support to work
-            'Access-Control-Allow-Credentials': true, // Required for cookies, authorization headers with HTTPS
-          },
-          body: JSON.stringify({
-            errors: checkForDuplicateError
-          }),
-        }
-
-        res.set(resultResponse.headers)
-        res.status(resultResponse.statusCode)
-        res.send(resultResponse.body)
-        return
-      }
-
-      // Handle other errors
       let resultResponse
       if (err.resultResponse) {
         resultResponse = err.resultResponse
       } else {
         resultResponse = {
           statusCode: ResponseCodes['500_INTERNAL_SERVER_ERROR'],
-          headers: {
-            'Access-Control-Max-Age': 600,
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept', // Required for CORS support to work
-            // Required for CORS support to work
-            'Access-Control-Allow-Credentials': true, // Required for cookies, authorization headers with HTTPS
-          }
+          headers: corsHeaders()
         }
       }
 
