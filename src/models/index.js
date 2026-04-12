@@ -60,6 +60,7 @@ import AutoRecordingEventSchema from './AutoRecordingEvent.js'
 import DemoSuggestionSchema from './DemoSuggestion.js'
 import DemoActivityEventSchema from './DemoActivityEvent.js'
 import HubspotTokenSchema from './HubspotToken.js'
+import CursorPositionsSchema from './CursorPositions.js'
 
 
 // const ChannelSchema = require('./Channel')
@@ -110,6 +111,7 @@ export const connect = async () => {
     // Buffering means mongoose will queue up operations if it gets
     // disconnected from MongoDB and send them when it reconnects.
     // With serverless, better to fail fast if not connected.
+    // directConnection: true, //used for running adhoc scripts which skip replicaSet config discovery
     bufferCommands: false, // Disable mongoose buffering
   })
 
@@ -216,6 +218,7 @@ export const initModels = (conn) => {
   conn.model('AutoRecordingEvent', AutoRecordingEventSchema)
   conn.model('DemoActivityEvent', DemoActivityEventSchema)
   conn.model('HubspotToken', HubspotTokenSchema)
+  conn.model('CursorPositions', CursorPositionsSchema)
 
   // conn.model('Subscriber', SubscriberSchema)
 
@@ -290,6 +293,7 @@ export const getModels = (conn) => {
     DemoSuggestion: conn.model('DemoSuggestion'),
     DemoActivityEvent: conn.model('DemoActivityEvent'),
     HubspotToken: conn.model('HubspotToken'),
+    CursorPositions: conn.model('CursorPositions'),
 
     // Channel: conn.model('Channel'),
     // InstantMessagesChannel: conn.model('InstantMessagesChannel'),

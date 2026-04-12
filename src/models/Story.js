@@ -33,6 +33,7 @@ const Story = new mongoose.Schema({
         videoStartMs: {type: mongoose.Schema.Types.Number},
         videoEndMs: {type: mongoose.Schema.Types.Number},
         aspectRatio: {type: mongoose.Schema.Types.String},
+        hasCursorPositions: {type: Boolean},
         content: {
             contentStatus: {type: String, default: ''}, //updating, ready
             contentId: {type: mongoose.Schema.Types.ObjectId, ref: 'StoryContent'}
@@ -65,6 +66,14 @@ const Story = new mongoose.Schema({
                 isOmniBarDisabled: {type: Boolean, default: false},
                 isLiveDemoWatermarkEnabled: {type: Boolean, default: true},
                 isTabsEnabled: {type: Boolean, default: true},
+            },
+            background: {
+                isActive: {type: Boolean, default: false},
+                backgroundColor: {type: String, default: '#FFFFFF'},
+                backgroundBlur: {type: Number, default: 0},
+                backgroundType: {type: String, default: 'color'}, // wallpaper | gradient | color
+                wallpaperImage: {type: String, default: ''},
+                padding: {type: Number, default: 24},
             },
             variables: [
                 {

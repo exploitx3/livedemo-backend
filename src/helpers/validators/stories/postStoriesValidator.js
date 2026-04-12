@@ -16,6 +16,11 @@ function validateBody(body) {
     videoStartMs: Joi.number().required(),
     videoEndMs: Joi.number().required(),
     aspectRatio: Joi.number(),
+    cursorPositions: Joi.array().items(Joi.object({
+      frameX: Joi.number().required(),
+      frameY: Joi.number().required(),
+      timeMs: Joi.number().required()
+    })).optional(),
     storyId: Joi.string().custom((storyId) => {
       if (validator.isMongoId(storyId)) {
 
@@ -41,4 +46,4 @@ function validateBody(body) {
   return result
 }
 
-export default  validateBody
+export default validateBody

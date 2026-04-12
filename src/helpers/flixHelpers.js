@@ -28,24 +28,24 @@ function waitUntilAssetRenditionsAreReady(assetId, pollTime, count) {
       promiseChain = promiseChain.then(() => {
 
         return mux.video.assets.retrieve(assetId)
-            .then((assetInfo) => {
+          .then((assetInfo) => {
 
-              if (assetInfo.static_renditions && assetInfo.static_renditions.status === 'ready') {
+            if (assetInfo.static_renditions && assetInfo.static_renditions.status === 'ready') {
 
-                let err = new Error('successful')
-                err.assetInfo = assetInfo
-                throw err
+              let err = new Error('successful')
+              err.assetInfo = assetInfo
+              throw err
 
-              } else {
+            } else {
 
-                return new Promise((checkResolve, checkReject) => {
-                  setTimeout(function () {
-                    checkResolve()
-                  }, pollTime)
-                })
-              }
+              return new Promise((checkResolve, checkReject) => {
+                setTimeout(function () {
+                  checkResolve()
+                }, pollTime)
+              })
+            }
 
-            })
+          })
       })
     }
 
@@ -71,24 +71,24 @@ function waitUntilAssetIsReady(assetId, pollTime, count) {
       promiseChain = promiseChain.then(() => {
 
         return mux.video.assets.retrieve(assetId)
-            .then((assetInfo) => {
+          .then((assetInfo) => {
 
-              if (assetInfo.status !== 'ready') {
+            if (assetInfo.status !== 'ready') {
 
-                return new Promise((checkResolve, checkReject) => {
-                  setTimeout(function () {
-                    checkResolve()
-                  }, pollTime)
-                })
-              } else {
+              return new Promise((checkResolve, checkReject) => {
+                setTimeout(function () {
+                  checkResolve()
+                }, pollTime)
+              })
+            } else {
 
-                let err = new Error('successful')
-                err.assetInfo = assetInfo
-                throw err
+              let err = new Error('successful')
+              err.assetInfo = assetInfo
+              throw err
 
-              }
+            }
 
-            })
+          })
       })
     }
 
@@ -118,24 +118,24 @@ function waitUntilAssetIsUploaded(uploadId, pollTime, count) {
       promiseChain = promiseChain.then(() => {
 
         return mux.video.uploads.retrieve(uploadId)
-            .then((assetInfo) => {
+          .then((assetInfo) => {
 
-              if (assetInfo.status !== 'asset_created') {
+            if (assetInfo.status !== 'asset_created') {
 
-                return new Promise((checkResolve, checkReject) => {
-                  setTimeout(function () {
-                    checkResolve()
-                  }, pollTime)
-                })
-              } else {
+              return new Promise((checkResolve, checkReject) => {
+                setTimeout(function () {
+                  checkResolve()
+                }, pollTime)
+              })
+            } else {
 
-                let err = new Error('successful')
-                err.assetInfo = assetInfo
-                throw err
+              let err = new Error('successful')
+              err.assetInfo = assetInfo
+              throw err
 
-              }
+            }
 
-            })
+          })
       })
     }
 
@@ -173,16 +173,16 @@ function createMuxClips(videoAssetId, renderEvents) {
       normalize_audio: false,
       video_quality: 'plus'
     })
-        .then((assetObj) => {
+      .then((assetObj) => {
 
-          return waitUntilAssetIsReady(assetObj.id, 5000, 5)
-              .then((assetInfo) => {
+        return waitUntilAssetIsReady(assetObj.id, 5000, 5)
+          .then((assetInfo) => {
 
-                assetInfo.videoId = event.videoId
-                return assetInfo
-              })
+            assetInfo.videoId = event.videoId
+            return assetInfo
+          })
 
-        })
+      })
   })
 
 
@@ -191,20 +191,20 @@ function createMuxClips(videoAssetId, renderEvents) {
 
 function saveMuxVideo(filePath, videoData) {
   let videoBuff = videoData
-  if(typeof videoBuff === 'string') {
+  if (typeof videoBuff === 'string') {
 
     videoBuff = Buffer.from(videoData.replace(/^data:video\/\w+;base64,/, ''), 'base64')
   }
 
   return fsp.writeFile(filePath, videoData)
-      .then(() => {
-        return filePath
-      })
+    .then(() => {
+      return filePath
+    })
 }
 
 function uploadMuxVideo(videoData) {
   let videoBuff = videoData
-  if(typeof videoBuff === 'string') {
+  if (typeof videoBuff === 'string') {
 
     videoBuff = Buffer.from(videoData.replace(/^data:video\/\w+;base64,/, ''), 'base64')
   }
@@ -219,33 +219,33 @@ function uploadMuxVideo(videoData) {
     },
     cors_origin: '*',
   })
-      .then((uploadObj) => {
+    .then((uploadObj) => {
 
-        return axios.put(uploadObj.url, videoBuff, {
-          maxContentLength: Infinity,
-          maxBodyLength: Infinity,
-        })
+      return axios.put(uploadObj.url, videoBuff, {
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity,
+      })
 
-            .then((uploadResp) => {
+        .then((uploadResp) => {
 
-              return waitUntilAssetIsUploaded(uploadObj.id, 5000, 5)
-                  .then(uploadInfo => {
+          return waitUntilAssetIsUploaded(uploadObj.id, 5000, 5)
+            .then(uploadInfo => {
 
-                    return waitUntilAssetIsReady(uploadInfo.asset_id, 5000, 15)
-                        .then((assetInfo) => {
-                          assetInfo.assetId = uploadInfo.asset_id
+              return waitUntilAssetIsReady(uploadInfo.asset_id, 5000, 15)
+                .then((assetInfo) => {
+                  assetInfo.assetId = uploadInfo.asset_id
 
-                          return assetInfo
-                        })
-                  })
+                  return assetInfo
+                })
             })
-      })
-      .then((uploadedAssetInfo) => {
+        })
+    })
+    .then((uploadedAssetInfo) => {
 
-        console.log(uploadedAssetInfo)
+      console.log(uploadedAssetInfo)
 
-        return uploadedAssetInfo
-      })
+      return uploadedAssetInfo
+    })
 }
 
 
@@ -454,8 +454,8 @@ function uploadImage(imageData, imageName) {
 
 async function getUserTokenAuth(token) {
   return axios.post(`${ENV.URL}/users/token-authenticate`, {
-      token: token
-    })
+    token: token
+  })
     .then(function (response) {
 
       return response.data
@@ -552,7 +552,7 @@ function getRenderEvents(capturedEvents, videoStartMs, videoEndMs, screenshots) 
 
   let clickEvents = capturedEvents.filter(event => {
     return event.type === 'click' && event.timeMs > videoStartMs && event.timeMs < videoEndMs
-    })
+  })
     .sort((firstEvent, secondEvent) => firstEvent.timeMs - secondEvent.timeMs)
 
 
@@ -568,7 +568,7 @@ function getRenderEvents(capturedEvents, videoStartMs, videoEndMs, screenshots) 
 
     let testTime = event.timeMs - videoStartMs
 
-    if(endTime < startTime && i === 0) {
+    if (endTime < startTime && i === 0) {
 
       endTime = videoStartMs
       endMillis = 0
@@ -596,7 +596,7 @@ function getRenderEvents(capturedEvents, videoStartMs, videoEndMs, screenshots) 
       imageId: event.clickId,
       frameX: event.frameX,
       frameY: event.frameY,
-      description:'',
+      description: '',
       image: screenshots[event.clickId],
       targetHTML: event.targetHTML ? he.encode(event.targetHTML) : '',
       targetText: event.targetText,
@@ -635,7 +635,7 @@ function getRenderEvents(capturedEvents, videoStartMs, videoEndMs, screenshots) 
   }
 
   renderEvents = renderEvents.filter(event => {
-    if(event.type === 'video' && event.endTime - event.startTime < 501){
+    if (event.type === 'video' && event.endTime - event.startTime < 501) {
 
       return false
     } else {
@@ -648,6 +648,28 @@ function getRenderEvents(capturedEvents, videoStartMs, videoEndMs, screenshots) 
   return renderEvents
 }
 
+function buildCursorPositionDocs(storyId, cursorPositionsInput) {
+  let input = cursorPositionsInput || []
+  return input.map((cp) => ({
+    storyId,
+    frameX: cp.frameX,
+    frameY: cp.frameY,
+    timeMs: cp.timeMs
+  }))
+}
+
+function getCursorPositionIdsForVideoSegment(insertedCursorPositions, startTime, endTime) {
+  return insertedCursorPositions
+    .filter((doc) => doc.timeMs >= startTime && doc.timeMs < endTime)
+    .map((doc) => doc._id)
+}
+
+function insertStoryCursorPositions(CursorPositionsModel, cursorPositionDocs) {
+  if (cursorPositionDocs.length === 0) {
+    return Promise.resolve([])
+  }
+  return CursorPositionsModel.insertMany(cursorPositionDocs)
+}
 
 function enqueueProcessStoryDemo(storyDemoId) {
   const client = monq(ENV.DB_URI || 'mongodb://localhost:27017/livedemo_app')
@@ -700,7 +722,7 @@ function enqueueProcessStoryDemoVideo(storyDemoId, userEmail) {
   })
 }
 
-export default  {
+export default {
   authReq,
   getUserTokenAuth,
   validateBody,
@@ -713,6 +735,9 @@ export default  {
   uploadMuxVideo,
   createMuxClips,
   getRenderEvents,
+  buildCursorPositionDocs,
+  getCursorPositionIdsForVideoSegment,
+  insertStoryCursorPositions,
   enqueueProcessStoryDemo,
   enqueueProcessStoryDemoVideo,
   enqueueProcessAutoRecording

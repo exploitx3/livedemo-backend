@@ -2,18 +2,110 @@ import fsp from 'fs/promises'
 import ENV_VARS from '../envServer.js'
 import StoryStatuses from '../constants/StoryStatuses.js'
 import ScreenTypes from '../constants/ScreenTypes.js'
+import StoryTypes from '../constants/StoryTypes.js'
 import pkg from 'mongodb'
-const {ObjectId} = pkg
+const { ObjectId } = pkg
 import flixHelpers from '../helpers/flixHelpers.js'
 import he from 'he'
 
+const MIN_VIDEO_DURATION_SEC_FOR_END_ZOOM = 3
+const END_ZOOM_DURATION_SEC = 1.5
+const END_ZOOM_MIN_BOX_RATIO = 0.65
+
+/**
+ * @param {object} asset - Mux asset object stored on Screen_Video
+ * @returns {number} duration in seconds
+ */
+function getMuxAssetDurationSeconds(asset) {
+    if (!asset) {
+        return 0
+    }
+    const raw = asset.duration ?? asset.tracks?.[0]?.duration
+    if (raw === undefined || raw === null) {
+        return 0
+    }
+    const n = typeof raw === 'number' ? raw : parseFloat(raw)
+    return Number.isFinite(n) ? n : 0
+}
+
+/**
+ * For each screen video clip longer than 3s, adds a zoom span in the last 1.5s of the clip,
+ * anchored toward the last cursor position in that segment. The zoom box is at least 80% of
+ * editor width and height (from windowMeasures), clamped so it stays inside the frame.
+ *
+ * @param {Array} screenVideos - Screen_Video payloads (mutated in place)
+ * @param {Array} renderEvents - from getRenderEvents; used to match video segments to time ranges
+ * @param {Array} insertedCursorPositions - docs with timeMs, frameX, frameY
+ * @param {object} windowMeasures - story windowMeasures (innerWidth / innerHeight)
+ */
+function addEndZoomSpansToScreenVideos(screenVideos, renderEvents, insertedCursorPositions, windowMeasures) {
+    const editorWidth = windowMeasures?.innerWidth ?? 1920
+    const editorHeight = windowMeasures?.innerHeight ?? 1080
+
+    const minBoxW = END_ZOOM_MIN_BOX_RATIO * editorWidth
+    const minBoxH = END_ZOOM_MIN_BOX_RATIO * editorHeight
+
+    let videoIdx = 0
+    for (let i = 0; i < renderEvents.length; i++) {
+        const event = renderEvents[i]
+        if (event.type !== 'video') {
+            continue
+        }
+        const screenVideo = screenVideos[videoIdx]
+        videoIdx += 1
+        if (!screenVideo) {
+            continue
+        }
+
+        const durationSec = getMuxAssetDurationSeconds(screenVideo.asset)
+        if (durationSec <= MIN_VIDEO_DURATION_SEC_FOR_END_ZOOM) {
+            continue
+        }
+
+        const cursorsInSegment = insertedCursorPositions
+            .filter((doc) => doc.timeMs >= event.startTime && doc.timeMs < event.endTime)
+            .sort((a, b) => a.timeMs - b.timeMs)
+
+        if (cursorsInSegment.length === 0) {
+            continue
+        }
+
+        const last = cursorsInSegment[cursorsInSegment.length - 1]
+        const cx = last.frameX
+        const cy = last.frameY
+
+        const boxW = minBoxW
+        const boxH = minBoxH
+
+        let offsetX = cx - boxW / 2
+        let offsetY = cy - boxH / 2
+        offsetX = Math.max(0, Math.min(offsetX, editorWidth - boxW))
+        offsetY = Math.max(0, Math.min(offsetY, editorHeight - boxH))
+
+        const startTime = Math.max(0, durationSec - END_ZOOM_DURATION_SEC)
+
+        screenVideo.zoomSpans = [
+            {
+                startTime,
+                duration: END_ZOOM_DURATION_SEC,
+                width: boxW,
+                height: boxH,
+                editorWidth,
+                editorHeight,
+                offsetX,
+                offsetY
+            }
+        ]
+    }
+}
+
 async function processStoryDemo(sharedConfig, params, callback) {
-    const {Models, axios} = sharedConfig
-    const {storyDemoId} = params
+    const { Models, axios } = sharedConfig
+    const { storyDemoId } = params
 
     console.log(`Started - processStoryDemo - ${storyDemoId}`)
 
-    return Models.Story.findOne({_id: storyDemoId})
+    return Models.Story.findOne({ _id: storyDemoId })
         .lean()
         .then((storyDemoDoc) => {
 
@@ -24,7 +116,7 @@ async function processStoryDemo(sharedConfig, params, callback) {
                 throw new Error(`Cannot process storyDemo either has incorrect status - ${storyDemoDoc.status} or missing filePath - ${storyDemoDoc.filePath}`)
             } else {
 
-                return fsp.readFile(storyDemoDoc.filePath, {encoding: 'utf8'})
+                return fsp.readFile(storyDemoDoc.filePath, { encoding: 'utf8' })
                     .then((storyDemoJsonString) => {
                         return {
                             storyDemoDoc,
@@ -34,7 +126,7 @@ async function processStoryDemo(sharedConfig, params, callback) {
             }
 
         })
-        .then(({storyDemoDoc, requestBody}) => {
+        .then(({ storyDemoDoc, requestBody }) => {
             let name = storyDemoDoc.name
             let workspaceId = storyDemoDoc.workspaceId
 
@@ -49,12 +141,13 @@ async function processStoryDemo(sharedConfig, params, callback) {
 
             let screenshots = {}
             let videos = {}
+            let hasCursorPositionsFlag = false
 
             // renderEvents = flixHelpers.getRenderEvents(capturedEvents, videoStartMs, videoEndMs, screenshots)
 
             return flixHelpers.uploadMuxVideo(requestBody.videoBase64)
                 .then((videoUploadRes) => {
-                    
+
                     // console.log(videoUploadRes)
                     videoAssetId = videoUploadRes.id
 
@@ -70,15 +163,15 @@ async function processStoryDemo(sharedConfig, params, callback) {
                     //     }
                     // }
                     return Promise.all(Object.entries(requestBody.screenshots).map(function ([key, value]) {
-                            return flixHelpers.uploadImage(value, storyId + '/' + key)
-                                .then(res => {
-                                    let imgObj = {}
-                                    imgObj.name = key
-                                    imgObj.imageUrl = res.Location
+                        return flixHelpers.uploadImage(value, storyId + '/' + key)
+                            .then(res => {
+                                let imgObj = {}
+                                imgObj.name = key
+                                imgObj.imageUrl = res.Location
 
-                                    return imgObj
-                                })
-                        })
+                                return imgObj
+                            })
+                    })
                     )
                 })
                 .then(imageUploadResults => {
@@ -109,99 +202,122 @@ async function processStoryDemo(sharedConfig, params, callback) {
                         })
                 })
                 .then(() => {
-                    let screenScreenshots = []
-                    let screenVideos = []
+                    let cursorPositionDocs = flixHelpers.buildCursorPositionDocs(storyId, requestBody.cursorPositions)
+                    hasCursorPositionsFlag = cursorPositionDocs.length > 0
 
-                    for (let i = 0; i < renderEvents.length; i++) {
-                        let event = renderEvents[i]
-                        let screenIndex = i
+                    return flixHelpers.insertStoryCursorPositions(Models.CursorPositions, cursorPositionDocs)
+                        .then((insertedCursorPositions) => {
 
-                        if (event.type === 'video') {
+                            let screenScreenshots = []
+                            let screenVideos = []
 
-                            screenVideos.push({
-                                asset: videos[event.videoId],
+                            for (let i = 0; i < renderEvents.length; i++) {
+                                let event = renderEvents[i]
+                                let screenIndex = i
 
-                                index: screenIndex,
-                                workspaceId,
-                                userId: storyDemoDoc.userId,
-                                storyId,
-                                type: ScreenTypes.SCREEN_VIDEO,
-                                steps: [
-                                    {
-                                        index: 0,
-                                        view: {
-                                            viewType: 'none',
-                                        }
+                                if (event.type === 'video') {
+
+                                    screenVideos.push({
+                                        asset: videos[event.videoId],
+
+                                        index: screenIndex,
+                                        workspaceId,
+                                        userId: storyDemoDoc.userId,
+                                        storyId,
+                                        type: ScreenTypes.SCREEN_VIDEO,
+                                        cursorPositions: flixHelpers.getCursorPositionIdsForVideoSegment(
+                                            insertedCursorPositions,
+                                            event.startTime,
+                                            event.endTime
+                                        ),
+                                        steps: [
+                                            {
+                                                index: 0,
+                                                view: {
+                                                    viewType: 'none',
+                                                }
+                                            }
+                                        ]
+                                    })
+                                }
+
+                                if ((event.type === 'image' && screenshots[event.imageId]) &&
+                                    (event.frameX !== 0 && event.frameY !== 0)
+                                ) {
+                                    let steps = []
+
+                                    if (event.frameX) {
+
+                                        let contentText = event.targetText ? `<p>Click on ${event.targetText}</p>` : `<p>Click here</p>`
+
+                                        steps.push({
+                                            index: 0,
+                                            view: {
+                                                hotspot: {
+                                                    frameX: event.frameX,
+                                                    frameY: event.frameY,
+                                                },
+                                                type: 'hotspot',
+                                                content: contentText,
+                                            },
+                                            elementData: {
+                                                // targetHTML: event.targetHTML,
+                                                targetHTML: he.encode(event.targetHTML),
+                                                targetElementType: event.targetElementType,
+                                                targetText: event.targetText
+                                            }
+                                        })
                                     }
-                                ]
-                            })
-                        }
 
-                        if ((event.type === 'image' && screenshots[event.imageId]) &&
-                            (event.frameX !== 0 && event.frameY !== 0)
-                        ) {
-                            let steps = []
+                                    screenScreenshots.push({
+                                        imageUrl: screenshots[event.imageId].imageUrl,
+                                        steps: steps,
 
-                            if (event.frameX) {
 
-                                let contentText = event.targetText ? `<p>Click on ${event.targetText}</p>` : `<p>Click here</p>`
+                                        index: screenIndex,
+                                        workspaceId,
+                                        userId: storyDemoDoc.userId,
+                                        storyId,
+                                        type: ScreenTypes.SCREEN_SCREENSHOT,
+                                    })
+                                }
 
-                                steps.push({
-                                    index: 0,
-                                    view: {
-                                        hotspot: {
-                                            frameX: event.frameX,
-                                            frameY: event.frameY,
-                                        },
-                                        type: 'hotspot',
-                                        content: contentText,
-                                    },
-                                    elementData: {
-                                        // targetHTML: event.targetHTML,
-                                        targetHTML: he.encode(event.targetHTML),
-                                        targetElementType: event.targetElementType,
-                                        targetText: event.targetText
-                                    }
-                                })
                             }
 
-                            screenScreenshots.push({
-                                imageUrl: screenshots[event.imageId].imageUrl,
-                                steps: steps,
+                            addEndZoomSpansToScreenVideos(
+                                screenVideos,
+                                renderEvents,
+                                insertedCursorPositions,
+                                storyDemoDoc.windowMeasures
+                            )
 
-
-                                index: screenIndex,
-                                workspaceId,
-                                userId: storyDemoDoc.userId,
-                                storyId,
-                                type: ScreenTypes.SCREEN_SCREENSHOT,
-                            })
-                        }
-
-                    }
-
-                    return Promise.all([
-                        Models.Screen_Screenshot.insertMany(screenScreenshots),
-                        Models.Screen_Video.insertMany(screenVideos)
-                    ])
+                            return Promise.all([
+                                Models.Screen_Screenshot.insertMany(screenScreenshots),
+                                Models.Screen_Video.insertMany(screenVideos)
+                            ])
+                        })
                 })
                 .then(([screenShotResults, videoResults]) => {
                     let screensArr = screenShotResults.concat(videoResults).sort((first, second) => first.index - second.index)
 
-                    return Models.Story.findOneAndUpdate({_id: storyId}, {
-                            $set: {
-                                screens: screensArr,
-                                status: StoryStatuses.READY,
-                                videoEndMs: videoEndMs,
-                            }
-                        },
-                        {new: true})
+                    return Models.Story.findOneAndUpdate({ _id: storyId }, {
+                        $set: {
+                            screens: screensArr,
+                            status: StoryStatuses.READY,
+                            videoEndMs: videoEndMs,
+                            ...(hasCursorPositionsFlag ? { hasCursorPositions: true } : {}),
+                            ...(storyDemoDoc.type === StoryTypes.desktop
+                                ? { 'custom.misc.isOmniBarDisabled': true }
+                                : {}),
+                        }
+                    },
+                        { new: true })
                         .then((newStoryDoc) => {
 
-                            return Models.Workspace.findOneAndUpdate({_id: workspaceId}, {
+                            return Models.Workspace.findOneAndUpdate({ _id: workspaceId }, {
                                 $addToSet: {
-                                    'library.screenshots': {$each: screenShotResults},
-                                    'library.videos': {$each: videoResults}
+                                    'library.screenshots': { $each: screenShotResults },
+                                    'library.videos': { $each: videoResults }
                                 }
                             })
                                 .then(() => {
@@ -214,7 +330,7 @@ async function processStoryDemo(sharedConfig, params, callback) {
         })
         .then(() => {
             console.log('processStoryDemo completed - end')
-            callback(null, {storyDemoId})
+            callback(null, { storyDemoId })
         })
         .catch(err => {
             console.log('processStoryDemo failed - end')
@@ -224,7 +340,7 @@ async function processStoryDemo(sharedConfig, params, callback) {
 
             endPromise = endPromise.then(() => {
 
-                return Models.Story.findOneAndUpdate({_id: storyDemoId}, {
+                return Models.Story.findOneAndUpdate({ _id: storyDemoId }, {
                     $set: {
                         status: StoryStatuses.FAILED
                     }

@@ -10,8 +10,8 @@ const handler = function (req, res) {
 
   return Promise.resolve().then(async () => {
 
-      return helpers.authReq(req, Models)
-    })
+    return helpers.authReq(req, Models)
+  })
     .then(({ authUser }) => {
       authUserDoc = authUser
 
@@ -19,12 +19,11 @@ const handler = function (req, res) {
     })
     .then(async () => {
 
-
-      return Models.Story.findOne({
-          _id: storyId,
-          workspaceId: workspaceId,
-          deletedAt: null
-        })
+      let storyPromise = Models.Story.findOne({
+        _id: storyId,
+        workspaceId: workspaceId,
+        deletedAt: null
+      })
         .populate({
           path: 'screens',
           populate: [
@@ -44,15 +43,27 @@ const handler = function (req, res) {
             {
               path: 'steps.view.popup.buttons.gotoScreen',
               model: 'Screen',
+            },
+            {
+              path: 'cursorPositions',
+              model: 'CursorPositions',
             }
           ],
-          select: '_id name type screens steps customTransitions width height imageUrl index asset playbackRate popups zoomSpans zoomSpan startTime endTime',
+          select: '_id name type screens steps customTransitions width height imageUrl index asset playbackRate popups zoomSpans zoomSpan startTime endTime cursorPositions',
         })
         .populate('content.contentId')
+
+      let cursorPositionsPromise = Models.CursorPositions.find({ storyId }).lean()
+
+      return Promise.all([storyPromise, cursorPositionsPromise])
     })
-    .then((foundStory) => {
-      if (foundStory && Array.isArray(foundStory.screens)) {
-        foundStory.screens.sort((a, b) => a.index - b.index)
+    .then(([foundStory, cursorPositions]) => {
+      let responsePayload = foundStory ? (foundStory.toObject ? foundStory.toObject() : foundStory) : null;
+      if (responsePayload) {
+        if (Array.isArray(responsePayload.screens)) {
+          responsePayload.screens.sort((a, b) => a.index - b.index)
+        }
+        responsePayload.cursorPositions = cursorPositions;
       }
 
       const resultResponse = {
@@ -68,7 +79,7 @@ const handler = function (req, res) {
 
       res.set(resultResponse.headers)
       res.status(resultResponse.statusCode)
-      res.send(JSON.stringify(foundStory))
+      res.send(JSON.stringify(responsePayload))
     })
     .catch((error) => {
       console.log(error)
@@ -100,5 +111,5 @@ const handler = function (req, res) {
     })
 }
 
-export default  handler
+export default handler
 

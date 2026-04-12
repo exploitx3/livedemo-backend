@@ -22,6 +22,7 @@ import postCustomThemeUploadWatermarkImageHandler from './handlers/postCustomThe
 import postCustomHeaderHandler from './handlers/postCustomHeader.js'
 import postCustomThemeHandler from './handlers/postCustomTheme.js'
 import postCustomMiscHandler from './handlers/postCustomMisc.js'
+import postCustomBackgroundHandler from './handlers/postCustomBackground.js'
 import postCustomVariablesHandler from './handlers/postCustomVariables.js'
 import patchCustomVariablesHandler from './handlers/patchCustomVariables.js'
 import deleteCustomVariablesHandler from './handlers/deleteCustomVariables.js'
@@ -487,6 +488,8 @@ app.post('/workspaces/:workspaceId/stories/:storyId/custom/theme', [setupMongo],
 
 
 app.post('/workspaces/:workspaceId/stories/:storyId/custom/misc', [setupMongo], postCustomMiscHandler)
+
+app.post('/workspaces/:workspaceId/stories/:storyId/custom/background', [setupMongo], postCustomBackgroundHandler)
 
 app.post('/workspaces/:workspaceId/stories/:storyId/custom/variables', [setupMongo], postCustomVariablesHandler)
 

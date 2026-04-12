@@ -59,9 +59,13 @@ const handler = function (req, res) {
                         {
                             path: 'steps.stepAudioId',
                             model: 'Audio',
+                        },
+                        {
+                            path: 'cursorPositions',
+                            model: 'CursorPositions',
                         }
                     ],
-                    select: '_id name steps type customTransitions width height imageUrl index imageUrl asset playbackRate popups zoomSpans startTime endTime playbackRate',
+                    select: '_id name steps type cursorPositions customTransitions width height imageUrl index imageUrl asset playbackRate popups zoomSpans startTime endTime playbackRate',
                     options: { sort: { 'index': 1 } }
                 })
                 .lean()
@@ -211,6 +215,7 @@ const handler = function (req, res) {
                         startTime: screen.startTime,
                         endTime: screen.endTime,
                         zoomSpans: screen.zoomSpans,
+                        cursorPositions: screen.cursorPositions,
                     })
                 } else {
 

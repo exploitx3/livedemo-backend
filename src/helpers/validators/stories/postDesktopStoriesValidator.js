@@ -13,6 +13,11 @@ function validateBody(body) {
     windowMeasures: Joi.object(),
     videoStartMs: Joi.number().required(),
     videoEndMs: Joi.number().required(),
+    cursorPositions: Joi.array().items(Joi.object({
+      frameX: Joi.number().required(),
+      frameY: Joi.number().required(),
+      timeMs: Joi.number().required()
+    })).optional(),
     storyId: Joi.string().custom((storyId) => {
       if (validator.isMongoId(storyId)) {
 

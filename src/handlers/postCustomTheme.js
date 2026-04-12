@@ -24,7 +24,6 @@ const handler = function (req, res) {
     })
     .then(async () => {
       let isActive = requestBody.isActive
-      let backgroundColor = requestBody.backgroundColor
       let stepBackgroundColor = requestBody.stepBackgroundColor
       let textColor = requestBody.textColor
       let buttonBackgroundColor = requestBody.buttonBackgroundColor
@@ -41,7 +40,6 @@ const handler = function (req, res) {
         $set: {
           'custom.theme.isActive': isActive,
           'custom.theme.stepBackgroundColor': stepBackgroundColor,
-          'custom.theme.backgroundColor': backgroundColor,
           'custom.theme.textColor': textColor,
           'custom.theme.buttonBackgroundColor': buttonBackgroundColor,
           'custom.theme.overlayBackgroundColor': overlayBackgroundColor,

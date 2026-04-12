@@ -7,7 +7,6 @@ function validateBody(body) {
   let schema = Joi.object().keys({
     isActive: Joi.boolean().required(),
     stepBackgroundColor: Joi.string().required(),
-    backgroundColor: Joi.string().required(),
     textColor: Joi.string().required(),
     buttonBackgroundColor: Joi.string().required(),
     overlayBackgroundColor: Joi.string().required(),

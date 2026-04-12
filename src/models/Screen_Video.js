@@ -13,6 +13,7 @@ const ScreenVideo = new mongoose.Schema({
     playbackRate: { type: mongoose.Number, default: 1},
     startTime: {type: Number, default: 0},
     endTime: {type: Number, default: 0},
+    cursorPositions: [{ type: mongoose.Schema.Types.ObjectId, ref: 'CursorPositions' }],
     zoomSpans: [
       ZoomSpanVideoSchema
     ],
