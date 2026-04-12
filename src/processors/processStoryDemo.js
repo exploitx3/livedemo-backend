@@ -8,7 +8,7 @@ const { ObjectId } = pkg
 import flixHelpers from '../helpers/flixHelpers.js'
 import he from 'he'
 
-const MIN_VIDEO_DURATION_SEC_FOR_END_ZOOM = 3
+const MIN_VIDEO_DURATION_SEC_FOR_END_ZOOM = 2
 const END_ZOOM_DURATION_SEC = 1.5
 const END_ZOOM_MIN_BOX_RATIO = 0.65
 
