@@ -30,6 +30,7 @@ import postScreenEditTextHandler from './handlers/postScreenEditText.js'
 import patchScreenHandler from './handlers/patchScreen.js'
 import postStoryUpdateScreenOrderHandler from './handlers/postStoryUpdateScreenOrder.js'
 import postScreenCopyHandler from './handlers/postScreenCopy.js'
+import postCreateScreenFromFrameHandler from './handlers/postCreateScreenFromFrame.js'
 import getScreenPreviewHandler from './handlers/getScreenPreview.js'
 import getStoryPreviewHandler from './handlers/getStoryPreview.js'
 import postStepsHandler from './handlers/postSteps.js'
@@ -509,6 +510,7 @@ app.post('/workspaces/:workspaceId/stories/:storyId/updateScreenOrder', [setupMo
 
 app.post('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/copy', [setupMongo], postScreenCopyHandler)
 
+app.post('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/createScreenFromFrame', [setupMongo], postCreateScreenFromFrameHandler)
 
 app.get('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/preview', [setupMongo], getScreenPreviewHandler)
 
