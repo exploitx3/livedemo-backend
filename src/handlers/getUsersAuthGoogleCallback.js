@@ -9,6 +9,10 @@ import mongoose from 'mongoose'
 
 const {ObjectId} = mongoose.Types
 
+function shouldRedirectToOnboarding(userDoc) {
+    const onboardingGoals = userDoc?.onboarding?.goals
+    return !Array.isArray(onboardingGoals) || onboardingGoals.length === 0
+}
 
 const handler = function (req, res) {
     let {Models, conn} = req.mongo
@@ -209,7 +213,8 @@ const handler = function (req, res) {
 
         // Redirect to frontend with token (return path from OAuth state set at google-link)
         const returnPath = decodeReturnPathFromOAuthState(req.query.state)
-        const encodedPage = encodeURIComponent(returnPath)
+        const redirectPath = shouldRedirectToOnboarding(userDoc) ? '/onboarding' : returnPath
+        const encodedPage = encodeURIComponent(redirectPath)
         const redirectUrl = `${ENV.SERVER_URL}/auth/?page=${encodedPage}&token=${authTokenDoc.token}`
 
         const resultResponse = {

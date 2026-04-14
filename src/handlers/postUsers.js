@@ -7,6 +7,11 @@ import Templates from '../helpers/emails/templates/index.js'
 import mongoose from 'mongoose'
 const { ObjectId } = mongoose.Types
 
+function shouldRedirectToOnboarding(userDoc) {
+  const onboardingGoals = userDoc?.onboarding?.goals
+  return !Array.isArray(onboardingGoals) || onboardingGoals.length === 0
+}
+
 const handler = function (req, res) {
   let { Models, conn } = req.mongo
 
@@ -186,6 +191,7 @@ const handler = function (req, res) {
         })
     })
     .then(({ savedUserData, authTokenData }) => {
+      const redirectPath = shouldRedirectToOnboarding(savedUserData) ? '/onboarding' : '/'
       const resultResponse = {
         statusCode: ResponseCodes['200_OK'],
         headers: {
@@ -204,7 +210,8 @@ const handler = function (req, res) {
         name: savedUserData.name,
         email: savedUserData.email,
         timezone: savedUserData.timezone,
-        token: authTokenData.token
+        token: authTokenData.token,
+        redirectPath
       }))
     })
     .catch((error) => {

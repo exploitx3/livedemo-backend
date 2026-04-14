@@ -2,6 +2,11 @@ import ResponseCodes from '../constants/ResponseCodes.js'
 import userValidators from '../helpers/validators/userValidators.js'
 import authUtils from '../helpers/authUtils.js'
 
+function shouldRedirectToOnboarding(userDoc) {
+  const onboardingGoals = userDoc?.onboarding?.goals
+  return !Array.isArray(onboardingGoals) || onboardingGoals.length === 0
+}
+
 const handler = function (req, res) {
   let { Models, conn } = req.mongo
 
@@ -64,6 +69,7 @@ const handler = function (req, res) {
         })
     })
     .then(({ userDataSaved, authToken }) => {
+      const redirectPath = shouldRedirectToOnboarding(userDataSaved) ? '/onboarding' : '/'
       const resultResponse = {
         statusCode: ResponseCodes['200_OK'],
         headers: {
@@ -83,7 +89,8 @@ const handler = function (req, res) {
         timezone: userDataSaved.timezone,
         name: userDataSaved.name,
         token: authToken.token,
-        workspaceMembers: userDataSaved.workspaceMembers
+        workspaceMembers: userDataSaved.workspaceMembers,
+        redirectPath
       }))
     })
     .catch((error) => {

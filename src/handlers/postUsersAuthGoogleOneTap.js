@@ -24,6 +24,11 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Credentials': true,
 }
 
+function shouldRedirectToOnboarding(userDoc) {
+  const onboardingGoals = userDoc?.onboarding?.goals
+  return !Array.isArray(onboardingGoals) || onboardingGoals.length === 0
+}
+
 const handler = function (req, res) {
   let { Models } = req.mongo
 
@@ -201,11 +206,13 @@ const handler = function (req, res) {
     const userDocForToken = await Models.User.findOne({ _id: userDoc._id })
     const authTokenDoc = await authUtils.createTokenForUser(userDocForToken, Models.AuthToken)
 
-    const redirectUrl = `${ENV.SERVER_URL}/auth/?page=/&token=${authTokenDoc.token}`
+    const redirectPath = shouldRedirectToOnboarding(userDoc) ? '/onboarding' : '/'
+    const encodedPage = encodeURIComponent(redirectPath)
+    const redirectUrl = `${ENV.SERVER_URL}/auth/?page=${encodedPage}&token=${authTokenDoc.token}`
 
     res.set({ ...CORS_HEADERS, 'Content-Type': 'application/json' })
     res.status(ResponseCodes['200_OK'])
-    res.json({ success: true, token: authTokenDoc.token, redirectUrl })
+    res.json({ success: true, token: authTokenDoc.token, redirectUrl, redirectPath })
   })
   .catch((error) => {
     console.log(error)
