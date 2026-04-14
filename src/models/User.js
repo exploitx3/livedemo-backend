@@ -1,5 +1,6 @@
 import mongoose from 'mongoose'
 import bcrypt from 'bcryptjs'
+import OnboardingGoalsTypes from '../constants/OnboardingGoalsTypes.js'
 const options = {
   discriminatorKey: 'userType',
   strict: true,
@@ -48,6 +49,12 @@ const UserSchema = new mongoose.Schema({
     googleProfile: { type: GoogleProfile },
     featureFlags: {
       freeActivate: { type: Boolean, default: true},
+    },
+    onboarding: {
+      goals: [{
+        type: String,
+        enum: Object.values(OnboardingGoalsTypes.ONBOARDING_GOALS),
+      }],
     },
     // transactions: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Transaction' }],
   }, options

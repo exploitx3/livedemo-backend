@@ -42,12 +42,18 @@ const handler = function (req, res) {
     })
     .then((userData) => {
       const newTimezone = requestBody.timezone
+      const newOnboardingGoals = requestBody.onboarding?.goals
       let hasUpdates = false
 
       let updateObj = {}
 
       if (newTimezone) {
         updateObj.timezone = newTimezone
+        hasUpdates = true
+      }
+
+      if (Array.isArray(newOnboardingGoals)) {
+        updateObj['onboarding.goals'] = newOnboardingGoals
         hasUpdates = true
       }
 
@@ -80,6 +86,7 @@ const handler = function (req, res) {
         email: userData.email,
         name: userData.name,
         timezone: userData.timezone,
+        onboarding: userData.onboarding,
       }))
     })
     .catch((error) => {
