@@ -162,7 +162,10 @@ async function processStoryDemo(sharedConfig, params, callback) {
                     //         event.timeMs = event.timeMs + differenceBetweenNewAndOldVideoEndMs
                     //     }
                     // }
-                    return Promise.all(Object.entries(requestBody.screenshots).map(function ([key, value]) {
+                    const screenshotEntries = Object.entries(requestBody.screenshots)
+                    const firstScreenshotKey = screenshotEntries.length > 0 ? screenshotEntries[0][0] : null
+
+                    return Promise.all(screenshotEntries.map(function ([key, value]) {
                         return flixHelpers.uploadImage(value, storyId + '/' + key)
                             .then(res => {
                                 let imgObj = {}
@@ -171,20 +174,25 @@ async function processStoryDemo(sharedConfig, params, callback) {
 
                                 return imgObj
                             })
-                    })
-                    )
+                    }))
                 })
-                .then(imageUploadResults => {
+                .then((imageUploadResults) => {
 
                     let imgsObj = imageUploadResults.reduce(function (accum, imgObj) {
                         accum[imgObj.name] = imgObj
                         return accum
                     }, {})
 
-                    // console.log(imageUploadResults)
-                    // console.log(imgsObj)
-
                     screenshots = imgsObj
+
+                    const firstScreenshotKey = Object.keys(screenshots)[0]
+                    const thumbnailImageUrl = firstScreenshotKey ? screenshots[firstScreenshotKey].imageUrl : null
+
+                    if (thumbnailImageUrl) {
+                        return Models.Story.findOneAndUpdate({ _id: storyId }, {
+                            $set: { thumbnailImageUrl }
+                        })
+                    }
                 })
                 .then(() => {
 

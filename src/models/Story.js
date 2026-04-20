@@ -83,6 +83,8 @@ const Story = new mongoose.Schema({
             ],
         },
 
+        thumbnailImageUrl: {type: String, default: ''},
+
         links: [
             {type: String, ref: 'Link'}
         ],
