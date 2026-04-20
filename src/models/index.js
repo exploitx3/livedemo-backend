@@ -61,6 +61,7 @@ import DemoSuggestionSchema from './DemoSuggestion.js'
 import DemoActivityEventSchema from './DemoActivityEvent.js'
 import HubspotTokenSchema from './HubspotToken.js'
 import CursorPositionsSchema from './CursorPositions.js'
+import TutorialSchema from './Tutorial.js'
 
 
 // const ChannelSchema = require('./Channel')
@@ -113,6 +114,7 @@ export const connect = async () => {
     // With serverless, better to fail fast if not connected.
     // directConnection: true, //used for running adhoc scripts which skip replicaSet config discovery
     bufferCommands: false, // Disable mongoose buffering
+    // directConnection: true,
   })
 
   await conn.asPromise()
@@ -219,6 +221,7 @@ export const initModels = (conn) => {
   conn.model('DemoActivityEvent', DemoActivityEventSchema)
   conn.model('HubspotToken', HubspotTokenSchema)
   conn.model('CursorPositions', CursorPositionsSchema)
+  conn.model('Tutorial', TutorialSchema)
 
   // conn.model('Subscriber', SubscriberSchema)
 
@@ -294,6 +297,7 @@ export const getModels = (conn) => {
     DemoActivityEvent: conn.model('DemoActivityEvent'),
     HubspotToken: conn.model('HubspotToken'),
     CursorPositions: conn.model('CursorPositions'),
+    Tutorial: conn.model('Tutorial'),
 
     // Channel: conn.model('Channel'),
     // InstantMessagesChannel: conn.model('InstantMessagesChannel'),

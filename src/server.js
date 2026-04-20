@@ -136,6 +136,7 @@ import postDemoSuggestionsGenerateLiveDemoHandler from './handlers/postDemoSugge
 
 import postAuthorizeInstanceHandler from './handlers/postAuthorizeInstance.js'
 import postInstanceAuthenticateHandler from './handlers/postInstanceAuthenticate.js'
+import getTutorialsSearchHandler from './handlers/getTutorialsSearch.js'
 
 import multer from 'multer'
 
@@ -571,6 +572,10 @@ app.post('/workspaces/:workspaceId/auto-recordings/:autoRecordingId/complete', [
 app.post('/workspaces/:workspaceId/demo-suggestions/:demoSuggestionId/generate-livedemo', [setupMongo], postDemoSuggestionsGenerateLiveDemoHandler)
 
 // app.post('/workspaces/:workspaceId/stories/:storyId/addScreen', [setupMongo], postStoryAddScreenHandler)
+
+// Public tutorial search — no auth required, IP rate-limited (5 req/s/IP)
+// Supports ?q=<term> for search and ?featured=true for carousel data
+app.get('/tutorials/search', [setupMongo, corsMiddleware], getTutorialsSearchHandler)
 
 console.log(ENV.ENV)
 let server
