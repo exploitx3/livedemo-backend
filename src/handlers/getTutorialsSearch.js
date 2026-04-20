@@ -16,6 +16,8 @@ const ipLimiter = LambdaRateLimiter({
 
 const MAX_RESULTS = 8
 const FEATURED_LIMIT = 24
+const DEFAULT_PAGE_SIZE = 12
+const MAX_PAGE_SIZE = 50
 
 const handler = async function (req, res) {
     const { Models } = req.mongo
@@ -42,46 +44,67 @@ const handler = async function (req, res) {
             // Sentinel to stop the chain
             throw Object.assign(new Error('rate-limited'), { handled: true })
         })
-        .then(() => {
+        .then(async () => {
             const q = (req.query.q || '').trim()
             const featured = req.query.featured === 'true'
 
-            // ?featured=true — return latest tutorials that have an image
+            // Parse pagination params — used for both ?featured and ?q flows
+            const page = Math.max(1, parseInt(req.query.page, 10) || 1)
+            const limit = Math.min(
+                MAX_PAGE_SIZE,
+                Math.max(1, parseInt(req.query.limit, 10) || DEFAULT_PAGE_SIZE),
+            )
+            const skip = (page - 1) * limit
+
+            // ?featured=true — return latest tutorials that have an image, paginated
             if (featured) {
-                return Models.Tutorial.find(
-                    { draft: { $ne: true }, image: { $nin: [null, ''] } },
-                    { title: 1, slug: 1, image: 1, category: 1 },
-                )
-                    .sort({ publishedAt: -1 })
-                    .limit(FEATURED_LIMIT)
-                    .lean()
+                const category = (req.query.category || '').trim()
+                const filter = {
+                    draft: { $ne: true },
+                    image: { $nin: [null, ''] },
+                    ...(category && { category }),
+                }
+                const projection = { title: 1, slug: 1, image: 1, category: 1 }
+
+                const [results, total] = await Promise.all([
+                    Models.Tutorial.find(filter, projection)
+                        .sort({ publishedAt: -1 })
+                        .skip(skip)
+                        .limit(limit)
+                        .lean(),
+                    Models.Tutorial.countDocuments(filter),
+                ])
+
+                return { results, total, page, limit }
             }
 
             if (q.length < 2) {
-                return []
+                return { results: [], total: 0, page, limit }
             }
 
             // Build a case-insensitive regex that requires every word to appear
             const words = q.split(/\s+/).filter(Boolean)
             const regexParts = words.map((w) => `(?=.*${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`)
             const regex = new RegExp(regexParts.join(''), 'i')
+            const filter = { title: regex, draft: { $ne: true } }
+            const projection = { title: 1, slug: 1, image: 1, category: 1 }
 
-            return Models.Tutorial.find(
-                { title: regex, draft: { $ne: true } },
-                { title: 1, slug: 1, image: 1, category: 1 },
-            )
-                .sort({ publishedAt: -1 })
-                .limit(MAX_RESULTS)
-                .lean()
+            const [results, total] = await Promise.all([
+                Models.Tutorial.find(filter, projection)
+                    .sort({ publishedAt: -1 })
+                    .skip(skip)
+                    .limit(Math.min(limit, MAX_RESULTS))
+                    .lean(),
+                Models.Tutorial.countDocuments(filter),
+            ])
+
+            return { results, total, page, limit: Math.min(limit, MAX_RESULTS) }
         })
-        .then((results) => {
-            const resultResponse = {
-                statusCode: ResponseCodes['200_OK'],
-                headers: CORS_HEADERS,
-            }
-            res.set(resultResponse.headers)
-            res.status(resultResponse.statusCode)
-            res.send(JSON.stringify(results))
+        .then(({ results, total, page, limit }) => {
+            const totalPages = Math.ceil(total / limit) || 1
+            res.set(CORS_HEADERS)
+            res.status(ResponseCodes['200_OK'])
+            res.send(JSON.stringify({ results, total, page, totalPages }))
         })
         .catch((error) => {
             if (error.handled) return
