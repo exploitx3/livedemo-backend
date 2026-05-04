@@ -34,6 +34,8 @@ const ScreenStepSchema = new mongoose.Schema({
       title: {type: String, default: 'Title'},
       description: {type: String, default: '<p>Description</p>'},
       alignment: {type: String, default: PopupAlignments.center}, // center, left, right
+      showPreviewImage: {type: Boolean, default: false},
+      previewImageUrl: {type: String, default: ''},
       buttons: [{
         index: {type: Number, default: 0},
         text: {type: String, default: "Next"}, // screen | website | none

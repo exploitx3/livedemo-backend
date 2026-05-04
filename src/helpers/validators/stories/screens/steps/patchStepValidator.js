@@ -37,6 +37,7 @@ function validateBody(body) {
       popup: {
         type: Joi.string().optional(),
         showOverlay: Joi.boolean().optional(),
+        showPreviewImage: Joi.boolean().optional(),
         title: Joi.string().allow('').optional(),
         description: Joi.string().allow('').optional(),
         alignment: Joi.string().optional(),

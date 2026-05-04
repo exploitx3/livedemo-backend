@@ -722,12 +722,49 @@ function enqueueProcessStoryDemoVideo(storyDemoId, userEmail) {
   })
 }
 
+function uploadImageBuffer(buffer, imageName, contentType = 'image/jpeg', extension = 'jpg') {
+  const s3Client = new S3Client({
+    region: 'us-east-1',
+    credentials: {
+      accessKeyId: ENV.AWS_ACCESS_KEY_ID,
+      secretAccessKey: ENV.AWS_SECRET_ACCESS_KEY
+    }
+  })
+
+  const uploadParams = {
+    Bucket: 'livedemo-cdn',
+    Key: 'flix-images/' + imageName + '.' + extension,
+    Body: buffer,
+    ACL: 'public-read',
+    ContentType: contentType
+  }
+
+  return new Promise(async (resolve, reject) => {
+    try {
+      const upload = new Upload({
+        client: s3Client,
+        params: uploadParams
+      })
+
+      const uploadResult = await upload.done()
+
+      console.log('successfully uploaded the image buffer!')
+      resolve(uploadResult)
+    } catch (error) {
+      console.log(error)
+      console.log('Error uploading image buffer: ', error)
+      reject(error)
+    }
+  })
+}
+
 export default {
   authReq,
   getUserTokenAuth,
   validateBody,
   validateUserHasAccessToWorkspace,
   uploadImage,
+  uploadImageBuffer,
   uploadVideo,
   uploadStoryGif,
   uploadStoryVideo,

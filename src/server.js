@@ -73,6 +73,7 @@ import deleteStepAudioHandler from './handlers/deleteStepAudio.js'
 import postStepAudioHandler from './handlers/postStepAudio.js'
 
 import postStepUploadAudioHandler from './handlers/postStepUploadAudio.js'
+import postStepPreviewImageHandler from './handlers/postStepPreviewImage.js'
 
 import postGenerateStoryContentHandler from './handlers/postGenerateStoryContent.js'
 
@@ -527,6 +528,8 @@ app.delete('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/steps/:s
 app.patch('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/steps/:stepId', [setupMongo], patchStepHandler)
 
 app.post('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/steps/:stepId/uploadAudio', [setupMongo, uploadAudio.single('audioFile')], postStepUploadAudioHandler)
+
+app.post('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/steps/:stepId/previewImage', [setupMongo, uploadImage.single('previewImage')], postStepPreviewImageHandler)
 
 app.post('/workspaces/:workspaceId/forms', [setupMongo], postFormsHandler)
 
