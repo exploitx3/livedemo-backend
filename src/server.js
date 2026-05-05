@@ -109,6 +109,8 @@ import deleteCardHandler from './handlers/deleteCard.js'
 import getChargesHandler from './handlers/getCharges.js'
 import postWorkspaceRemoveUserHandler from './handlers/postWorkspaceRemoveUser.js'
 import postPaymentChargeHandler from './handlers/postPaymentCharge.js'
+import postCheckoutSessionHandler from './handlers/postCheckoutSession.js'
+import postVerifyCheckoutSessionHandler from './handlers/postVerifyCheckoutSession.js'
 import postPaymentFreeActivateHandler from './handlers/postPaymentFreeActivate.js'
 import postPaymentAfterPaymentHandler from './handlers/postPaymentAfterPayment.js'
 import postVerifyPaymentChargeHandler from './handlers/postVerifyPaymentCharge.js'
@@ -326,6 +328,10 @@ app.delete('/cards/:cardId', [setupMongo], deleteCardHandler)
 app.get('/charges', [setupMongo], getChargesHandler)
 
 app.post('/payments/charge', [setupMongo], postPaymentChargeHandler)
+
+app.post('/payments/checkout-session', [setupMongo], postCheckoutSessionHandler)
+
+app.post('/payments/verify-checkout-session', [setupMongo], postVerifyCheckoutSessionHandler)
 
 app.post('/payments/freeActivate', [setupMongo], postPaymentFreeActivateHandler)
 
