@@ -24,7 +24,7 @@ COPY ./package*.json ./
 #RUN git submodule update
 #RUN cd ./src/modules/react-joyride && npm run build
 
-RUN npm install -g pnpm
+RUN npm install -g pnpm@10.27.0
 
 RUN pnpm install
 
