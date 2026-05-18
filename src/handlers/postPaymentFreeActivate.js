@@ -5,6 +5,10 @@ import SubscriptionTypes from '../constants/SubscriptionTypes.js'
 import SubscriptionTypesExpireDates from '../constants/SubscriptionTypesExpireDates.js'
 import SubscriptionTypesRank from '../constants/SubscriptionTypesRank.js'
 import SubscriptionTypesMembersAllowed from '../constants/SubscriptionTypesMembersAllowed.js'
+import {
+  getOrCreateSubscriptionCustomer,
+  linkSubscriptionToCustomer,
+} from '../helpers/subscriptionCustomerHelpers.js'
 
 const handler = function (req, res) {
   let { Models, conn } = req.mongo
@@ -44,17 +48,24 @@ const handler = function (req, res) {
           return { workspace, subscriptionType }
         })
     })
-    .then(({ workspace, subscriptionType }) => {
+    .then(async ({ workspace, subscriptionType }) => {
       // Verify user has freeActivate feature flag
       // Note: This assumes workspaceMembers exist - may need to be adapted
       if (!authUserDoc.featureFlags || !authUserDoc.featureFlags.freeActivate) {
         throw new Error('Cannot activate for free')
       }
 
+      const subscriptionCustomer = await getOrCreateSubscriptionCustomer(
+        Models,
+        authUserDoc._id,
+        { autoPay: false }
+      )
+
       // Create subscription
-      return new Models.Subscription({
+      const subscription = await new Models.Subscription({
         type: SubscriptionTypes[subscriptionType],
-        workspaceId: workspace._id,
+        workspaceIds: [workspace._id],
+        subscriptionCustomerId: subscriptionCustomer._id,
         active: true,
         userId: authUserDoc._id,
         autoPay: false,
@@ -62,21 +73,24 @@ const handler = function (req, res) {
         expireDate: SubscriptionTypesExpireDates[subscriptionType.toLowerCase()],
         membersAllowed: SubscriptionTypesMembersAllowed[subscriptionType] || 1
       }).save()
-        .then((subscription) => {
-          return Models.Workspace.findOneAndUpdate(
-            { _id: workspace._id },
-            { $push: { subscriptions: subscription._id } }
-          )
-            .then(() => {
-              return Models.User.findOneAndUpdate(
-                { _id: subscription.userId },
-                { $push: { subscriptions: subscription._id } }
-              )
-                .then(() => {
-                  return { subscription, workspace }
-                })
-            })
-        })
+
+      await linkSubscriptionToCustomer(
+        Models,
+        subscription._id,
+        subscriptionCustomer._id
+      )
+
+      await Models.Workspace.findOneAndUpdate(
+        { _id: workspace._id },
+        { $push: { subscriptions: subscription._id } }
+      )
+
+      await Models.User.findOneAndUpdate(
+        { _id: subscription.userId },
+        { $push: { subscriptions: subscription._id } }
+      )
+
+      return { subscription, workspace }
     })
     .then(({ subscription, workspace }) => {
       // Update workspace type

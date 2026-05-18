@@ -7,9 +7,13 @@ const options = {
 
 const Subscription = new mongoose.Schema({
     type: { type: String }, // one of SubscriptionTypes
-    workspaceId: { type: mongoose.Schema.Types.ObjectId, ref: 'Workspace' },
+    workspaceIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Workspace' }],
     chargeId: { type: mongoose.Schema.Types.ObjectId, ref: 'Charge' },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    subscriptionCustomerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'SubscriptionCustomer',
+    },
     autoPay: { type: Boolean, default: false },
     expired: { type: Boolean, default: false },
     expireDate: { type: Date },

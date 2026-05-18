@@ -1,5 +1,6 @@
 import helpers from '../helpers/livedemoHelpers.js'
 import ResponseCodes from '../constants/ResponseCodes.js'
+import { normalizeSubscriptions } from '../helpers/subscriptionHelpers.js'
 
 const handler = function (req, res) {
   let { Models, conn } = req.mongo
@@ -16,10 +17,12 @@ const handler = function (req, res) {
     .then(async () => {
 
       return Models.Subscription.find({ userId: authUserDoc._id })
+        .populate('workspaceIds', '_id name')
+        .populate('subscriptionCustomerId', '_id autoPay cardId stripeCustomerId stripeSubscriptionId')
         .lean()
-        .populate('workspaceId')
     })
     .then((subscriptions) => {
+      subscriptions = normalizeSubscriptions(subscriptions)
 
       const resultResponse = {
         statusCode: ResponseCodes['200_OK'],

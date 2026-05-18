@@ -4,6 +4,7 @@ import SubscriptionTypes from '../constants/SubscriptionTypes.js'
 import WorkspaceTypes from '../constants/WorkspaceTypes.js'
 import helpers from '../helpers/livedemoHelpers.js'
 import { triggerPostChargeInternal } from '../helpers/paymentHelpers.js'
+import { getPrimarySubscriptionWorkspaceId, getSubscriptionWorkspaceIds } from '../helpers/subscriptionHelpers.js'
 
 const handler = function (req, res) {
   let { Models, conn } = req.mongo
@@ -59,12 +60,17 @@ const handler = function (req, res) {
     .then(({ chargeDoc, subDoc, userDoc }) => {
       // If autoPay is enabled, trigger chargeInternal
       if (subDoc.autoPay && userDoc.defaultCardId) {
+        const primaryWorkspaceId = getPrimarySubscriptionWorkspaceId(subDoc)
+        if (!primaryWorkspaceId) {
+          return { chargeDoc, subDoc, userDoc }
+        }
+
         return triggerPostChargeInternal(
           userDoc._id.toString(),
           userDoc.defaultCardId.toString(),
           chargeDoc.currency,
           subDoc.type,
-          subDoc.workspaceId.toString(),
+          primaryWorkspaceId.toString(),
           true,
           Models,
           conn
@@ -89,14 +95,18 @@ const handler = function (req, res) {
         workspaceExports: false
       }
 
+      const workspaceIds = getSubscriptionWorkspaceIds(subDoc)
+
       return Promise.all([
         Models.Subscription.updateOne(
           { _id: subDoc._id },
           { $set: { expired: true, active: false } }
         ),
-        Models.Workspace.updateOne(
-          { _id: subDoc.workspaceId },
-          { $set: { type: WorkspaceTypes.EMPTY } }
+        ...workspaceIds.map((workspaceId) =>
+          Models.Workspace.updateOne(
+            { _id: workspaceId },
+            { $set: { type: WorkspaceTypes.EMPTY } }
+          )
         ),
         Models.Job.updateMany(
           { subscriptionId: subDoc._id },

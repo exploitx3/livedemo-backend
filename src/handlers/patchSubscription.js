@@ -1,6 +1,8 @@
 import helpers from '../helpers/livedemoHelpers.js'
 import ResponseCodes from '../constants/ResponseCodes.js'
 import patchSubscriptionValidator from '../helpers/validators/oldLambdaRoutes/subscriptions/patchSubscriptionValidator.js'
+import { normalizeSubscription } from '../helpers/subscriptionHelpers.js'
+import { syncStripeSubscriptionAutoPay } from '../helpers/subscriptionCustomerHelpers.js'
 
 const handler = function (req, res) {
   let { Models, conn } = req.mongo
@@ -80,6 +82,32 @@ const handler = function (req, res) {
         throw error
       }
 
+      if (requestBody.autoPay !== undefined) {
+        let subscriptionCustomer = subscription.subscriptionCustomerId
+          ? await Models.SubscriptionCustomer.findById(
+              subscription.subscriptionCustomerId
+            ).lean()
+          : null
+
+        if (!subscriptionCustomer) {
+          subscriptionCustomer = await Models.SubscriptionCustomer.findOne({
+            userId: authUserDoc._id,
+          }).lean()
+        }
+
+        if (subscriptionCustomer?.stripeSubscriptionId) {
+          await syncStripeSubscriptionAutoPay(
+            subscriptionCustomer.stripeSubscriptionId,
+            requestBody.autoPay
+          )
+
+          await Models.SubscriptionCustomer.findOneAndUpdate(
+            { _id: subscriptionCustomer._id },
+            { $set: { autoPay: requestBody.autoPay } }
+          )
+        }
+      }
+
       return Models.Subscription.findOneAndUpdate(
         { _id: subscriptionId },
         { $set: { ...requestBody } },
@@ -118,7 +146,7 @@ const handler = function (req, res) {
       res.set(resultResponse.headers)
       res.status(resultResponse.statusCode)
       res.send(JSON.stringify({
-        subscription: subscription
+        subscription: normalizeSubscription(subscription)
       }))
     })
     .catch((error) => {

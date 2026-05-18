@@ -67,9 +67,12 @@ async function processAutoRecording(sharedConfig, params, callback) {
                 })
         }
 
+        let autoRecordingImageData = demoSuggestionsArr[0] && demoSuggestionsArr[0].thumbnailImageData ? demoSuggestionsArr[0].thumbnailImageData : ''
+
         await Models.AutoRecording.findOneAndUpdate({_id: autoRecordingId}, {
             $set: {
-                status: AutoRecordingStatuses.completed
+                status: AutoRecordingStatuses.completed,
+                thumbnailImageData: autoRecordingImageData
             }
         })
 
@@ -86,7 +89,7 @@ async function processAutoRecording(sharedConfig, params, callback) {
 
         endPromise = endPromise.then(() => {
 
-            return Models.Story.findOneAndUpdate({_id: autoRecordingId}, {
+            return Models.AutoRecording.findOneAndUpdate({_id: autoRecordingId}, {
                 $set: {
                     status: AutoRecordingStatuses.failed,
                 }

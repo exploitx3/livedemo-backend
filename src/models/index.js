@@ -14,6 +14,7 @@ import AuthToken_UserChangePassword from './AuthToken_UserChangePassword.js'
 import WorkspaceSchema from './Workspace.js'
 import WorkspaceMemberSchema from './WorkspaceMember.js'
 import SubscriptionSchema from './Subscription.js'
+import SubscriptionCustomerSchema from './SubscriptionCustomer.js'
 import EmailSchema from './Email.js'
 import CardSchema from './Card.js'
 import ChargeSchema from './Charge.js'
@@ -114,7 +115,6 @@ export const connect = async () => {
     // With serverless, better to fail fast if not connected.
     // directConnection: true, //used for running adhoc scripts which skip replicaSet config discovery
     bufferCommands: false, // Disable mongoose buffering
-    // directConnection: true,
   })
 
   await conn.asPromise()
@@ -176,6 +176,7 @@ export const initModels = (conn) => {
   // conn.model('File', FileMessageSchema)
   conn.model('Charge', ChargeSchema)
   conn.model('Subscription', SubscriptionSchema)
+  conn.model('SubscriptionCustomer', SubscriptionCustomerSchema)
   conn.model('Job', JobSchema)
   conn.model('Email', EmailSchema)
 
@@ -262,6 +263,7 @@ export const getModels = (conn) => {
     WorkspaceMember: conn.model('WorkspaceMember'),
     Charge: conn.model('Charge'),
     Subscription: conn.model('Subscription'),
+    SubscriptionCustomer: conn.model('SubscriptionCustomer'),
     Job: conn.model('Job'),
     Email: conn.model('Email'),
     PublishedLiveDemo: conn.model('PublishedLiveDemo'),

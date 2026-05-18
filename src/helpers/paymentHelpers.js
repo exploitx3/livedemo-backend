@@ -2,6 +2,72 @@
 // This replaces Lambda invocation
 
 import postPaymentChargeInternalHandler from '../handlers/postPaymentChargeInternal.js'
+import { mapCard } from './mapper.js'
+
+/**
+ * Persist a Stripe payment method as a user Card (or reuse existing).
+ * @returns {Promise<object|null>} Saved card document
+ */
+export async function saveUserCardFromStripePaymentMethod(
+  stripe,
+  paymentMethodId,
+  userId,
+  Models
+) {
+  const pmId = typeof paymentMethodId === 'string'
+    ? paymentMethodId
+    : paymentMethodId?.id
+
+  if (!pmId) return null
+
+  const existingCard = await Models.Card.findOne({
+    paymentMethodId: pmId,
+    userId,
+  }).lean()
+
+  if (existingCard) {
+    await Models.User.findOneAndUpdate(
+      { _id: userId },
+      { $set: { defaultCardId: existingCard._id } }
+    )
+    return existingCard
+  }
+
+  const paymentMethod = await stripe.paymentMethods.retrieve(pmId)
+  if (!paymentMethod?.card) return null
+
+  const card = await new Models.Card({
+    ...mapCard(paymentMethod.card),
+    userId,
+    paymentMethodId: pmId,
+  }).save()
+
+  await Models.User.findOneAndUpdate(
+    { _id: userId },
+    {
+      $set: { defaultCardId: card._id },
+      $addToSet: { cards: card._id },
+    }
+  )
+
+  return card
+}
+
+/**
+ * Store Stripe customer id on the user when checkout creates one.
+ */
+export async function syncUserStripeCustomerId(userId, stripeCustomerId, Models) {
+  const customerId = typeof stripeCustomerId === 'string'
+    ? stripeCustomerId
+    : stripeCustomerId?.id
+
+  if (!customerId) return
+
+  await Models.User.findOneAndUpdate(
+    { _id: userId, stripeCustomerId: { $in: [null, ''] } },
+    { $set: { stripeCustomerId: customerId } }
+  )
+}
 
 /**
  * Triggers postChargeInternal handler directly (without Lambda)
@@ -48,5 +114,7 @@ export function triggerPostChargeInternal(userId, cardId, currency, subscription
 }
 
 export default {
-  triggerPostChargeInternal
+  triggerPostChargeInternal,
+  saveUserCardFromStripePaymentMethod,
+  syncUserStripeCustomerId,
 }

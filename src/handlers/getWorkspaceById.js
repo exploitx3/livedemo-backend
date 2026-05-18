@@ -1,5 +1,6 @@
 import helpers from '../helpers/livedemoHelpers.js'
 import ResponseCodes from '../constants/ResponseCodes.js'
+import { normalizeSubscriptions } from '../helpers/subscriptionHelpers.js'
 
 // Simple subscription type ranking for sorting
 const SubscriptionTypesRank = {
@@ -64,9 +65,11 @@ const handler = function (req, res) {
 
       // Filter subscriptions to only active ones and sort them
       if (workspaceDoc.subscriptions && Array.isArray(workspaceDoc.subscriptions)) {
-        workspaceDoc.subscriptions = workspaceDoc.subscriptions
-          .filter(sub => sub.active)
-          .sort(sortSubscriptionTypes)
+        workspaceDoc.subscriptions = normalizeSubscriptions(
+          workspaceDoc.subscriptions
+            .filter(sub => sub.active)
+            .sort(sortSubscriptionTypes)
+        )
       } else {
         workspaceDoc.subscriptions = []
       }

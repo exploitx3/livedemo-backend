@@ -87,6 +87,8 @@ import getWorkspaceHubspotFormsHandler from './handlers/getWorkspaceHubspotForms
 import postCreateWorkspaceHandler from './handlers/postCreateWorkspace.js'
 import getSubscriptionsHandler from './handlers/getSubscriptions.js'
 import patchSubscriptionHandler from './handlers/patchSubscription.js'
+import getSubscriptionCustomerHandler from './handlers/getSubscriptionCustomer.js'
+import patchSubscriptionCustomerHandler from './handlers/patchSubscriptionCustomer.js'
 import getUsersHandler from './handlers/getUsers.js'
 import patchUsersHandler from './handlers/patchUsers.js'
 import postUsersHandler from './handlers/postUsers.js'
@@ -288,6 +290,10 @@ app.get('/workspaces/:workspaceId/library', [setupMongo], getWorkspaceLibraryHan
 app.get('/subscriptions', [setupMongo], getSubscriptionsHandler)
 
 app.patch('/subscriptions/:subscriptionId', [setupMongo], patchSubscriptionHandler)
+
+app.get('/subscription-customer', [setupMongo], getSubscriptionCustomerHandler)
+
+app.patch('/subscription-customer', [setupMongo], patchSubscriptionCustomerHandler)
 
 app.get('/users', [setupMongo], getUsersHandler)
 
@@ -550,6 +556,7 @@ app.get('/oembed', [setupMongo], getLiveDemoOEmbedHandler)
 app.post('/workspaces/:workspaceId/stories/:storyId/publish', [setupMongo], postStoryPublishHandler)
 
 app.post('/workspaces/:workspaceId/stories/:storyId/sessions', [setupMongo], postStorySessionHandler)
+
 app.post('/workspaces/:workspaceId/stories/:storyId/sessions/:sessionId/events', [setupMongo], postStorySessionEventsHandler)
 
 app.get('/workspaces/:workspaceId/stories/:storyId/sessions/:sessionId/events', [setupMongo], getStorySessionEventsHandler)

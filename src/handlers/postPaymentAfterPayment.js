@@ -4,6 +4,7 @@ import helpers from '../helpers/livedemoHelpers.js'
 import EventReporter from '../helpers/eventReporter.js'
 import EventNamesEnum from '../constants/EventNamesEnum.js'
 import SubscriptionTypes from '../constants/SubscriptionTypes.js'
+import { subscriptionsForWorkspacesFilter } from '../helpers/subscriptionHelpers.js'
 
 const handler = function (req, res) {
   let { Models, conn } = req.mongo
@@ -48,12 +49,12 @@ const handler = function (req, res) {
         throw new Error('Subscription not found')
       }
 
-      // Cancel other active subscriptions for this workspace
+      // Cancel other active subscriptions for workspaces on this subscription
       return Models.Subscription.find({
-        workspaceId: subDoc.workspaceId,
+        ...subscriptionsForWorkspacesFilter(subDoc),
         active: true,
         expired: false,
-        _id: { $ne: subscriptionId }
+        _id: { $ne: subDoc._id },
       }).lean()
         .then((subsToCancel) => {
           // TODO: Implement subscription cancellation logic

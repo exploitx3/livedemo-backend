@@ -28,6 +28,10 @@ const handler = async function (req, res) {
   try {
     const { authUser: authUserDoc } = await helpers.authReq(req, Models)
     const { productId, workspaceId } = req.body
+    const parsedQuantity = parseInt(req.body.quantity, 10)
+    const quantity = Number.isFinite(parsedQuantity)
+      ? Math.min(100, Math.max(1, parsedQuantity))
+      : 1
 
     if (!productId) {
       return res.status(ResponseCodes['500_INTERNAL_SERVER_ERROR']).json({
@@ -63,7 +67,7 @@ const handler = async function (req, res) {
       })
     }
 
-    const lineItems = [{ price: prices.data[0].id, quantity: 1 }]
+    const lineItems = [{ price: prices.data[0].id, quantity }]
 
     const sessionParams = {
       mode: 'subscription',
@@ -72,7 +76,8 @@ const handler = async function (req, res) {
       cancel_url: cancelUrl,
       metadata: {
         userId: authUserDoc._id.toString(),
-        workspaceId: workspaceId.toString()
+        workspaceId: workspaceId.toString(),
+        quantity: String(quantity),
       }
     }
 

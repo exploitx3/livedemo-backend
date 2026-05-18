@@ -16,7 +16,9 @@ const Charge = new mongoose.Schema({
     cardId: { type: mongoose.Schema.Types.ObjectId, ref: 'Card' },
     useSavedCard: { type: Boolean },
     currency: { type: String },
-    autoPay: { type: Boolean, default: false }
+    autoPay: { type: Boolean, default: false },
+    stripeCheckoutSessionId: { type: String },
+    stripeSubscriptionId: { type: String },
   }, options
 )
 

@@ -1,4 +1,5 @@
 import AuthTokenStatuses from '../constants/AuthTokenStatuses.js'
+import { normalizeSubscriptions } from './subscriptionHelpers.js'
 
 export function getUserByAccessToken(token, UserModel, AuthToken) {
     let userDataPromise = AuthToken.findOne({ token: token, status: AuthTokenStatuses.ACTIVE }).lean()
@@ -22,7 +23,11 @@ export function getUserByAccessToken(token, UserModel, AuthToken) {
                         throw new Error('No user found by the userId from the access token')
                     }
 
-                    return JSON.parse(JSON.stringify(userData))
+                    const user = JSON.parse(JSON.stringify(userData))
+                    if (user.subscriptions) {
+                      user.subscriptions = normalizeSubscriptions(user.subscriptions)
+                    }
+                    return user
                 })
         })
 }
@@ -43,8 +48,12 @@ export function getUserAndTokenByInstanceId(instanceId, UserModel, AuthToken) {
                         throw new Error('No user found by the userId from the access token')
                     }
 
+                    const user = JSON.parse(JSON.stringify(userData))
+                    if (user.subscriptions) {
+                      user.subscriptions = normalizeSubscriptions(user.subscriptions)
+                    }
                     return {
-                        userData: JSON.parse(JSON.stringify(userData)),
+                        userData: user,
                         authToken: JSON.parse(JSON.stringify(authTokenDoc))
                     }
                 })

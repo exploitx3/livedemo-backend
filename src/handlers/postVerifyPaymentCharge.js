@@ -76,7 +76,7 @@ const handler = function (req, res) {
         return new Models.Subscription({
           type: charge.subscriptionType,
           membersAllowed: SubscriptionTypesMembersAllowed[charge.subscriptionType],
-          workspaceId: charge.workspaceId,
+          workspaceIds: [charge.workspaceId],
           chargeId: charge._id,
           userId: authUserDoc._id,
           active: true,
@@ -151,7 +151,7 @@ const handler = function (req, res) {
               .then((chargeDoc) => {
                 // Update workspace type
                 return Models.Workspace.findOneAndUpdate(
-                  { _id: subscription.workspaceId },
+                  { _id: { $in: subscription.workspaceIds } },
                   { $set: { type: subscription.type } }
                 )
                   .then(() => {

@@ -15,6 +15,12 @@ import EventNamesEnum from '../constants/EventNamesEnum.js'
 import ENV from '../envServer.js'
 import { mapCard } from '../helpers/mapper.js'
 import WorkspaceTypes from '../constants/WorkspaceTypes.js'
+import { getSubscriptionWorkspaceIds } from '../helpers/subscriptionHelpers.js'
+import {
+  getOrCreateSubscriptionCustomer,
+  linkSubscriptionToCustomer,
+  upsertSubscriptionCustomer,
+} from '../helpers/subscriptionCustomerHelpers.js'
 
 // Stripe integration - will be initialized when needed
 let stripe = null
@@ -198,7 +204,11 @@ const handler = function (req, res) {
                   Models
                 )
                   .then(({ subscription, charge }) => {
-                    return setWorkspaceType(subscription.workspaceId, subscription.type, Models)
+                    return Promise.all(
+                      getSubscriptionWorkspaceIds(subscription).map((workspaceId) =>
+                        setWorkspaceType(workspaceId, subscription.type, Models)
+                      )
+                    )
                       .then(() => {
                         return EventReporter.storeInfoEvent(EventNamesEnum.SUBSCRIPITON_PURCHASED, {
                           userId: authUserDoc._id,
@@ -411,15 +421,30 @@ function setWorkspaceType(workspaceId, subscriptionType, Models) {
 }
 
 function createSubscriptionAndCharge(workspace, authUserDoc, subscriptionType, autoPay, confirmedPaymentIntent, card, useSavedCard, currency, amount, Models) {
-  return new Models.Subscription({
-    type: SubscriptionTypes[subscriptionType],
-    workspaceId: workspace._id,
-    active: true,
-    userId: authUserDoc._id,
-    autoPay: autoPay,
-    expired: false,
-    expireDate: SubscriptionTypesExpireDates[subscriptionType.toLowerCase()]
-  }).save()
+  return getOrCreateSubscriptionCustomer(Models, authUserDoc._id, {
+    cardId: card?._id,
+    autoPay,
+  })
+    .then((subscriptionCustomer) =>
+      new Models.Subscription({
+        type: SubscriptionTypes[subscriptionType],
+        workspaceIds: [workspace._id],
+        subscriptionCustomerId: subscriptionCustomer._id,
+        active: true,
+        userId: authUserDoc._id,
+        autoPay: autoPay,
+        expired: false,
+        expireDate: SubscriptionTypesExpireDates[subscriptionType.toLowerCase()],
+      })
+        .save()
+        .then((subscription) =>
+          linkSubscriptionToCustomer(
+            Models,
+            subscription._id,
+            subscriptionCustomer._id
+          ).then(() => subscription)
+        )
+    )
     .then((subscription) => {
       return Models.Workspace.findOneAndUpdate(
         { _id: workspace._id },
@@ -455,9 +480,16 @@ function createSubscriptionAndCharge(workspace, authUserDoc, subscriptionType, a
             { _id: charge.subscriptionId },
             { $set: { chargeId: charge._id } }
           )
-            .then(() => {
-              return { subscription, charge }
-            })
+            .then(() =>
+              upsertSubscriptionCustomer(Models, {
+                userId: authUserDoc._id,
+                chargeId: charge._id,
+                subscriptionId: subscription._id,
+                cardId: card?._id,
+                autoPay,
+              })
+            )
+            .then(() => ({ subscription, charge }))
         })
     })
 }
