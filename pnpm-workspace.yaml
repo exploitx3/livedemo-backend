@@ -1,15 +1,3 @@
-# Allow install scripts only for packages that need downloaded/native binaries.
-# Without these, pnpm reports ERR_PNPM_IGNORED_BUILDS and puppeteer/ffmpeg break at runtime.
-onlyBuiltDependencies:
-  - '@ffmpeg-installer/linux-x64'
-  - '@parcel/watcher'
-  - core-js
-  - esbuild
-  - ffmpeg-static
-  - puppeteer
-  - react-joyride
-  - sharp
-
 overrides:
   '@babel/runtime@<7.26.10': '>=7.26.10'
   bson@<1.1.4: '>=1.1.4'
