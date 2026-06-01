@@ -2,6 +2,7 @@ import Stripe from 'stripe'
 import helpers from '../helpers/livedemoHelpers.js'
 import ResponseCodes from '../constants/ResponseCodes.js'
 import ENV from '../envServer.js'
+import { syncUserStripeCustomerId } from '../helpers/paymentHelpers.js'
 
 let stripe = null
 
@@ -27,7 +28,7 @@ const handler = async function (req, res) {
 
   try {
     const { authUser: authUserDoc } = await helpers.authReq(req, Models)
-    const { productId, workspaceId } = req.body
+    const { productId, workspaceId, freeTrial } = req.body
     const parsedQuantity = parseInt(req.body.quantity, 10)
     const quantity = Number.isFinite(parsedQuantity)
       ? Math.min(100, Math.max(1, parsedQuantity))
@@ -78,7 +79,27 @@ const handler = async function (req, res) {
         userId: authUserDoc._id.toString(),
         workspaceId: workspaceId.toString(),
         quantity: String(quantity),
+        freeTrial: freeTrial ? 'true' : 'false',
       }
+    }
+
+    if (freeTrial === true) {
+      sessionParams.subscription_data = {
+        trial_period_days: 7,
+      }
+      sessionParams.payment_method_collection = 'always'
+    }
+
+    // For free trials we must attach a Stripe customer up-front.
+    // This guarantees session.customer is always set, which patchSubscriptionCustomer
+    // relies on via the stripeCustomerId stored in SubscriptionCustomer.
+    if (freeTrial === true && !authUserDoc.stripeCustomerId) {
+      const customer = await stripeInstance.customers.create({
+        email: authUserDoc.email || undefined,
+        metadata: { userId: authUserDoc._id.toString() },
+      })
+      await syncUserStripeCustomerId(authUserDoc._id, customer.id, Models)
+      authUserDoc.stripeCustomerId = customer.id
     }
 
     if (authUserDoc.stripeCustomerId) {

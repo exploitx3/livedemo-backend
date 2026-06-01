@@ -53,6 +53,7 @@ const PRODUCT_TO_SUBSCRIPTION_TYPE = {
 
 const SUBSCRIPTION_TYPE_TO_WORKSPACE_TYPE = {
   [SubscriptionTypes.PRO_MONTHLY]: WorkspaceTypes.PRO,
+  [SubscriptionTypes.TRIAL_PRO_MONTHLY]: WorkspaceTypes.PRO,
   [SubscriptionTypes.PRO_ANNUALLY]: WorkspaceTypes.PRO,
   [SubscriptionTypes.GROWTH_MONTHLY]: WorkspaceTypes.GROWTH,
   [SubscriptionTypes.GROWTH_ANNUALLY]: WorkspaceTypes.GROWTH,
@@ -80,7 +81,12 @@ const handler = async function (req, res) {
       expand: ['line_items.data.price.product']
     })
 
-    if (session.payment_status !== 'paid') {
+    const isFreeTrial = session.metadata?.freeTrial === 'true'
+    const validPaymentStatuses = isFreeTrial
+      ? ['paid', 'no_payment_required']
+      : ['paid']
+
+    if (!validPaymentStatuses.includes(session.payment_status)) {
       return res.status(ResponseCodes['500_INTERNAL_SERVER_ERROR']).json({
         error: true,
         message: `Payment not completed. Status: ${session.payment_status}`
@@ -112,7 +118,10 @@ const handler = async function (req, res) {
 
     // Derive subscription type from product
     const productId = session.line_items.data[0]?.price?.product?.id
-    const subscriptionType = PRODUCT_TO_SUBSCRIPTION_TYPE[productId]
+    
+    let subscriptionType = isFreeTrial
+      ? SubscriptionTypes.TRIAL_PRO_MONTHLY
+      : PRODUCT_TO_SUBSCRIPTION_TYPE[productId]
 
     if (!subscriptionType) {
       return res.status(ResponseCodes['500_INTERNAL_SERVER_ERROR']).json({
@@ -137,7 +146,24 @@ const handler = async function (req, res) {
       Models
     )
 
-    const defaultPaymentMethod = stripeSubscription.default_payment_method
+    // For free trials, default_payment_method may be null at trial start even
+    // though payment_method_collection: 'always' was used. Fall back to the
+    // payment method on the latest invoice's payment intent or the session's
+    // setup_intent so we can save the card for later auto-pay management.
+    let defaultPaymentMethod = stripeSubscription.default_payment_method
+    if (!defaultPaymentMethod && isFreeTrial) {
+      try {
+        const setupIntentId = session.setup_intent
+        if (setupIntentId) {
+          const setupIntent = await stripeInstance.setupIntents.retrieve(
+            typeof setupIntentId === 'string' ? setupIntentId : setupIntentId.id
+          )
+          defaultPaymentMethod = setupIntent.payment_method
+        }
+      } catch (e) {
+        console.warn('postVerifyCheckoutSession: could not retrieve setup intent payment method', e.message)
+      }
+    }
     const paymentMethodId = typeof defaultPaymentMethod === 'string'
       ? defaultPaymentMethod
       : defaultPaymentMethod?.id || ''
