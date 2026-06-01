@@ -90,6 +90,7 @@ const handler = function (req, res) {
         name: userDataSaved.name,
         token: authToken.token,
         workspaceMembers: userDataSaved.workspaceMembers,
+        featureFlags: userDataSaved.featureFlags,
         redirectPath
       }))
     })

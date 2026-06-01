@@ -9,6 +9,10 @@ import {
   getOrCreateSubscriptionCustomer,
   linkSubscriptionToCustomer,
 } from '../helpers/subscriptionCustomerHelpers.js'
+import {
+  enablePaidPlanUserFeatureFlags,
+  setActiveUserSubscription,
+} from '../helpers/subscriptionHelpers.js'
 
 const handler = function (req, res) {
   let { Models, conn } = req.mongo
@@ -73,6 +77,9 @@ const handler = function (req, res) {
         expireDate: SubscriptionTypesExpireDates[subscriptionType.toLowerCase()],
         membersAllowed: SubscriptionTypesMembersAllowed[subscriptionType] || 1
       }).save()
+
+      await setActiveUserSubscription(Models, authUserDoc._id, subscription._id)
+      await enablePaidPlanUserFeatureFlags(Models, authUserDoc._id)
 
       await linkSubscriptionToCustomer(
         Models,

@@ -212,7 +212,17 @@ const handler = function (req, res) {
 
     res.set({ ...CORS_HEADERS, 'Content-Type': 'application/json' })
     res.status(ResponseCodes['200_OK'])
-    res.json({ success: true, token: authTokenDoc.token, redirectUrl, redirectPath })
+    res.json({
+      success: true,
+      token: authTokenDoc.token,
+      redirectUrl,
+      redirectPath,
+      id: userDoc._id,
+      email: userDoc.email,
+      name: userDoc.name,
+      timezone: userDoc.timezone || '',
+      featureFlags: userDoc.featureFlags,
+    })
   })
   .catch((error) => {
     console.log(error)

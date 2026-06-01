@@ -15,7 +15,10 @@ import EventNamesEnum from '../constants/EventNamesEnum.js'
 import ENV from '../envServer.js'
 import { mapCard } from '../helpers/mapper.js'
 import WorkspaceTypes from '../constants/WorkspaceTypes.js'
-import { getSubscriptionWorkspaceIds } from '../helpers/subscriptionHelpers.js'
+import {
+  getSubscriptionWorkspaceIds,
+  setActiveUserSubscription,
+} from '../helpers/subscriptionHelpers.js'
 import {
   getOrCreateSubscriptionCustomer,
   linkSubscriptionToCustomer,
@@ -438,11 +441,15 @@ function createSubscriptionAndCharge(workspace, authUserDoc, subscriptionType, a
       })
         .save()
         .then((subscription) =>
-          linkSubscriptionToCustomer(
-            Models,
-            subscription._id,
-            subscriptionCustomer._id
-          ).then(() => subscription)
+          setActiveUserSubscription(Models, authUserDoc._id, subscription._id)
+            .then(() =>
+              linkSubscriptionToCustomer(
+                Models,
+                subscription._id,
+                subscriptionCustomer._id
+              )
+            )
+            .then(() => subscription)
         )
     )
     .then((subscription) => {

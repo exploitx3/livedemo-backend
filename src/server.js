@@ -100,6 +100,7 @@ import postForgotPasswordHandler from './handlers/postForgotPassword.js'
 import postSendChangePasswordEmailHandler from './handlers/postSendChangePasswordEmail.js'
 import postChangePasswordHandler from './handlers/postChangePassword.js'
 import getUsersAuthGoogleLinkHandler from './handlers/getUsersAuthGoogleLink.js'
+import postUsersAuthGoogleLinkHandler from './handlers/postUsersAuthGoogleLink.js'
 import getUsersAuthGoogleCallbackHandler from './handlers/getUsersAuthGoogleCallback.js'
 import postUsersAuthGoogleOneTapHandler from './handlers/postUsersAuthGoogleOneTap.js'
 import getIntegrationsHubspotCallbackHandler from './handlers/getIntegrationsHubspotCallback.js'
@@ -316,6 +317,8 @@ app.post('/users/sendChangePasswordEmail', [setupMongo], postSendChangePasswordE
 app.post('/users/changePassword', [setupMongo], postChangePasswordHandler)
 
 app.get('/users/auth/google-link', getUsersAuthGoogleLinkHandler)
+
+app.post('/users/auth/google-link', postUsersAuthGoogleLinkHandler)
 
 app.get('/users/auth/google-callback', [setupMongo], getUsersAuthGoogleCallbackHandler)
 

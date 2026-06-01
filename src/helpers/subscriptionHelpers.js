@@ -103,3 +103,45 @@ export function getPrimarySubscriptionWorkspaceId(subscription) {
   const ids = getSubscriptionWorkspaceIds(subscription)
   return ids[0] ?? null
 }
+
+/** Deactivate all user subscriptions except the one that should be active. */
+export async function setActiveUserSubscription(Models, userId, activeSubscriptionId) {
+  if (!userId || !activeSubscriptionId) return
+
+  const userObjectId = userId._id ?? userId
+  const activeId = activeSubscriptionId._id ?? activeSubscriptionId
+
+  await Models.Subscription.updateMany(
+    {
+      userId: userObjectId,
+      _id: { $ne: activeId },
+    },
+    { $set: { active: false } }
+  )
+
+  await Models.Subscription.updateOne(
+    { _id: activeId },
+    { $set: { active: true } }
+  )
+}
+
+export const PAID_PLAN_USER_FEATURE_FLAGS = {
+  'featureFlags.noDemoLimit': true,
+  'featureFlags.advanceInsights': true,
+  'featureFlags.allowRemoveWatermark': true,
+  'featureFlags.showMp4GifsExport': true,
+  'featureFlags.allowForms': true,
+  'featureFlags.allowPersonalization': true,
+}
+
+/** Enable paid-plan feature flags on the user after any plan purchase. */
+export async function enablePaidPlanUserFeatureFlags(Models, userId) {
+  if (!userId) return
+
+  const userObjectId = userId._id ?? userId
+
+  await Models.User.findOneAndUpdate(
+    { _id: userObjectId },
+    { $set: PAID_PLAN_USER_FEATURE_FLAGS }
+  )
+}

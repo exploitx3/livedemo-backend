@@ -9,7 +9,11 @@ import WorkspaceTypes from '../constants/WorkspaceTypes.js'
 import ChargeStatuses from '../constants/ChargeStatuses.js'
 import EventReporter from '../helpers/eventReporter.js'
 import EventNamesEnum from '../constants/EventNamesEnum.js'
-import { normalizeSubscription } from '../helpers/subscriptionHelpers.js'
+import {
+  normalizeSubscription,
+  enablePaidPlanUserFeatureFlags,
+  setActiveUserSubscription,
+} from '../helpers/subscriptionHelpers.js'
 import {
   saveUserCardFromStripePaymentMethod,
   syncUserStripeCustomerId,
@@ -189,6 +193,9 @@ const handler = async function (req, res) {
       expireDate: SubscriptionTypesExpireDates[subscriptionType],
       membersAllowed,
     }).save()
+
+    await setActiveUserSubscription(Models, authUserDoc._id, subscription._id)
+    await enablePaidPlanUserFeatureFlags(Models, authUserDoc._id)
 
     await linkSubscriptionToCustomer(
       Models,

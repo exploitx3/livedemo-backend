@@ -62,6 +62,7 @@ const handler = function (req, res) {
         workspaceMembers: userData.workspaceMembers,
         workspaces: userData.workspaces,
         subscriptions: userData.subscriptions,
+        featureFlags: userData.featureFlags,
         token: requestBody.token
       }))
     })

@@ -78,6 +78,7 @@ const handler = function (req, res) {
         name: userData.name,
         timezone: userData.timezone,
         workspaceMembers: userData.workspaceMembers,
+        featureFlags: userData.featureFlags,
         token: authTokenDoc.token
       }))
     })

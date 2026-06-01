@@ -49,6 +49,12 @@ const UserSchema = new mongoose.Schema({
     googleProfile: { type: GoogleProfile },
     featureFlags: {
       freeActivate: { type: Boolean, default: true},
+      noDemoLimit: { type: Boolean, default: false},
+      advanceInsights: { type: Boolean, default: false},
+      allowRemoveWatermark: { type: Boolean, default: false},
+      showMp4GifsExport: { type: Boolean, default: false},
+      allowForms: { type: Boolean, default: false},
+      allowPersonalization: { type: Boolean, default: false},
     },
     onboarding: {
       goals: [{

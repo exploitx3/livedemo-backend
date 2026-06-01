@@ -3,8 +3,10 @@ import afterPaymentValidator from '../helpers/validators/oldLambdaRoutes/payment
 import helpers from '../helpers/livedemoHelpers.js'
 import EventReporter from '../helpers/eventReporter.js'
 import EventNamesEnum from '../constants/EventNamesEnum.js'
-import SubscriptionTypes from '../constants/SubscriptionTypes.js'
-import { subscriptionsForWorkspacesFilter } from '../helpers/subscriptionHelpers.js'
+import {
+  enablePaidPlanUserFeatureFlags,
+  setActiveUserSubscription,
+} from '../helpers/subscriptionHelpers.js'
 
 const handler = function (req, res) {
   let { Models, conn } = req.mongo
@@ -49,27 +51,8 @@ const handler = function (req, res) {
         throw new Error('Subscription not found')
       }
 
-      // Cancel other active subscriptions for workspaces on this subscription
-      return Models.Subscription.find({
-        ...subscriptionsForWorkspacesFilter(subDoc),
-        active: true,
-        expired: false,
-        _id: { $ne: subDoc._id },
-      }).lean()
-        .then((subsToCancel) => {
-          // TODO: Implement subscription cancellation logic
-          // For now, just mark them as inactive
-          if (subsToCancel.length > 0) {
-            return Models.Subscription.updateMany(
-              { _id: { $in: subsToCancel.map(s => s._id) } },
-              { $set: { active: false } }
-            )
-              .then(() => {
-                return { chargeDoc, subDoc }
-              })
-          }
-          return { chargeDoc, subDoc }
-        })
+      return setActiveUserSubscription(Models, subDoc.userId, subDoc._id)
+        .then(() => ({ chargeDoc, subDoc }))
     })
     .then(({ chargeDoc, subDoc }) => {
       // Report event
@@ -83,35 +66,8 @@ const handler = function (req, res) {
         })
     })
     .then(({ chargeDoc, subDoc }) => {
-      // TODO: Trigger workspace populate saga if needed
-      // This would typically involve creating jobs or triggering async processes
-
-      // TODO: Create populate job, update instant updates job, finalize subscription job
-      // These are typically background jobs that run at scheduled times
-
-      // For now, just update feature flags based on subscription type
-      let featureFlags = {
-        channelExports: false,
-        instantUpdates: false,
-        workspaceExports: false,
-        freeActivate: true
-      }
-
-      if (subDoc.type === SubscriptionTypes.STARTUP_MONTHLY || subDoc.type === SubscriptionTypes.STARTUP_ANNUALLY) {
-        featureFlags.channelExports = true
-      } else if (subDoc.type === SubscriptionTypes.PRO_MONTHLY || subDoc.type === SubscriptionTypes.PRO_ANNUALLY) {
-        featureFlags.channelExports = true
-      } else if (subDoc.type === SubscriptionTypes.BUSINESS_MONTHLY || subDoc.type === SubscriptionTypes.BUSINESS_ANNUALLY) {
-        featureFlags.channelExports = true
-        featureFlags.instantUpdates = true
-        featureFlags.workspaceExports = true
-      }
-
-      // Note: WorkspaceMember model may not exist in story-api
-      // This would need to be adapted based on your data model
-      // For now, we'll just return success
-
-      return Promise.resolve()
+      return enablePaidPlanUserFeatureFlags(Models, subDoc.userId)
+        .then(() => ({ chargeDoc, subDoc }))
     })
     .then(() => {
       const resultResponse = {

@@ -28,28 +28,22 @@ const handler = function (req, res) {
       )
     })
     .then(() => {
-      const loginLink = buildGoogleLoginLink(req.query.returnTo)
+      const returnTo = req.body?.returnTo ?? req.query?.returnTo
+      const loginLink = buildGoogleLoginLink(returnTo)
 
       if (!loginLink) {
         const error = new Error('Google OAuth not configured')
         error.resultResponse = {
           statusCode: ResponseCodes['500_INTERNAL_SERVER_ERROR'],
-          headers: corsHeaders()
+          headers: corsHeaders(),
+          body: JSON.stringify({ error: 'Google OAuth not configured' })
         }
         throw error
       }
 
-      const resultResponse = {
-        statusCode: ResponseCodes['302_FOUND'],
-        headers: {
-          ...corsHeaders(),
-          Location: loginLink
-        }
-      }
-
-      res.set(resultResponse.headers)
-      res.status(resultResponse.statusCode)
-      res.redirect(loginLink)
+      res.set({ ...corsHeaders(), 'Content-Type': 'application/json' })
+      res.status(ResponseCodes['200_OK'])
+      res.json({ link: loginLink })
     })
     .catch((err) => {
       console.log(err)
@@ -60,7 +54,8 @@ const handler = function (req, res) {
       } else {
         resultResponse = {
           statusCode: ResponseCodes['500_INTERNAL_SERVER_ERROR'],
-          headers: corsHeaders()
+          headers: corsHeaders(),
+          body: JSON.stringify({ error: 'Internal server error' })
         }
       }
 

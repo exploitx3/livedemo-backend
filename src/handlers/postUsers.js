@@ -210,6 +210,7 @@ const handler = function (req, res) {
         name: savedUserData.name,
         email: savedUserData.email,
         timezone: savedUserData.timezone,
+        featureFlags: savedUserData.featureFlags,
         token: authTokenData.token,
         redirectPath
       }))
