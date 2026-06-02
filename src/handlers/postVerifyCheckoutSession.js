@@ -223,6 +223,13 @@ const handler = async function (req, res) {
     await setActiveUserSubscription(Models, authUserDoc._id, subscription._id)
     await enablePaidPlanUserFeatureFlags(Models, authUserDoc._id)
 
+    if (isFreeTrial) {
+      await Models.User.findOneAndUpdate(
+        { _id: authUserDoc._id },
+        { $set: { 'featureFlags.freeActivate': false } }
+      )
+    }
+
     await linkSubscriptionToCustomer(
       Models,
       subscription._id,
