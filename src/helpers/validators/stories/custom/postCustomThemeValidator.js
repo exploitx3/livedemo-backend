@@ -9,7 +9,6 @@ function validateBody(body) {
     stepBackgroundColor: Joi.string().required(),
     textColor: Joi.string().required(),
     buttonBackgroundColor: Joi.string().required(),
-    overlayBackgroundColor: Joi.string().required(),
     buttonTextColor: Joi.string().required(),
     watermarkConfig: {
       isActive: Joi.boolean().required(),

@@ -52,7 +52,6 @@ const Story = new mongoose.Schema({
                 textColor: {type: String, default: '#FFFFFF'}, // textColor
                 buttonBackgroundColor: {type: String, default: '#1070ff'},// buttonColor
                 buttonTextColor: {type: String, default: '#FFFFFF'}, // buttonColor
-                overlayBackgroundColor: {type: String, default: 'rgba(0,0,0,0.65)'}, // buttonColor
                 watermarkConfig: {
                     imageUrl: {type: String, default: ''},
                     text: {type: String, default: ''},

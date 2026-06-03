@@ -31,6 +31,8 @@ const ScreenStepSchema = new mongoose.Schema({
       type: {type: String, default: 'popup'}, //popup, form, start, iframe
       formId: {type:  mongoose.Schema.Types.ObjectId, ref: 'Form', default: null },
       showOverlay: {type: Boolean, default: false},
+      overlayBackgroundColor: {type: String, default: 'rgba(0,0,0,0.65)'},
+
       title: {type: String, default: 'Title'},
       description: {type: String, default: '<p>Description</p>'},
       alignment: {type: String, default: PopupAlignments.center}, // center, left, right

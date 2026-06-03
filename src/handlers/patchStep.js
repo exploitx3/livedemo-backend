@@ -88,6 +88,10 @@ const handler = function (req, res) {
         updateObj['steps.$.view.popup.showOverlay'] = stepView.popup.showOverlay
       }
 
+      if (stepView && stepView.popup && stepView.popup.overlayBackgroundColor !== undefined) {
+        updateObj['steps.$.view.popup.overlayBackgroundColor'] = stepView.popup.overlayBackgroundColor
+      }
+
       if (stepView && stepView.popup && stepView.popup.showPreviewImage !== undefined) {
         updateObj['steps.$.view.popup.showPreviewImage'] = stepView.popup.showPreviewImage
       }

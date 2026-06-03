@@ -27,7 +27,6 @@ const handler = function (req, res) {
       let stepBackgroundColor = requestBody.stepBackgroundColor
       let textColor = requestBody.textColor
       let buttonBackgroundColor = requestBody.buttonBackgroundColor
-      let overlayBackgroundColor = requestBody.overlayBackgroundColor
       let buttonTextColor = requestBody.buttonTextColor
 
       let watermarkConfigIsActive = requestBody.watermarkConfig.isActive
@@ -42,7 +41,6 @@ const handler = function (req, res) {
           'custom.theme.stepBackgroundColor': stepBackgroundColor,
           'custom.theme.textColor': textColor,
           'custom.theme.buttonBackgroundColor': buttonBackgroundColor,
-          'custom.theme.overlayBackgroundColor': overlayBackgroundColor,
           'custom.theme.buttonTextColor': buttonTextColor,
           'custom.theme.watermarkConfig.isActive': watermarkConfigIsActive,
           'custom.theme.watermarkConfig.text': watermarkConfigText,

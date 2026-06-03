@@ -11,6 +11,7 @@ const handler = function (req, res) {
   let workspaceId = req.params.workspaceId
   let authUserDoc = null
   let requestBody = null
+  let activeSubscription = null
 
   return Promise.resolve().then(async () => {
 
@@ -68,16 +69,25 @@ const handler = function (req, res) {
     .then(async () => {
       const email = requestBody.email
 
-      // Get workspace and user
+      // Get workspace, user, and active subscription
       return Promise.all([
         Models.Workspace.findOne({ _id: workspaceId })
           .populate('users')
           .lean(),
         Models.User.findOne({ email: email })
           .lean(),
+        Models.Subscription.findOne({
+          $or: [
+            { workspaceIds: workspaceId },
+            { userId: authUserDoc._id },
+          ],
+          active: true,
+          expired: false,
+        }).lean(),
       ])
     })
-    .then(([workspaceDoc, userDoc]) => {
+    .then(([workspaceDoc, userDoc, fetchedSubscription]) => {
+      activeSubscription = fetchedSubscription
       const email = requestBody.email
 
       // Check if user already in workspace
@@ -90,9 +100,8 @@ const handler = function (req, res) {
           headers: {
             'Access-Control-Max-Age': 600,
             'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept', // Required for CORS support to work
-            // Required for CORS support to work
-            'Access-Control-Allow-Credentials': true, // Required for cookies, authorization headers with HTTPS
+            'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept',
+            'Access-Control-Allow-Credentials': true,
           },
           body: JSON.stringify({
             error: 'User already in workspace'
@@ -102,6 +111,28 @@ const handler = function (req, res) {
         let error = new Error('User already in workspace')
         error.resultResponse = resultResponse
         throw error
+      }
+
+      // Check seat limit against active subscription
+      if (activeSubscription) {
+        const membersAllowed = activeSubscription.membersAllowed ?? 0
+        if (membersAllowed <= 0) {
+          const resultResponse = {
+            statusCode: ResponseCodes['400_BAD_REQUEST'],
+            headers: {
+              'Access-Control-Max-Age': 600,
+              'Access-Control-Allow-Origin': '*',
+              'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept',
+              'Access-Control-Allow-Credentials': true,
+            },
+            body: JSON.stringify({
+              error: `Member limit reached. Your plan allows ${membersAllowed} member${membersAllowed === 1 ? '' : 's'}.`
+            })
+          }
+          let error = new Error('Member limit reached')
+          error.resultResponse = resultResponse
+          throw error
+        }
       }
 
       // If user exists, add to workspace
@@ -186,15 +217,21 @@ const handler = function (req, res) {
         newUserEmail: email,
         directLoginLink: authUrl
       }, [email], Models)
-        .then(() => {
+        .then(async () => {
+          if (activeSubscription) {
+            await Models.Subscription.findOneAndUpdate(
+              { _id: activeSubscription._id },
+              { $inc: { membersAllowed: -1 } }
+            )
+          }
+
           const resultResponse = {
             statusCode: ResponseCodes['200_OK'],
             headers: {
               'Access-Control-Max-Age': 600,
               'Access-Control-Allow-Origin': '*',
-              'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept', // Required for CORS support to work
-              // Required for CORS support to work
-              'Access-Control-Allow-Credentials': true, // Required for cookies, authorization headers with HTTPS
+              'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept',
+              'Access-Control-Allow-Credentials': true,
             }
           }
 
