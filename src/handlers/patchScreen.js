@@ -78,7 +78,7 @@ const handler = function (req, res) {
 
       res.set(resultResponse.headers)
       res.status(resultResponse.statusCode)
-      res.send(JSON.stringify(screenDoc.value))
+      res.send(JSON.stringify(screenDoc))
     })
     .catch((error) => {
       console.log(error)
