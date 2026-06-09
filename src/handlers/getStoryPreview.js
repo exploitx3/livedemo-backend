@@ -7,7 +7,7 @@ import * as sanitezeLib from '@braintree/sanitize-url'
 const sanitize = sanitezeLib.sanitizeUrl
 
 const handler = function (req, res) {
-    let { Models, conn } = req.mongo
+    let {Models, conn} = req.mongo
 
     let requestBody = null
 
@@ -66,14 +66,14 @@ const handler = function (req, res) {
                         }
                     ],
                     select: '_id name steps type cursorPositions customTransitions width height imageUrl index imageUrl asset playbackRate popups zoomSpans startTime endTime playbackRate',
-                    options: { sort: { 'index': 1 } }
+                    options: {sort: {'index': 1}}
                 })
                 .lean()
         })
         .then(storyDoc => {
 
             if (link) {
-                return Models.Link.findOne({ _id: link }).lean()
+                return Models.Link.findOne({_id: link}).lean()
                     .then(linkDoc => {
                         if (!linkDoc || !linkDoc.variables) {
                             throw new Error('Cannot find link')
@@ -85,7 +85,7 @@ const handler = function (req, res) {
                     })
             } else {
 
-                storyDoc = livedemoHelpers.processLiveDemoLinkUpdates(storyDoc, { variables: storyDoc.custom.variables || [] })
+                storyDoc = livedemoHelpers.processLiveDemoLinkUpdates(storyDoc, {variables: storyDoc.custom.variables || []})
 
                 return storyDoc
 
@@ -294,7 +294,6 @@ const handler = function (req, res) {
             }
 
 
-
             htmlString += '</head><body><div id="demoWrapper"></div>'
             htmlString += '<style>' +
                 '@keyframes ld-spinner-rotate{100%{transform:rotate(360deg)}}' +
@@ -306,9 +305,9 @@ const handler = function (req, res) {
                 '<svg id="ld-spinner" viewBox="0 0 50 50"><circle class="path" cx="25" cy="25" r="20"></circle></svg>' +
                 '</div></body><html>'
 
-            return htmlString
+            return {htmlString, storyDoc}
         })
-        .then((htmlString) => {
+        .then(({htmlString, storyDoc}) => {
 
             let CSP = `default-src 'self' 'unsafe-eval' 'unsafe-inline' blob:
   https://cdn.jsdelivr.net
@@ -326,7 +325,7 @@ connect-src 'self'
   ${ENV.INJECT_BUNDLE_HOST} 
   ${ENV.STORIES_API} 
   ${ENV.ENV === 'dev' ? '  ws://localhost.mine:8080\n' +
-                    '  ws://localhost.mine:3005' : ''} ; 
+                '  ws://localhost.mine:3005' : ''} ; 
 
 script-src 'self' 'unsafe-eval' 'unsafe-inline'
   http://localhost.mine:8080
@@ -375,10 +374,47 @@ child-src 'self'
   blob: ;
 `
 
-            const normalizedCsp = CSP
-                .replace(/\s{2,}/g, ' ')  // collapse indentation
-                .replace(/\n/g, ' ')     // remove newlines
-                .trim();
+            function parseCspToMap(cspString) {
+                const map = new Map()
+                const directives = cspString.split(';').map(d => d.trim()).filter(Boolean)
+                for (const directive of directives) {
+                    const parts = directive.replace(/\s+/g, ' ').split(' ')
+                    const name = parts[0].toLowerCase()
+                    const sources = parts.slice(1)
+                    if (!map.has(name)) {
+                        map.set(name, new Set(sources))
+                    } else {
+                        sources.forEach(s => map.get(name).add(s))
+                    }
+                }
+                return map
+            }
+
+            function serializeCspMap(map) {
+                return Array.from(map.entries())
+                    .map(([name, sources]) => `${name} ${Array.from(sources).join(' ')}`)
+                    .join('; ')
+            }
+
+            const baseMap = parseCspToMap(CSP)
+
+            const additionalCsp = storyDoc &&
+                storyDoc.custom &&
+                storyDoc.custom.security &&
+                storyDoc.custom.security.additionalContentSecurityPolicy
+
+            if (additionalCsp && additionalCsp.trim()) {
+                const additionalMap = parseCspToMap(additionalCsp)
+                for (const [name, sources] of additionalMap.entries()) {
+                    if (baseMap.has(name)) {
+                        sources.forEach(s => baseMap.get(name).add(s))
+                    } else {
+                        baseMap.set(name, sources)
+                    }
+                }
+            }
+
+            const normalizedCsp = serializeCspMap(baseMap)
 
             const resultResponse = {
                 statusCode: ResponseCodes['200_OK'],

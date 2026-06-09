@@ -22,6 +22,7 @@ import postCustomThemeUploadWatermarkImageHandler from './handlers/postCustomThe
 import postCustomHeaderHandler from './handlers/postCustomHeader.js'
 import postCustomThemeHandler from './handlers/postCustomTheme.js'
 import postCustomMiscHandler from './handlers/postCustomMisc.js'
+import postCustomSecurityHandler from './handlers/postCustomSecurity.js'
 import postCustomBackgroundHandler from './handlers/postCustomBackground.js'
 import postCustomVariablesHandler from './handlers/postCustomVariables.js'
 import patchCustomVariablesHandler from './handlers/patchCustomVariables.js'
@@ -137,6 +138,7 @@ import postAutoRecordingsEventsHandler from './handlers/postAutoRecordingsEvents
 import postAutoRecordingsCompleteHandler from './handlers/postAutoRecordingsComplete.js'
 
 import getAutoRecordingByIdHandler from './handlers/getAutoRecordingById.js'
+import getAutoRecordingsHandler from './handlers/getAutoRecordings.js'
 
 import postDemoSuggestionsGenerateLiveDemoHandler from './handlers/postDemoSuggestionsGenerateLiveDemo.js'
 
@@ -507,6 +509,8 @@ app.post('/workspaces/:workspaceId/stories/:storyId/custom/theme', [setupMongo],
 
 app.post('/workspaces/:workspaceId/stories/:storyId/custom/misc', [setupMongo], postCustomMiscHandler)
 
+app.post('/workspaces/:workspaceId/stories/:storyId/custom/security', [setupMongo], postCustomSecurityHandler)
+
 app.post('/workspaces/:workspaceId/stories/:storyId/custom/background', [setupMongo], postCustomBackgroundHandler)
 
 app.post('/workspaces/:workspaceId/stories/:storyId/custom/variables', [setupMongo], postCustomVariablesHandler)
@@ -584,6 +588,7 @@ app.delete('/workspaces/:workspaceId/stories/:storyId/links/:linkId', [setupMong
 app.get('/workspaces/:workspaceId/stories/:storyId/links', [setupMongo], getStoryLinksHandler)
 
 app.post('/workspaces/:workspaceId/auto-recordings', [setupMongo], postAutoRecordingsHandler)
+app.get('/workspaces/:workspaceId/auto-recordings', [setupMongo], getAutoRecordingsHandler)
 app.get('/workspaces/:workspaceId/auto-recordings/:autoRecordingId', [setupMongo], getAutoRecordingByIdHandler)
 app.post('/workspaces/:workspaceId/auto-recordings/:autoRecordingId/events', [setupMongo], postAutoRecordingsEventsHandler)
 app.post('/workspaces/:workspaceId/auto-recordings/:autoRecordingId/complete', [setupMongo], postAutoRecordingsCompleteHandler)

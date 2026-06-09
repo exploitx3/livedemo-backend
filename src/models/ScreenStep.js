@@ -28,8 +28,9 @@ const ScreenStepSchema = new mongoose.Schema({
       placement: {type: String, default: 'auto'},
     },
     popup: {
-      type: {type: String, default: 'popup'}, //popup, form, start, iframe
+      type: {type: String, default: 'popup'}, //popup, form, embed, start, iframe
       formId: {type:  mongoose.Schema.Types.ObjectId, ref: 'Form', default: null },
+      embedHtmlContent: {type: String, default: null},
       showOverlay: {type: Boolean, default: false},
       overlayBackgroundColor: {type: String, default: 'rgba(0,0,0,0.65)'},
 

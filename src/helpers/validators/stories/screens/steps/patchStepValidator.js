@@ -42,7 +42,8 @@ function validateBody(body) {
         title: Joi.string().allow('').optional(),
         description: Joi.string().allow('').optional(),
         alignment: Joi.string().optional(),
-        buttons: Joi.array().items(button)
+        buttons: Joi.array().items(button),
+        embedHtmlContent: Joi.string().allow('', null).optional(),
       },
       placement: Joi.string().optional(),
       showHeader: Joi.boolean().optional(),

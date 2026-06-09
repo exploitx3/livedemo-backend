@@ -2,6 +2,11 @@ import helpers from '../helpers/livedemoHelpers.js'
 import patchStepValidator from '../helpers/validators/stories/screens/steps/patchStepValidator.js'
 import ResponseCodes from '../constants/ResponseCodes.js'
 
+function sanitizeEmbedHtml(raw) {
+  if (!raw) return raw
+  return Buffer.from(raw, 'utf8').toString('base64')
+}
+
 const handler = function (req, res) {
   let { Models, conn } = req.mongo
 
@@ -78,6 +83,10 @@ const handler = function (req, res) {
 
       if (stepView && stepView.popup && stepView.popup.type) {
         updateObj['steps.$.view.popup.type'] = stepView.popup.type
+      }
+
+      if (stepView && stepView.popup && stepView.popup.embedHtmlContent !== undefined) {
+        updateObj['steps.$.view.popup.embedHtmlContent'] = sanitizeEmbedHtml(stepView.popup.embedHtmlContent)
       }
 
       if (stepView && stepView.popup && stepView.popup.alignment) {

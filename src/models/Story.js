@@ -80,6 +80,10 @@ const Story = new mongoose.Schema({
                     value: String
                 }
             ],
+            security: {
+                additionalContentSecurityPolicy: {type: String, default: ''},
+
+            }
         },
 
         thumbnailImageUrl: {type: String, default: ''},
