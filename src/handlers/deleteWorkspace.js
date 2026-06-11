@@ -42,6 +42,23 @@ const handler = function (req, res) {
         throw error
       }
 
+      if (!workspaceDoc.adminUser || workspaceDoc.adminUser.toString() !== authUserDoc._id.toString()) {
+        const resultResponse = {
+          statusCode: ResponseCodes['400_BAD_REQUEST'],
+          headers: {
+            'Access-Control-Max-Age': 600,
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept', // Required for CORS support to work
+            // Required for CORS support to work
+            'Access-Control-Allow-Credentials': true, // Required for cookies, authorization headers with HTTPS
+          }
+        }
+
+        let error = new Error('User is not admin')
+        error.resultResponse = resultResponse
+        throw error
+      }
+
       // Delete workspace - remove workspace from all users
       return Models.User.updateMany(
         { workspaces: { $in: [workspaceId] } },
