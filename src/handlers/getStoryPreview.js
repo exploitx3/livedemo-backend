@@ -288,9 +288,11 @@ const handler = function (req, res) {
             if (!isSessionRecordingDisabled) {
                 htmlString += '\n<link\n' +
                     '  rel="stylesheet"\n' +
-                    '  href="https://cdn.jsdelivr.net/npm/rrweb@latest/dist/rrweb.min.css"\n' +
+                    // '  href="https://cdn.jsdelivr.net/npm/rrweb@latest/dist/rrweb.min.css"\n' +
+                    '  href="https://cdn.jsdelivr.net/npm/rrweb@1.1.3/dist/rrweb.min.css"\n' +
                     '/>\n' +
-                    '<script src="https://cdn.jsdelivr.net/npm/rrweb@latest/dist/rrweb.min.js" async></script>\n'
+                    '<script src="https://cdn.jsdelivr.net/npm/rrweb@1.1.3/dist/record/rrweb-record.min.js"></script>\n'
+                    // '<script src="https://cdn.jsdelivr.net/npm/rrweb@latest/dist/rrweb.min.js" async></script>\n'
             }
 
 
