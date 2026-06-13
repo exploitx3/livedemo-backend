@@ -186,17 +186,21 @@ async function recordStoryDemo(videoName, pageWidth, pageHeight, pageUrl) {
         value: 'no-preference'
     }])
 
+    const deviceScaleFactor = 2
+    const recordWidth = pageWidth * deviceScaleFactor
+    const recordHeight = pageHeight * deviceScaleFactor
+
     await page.setViewport({
         width: pageWidth,
         height: pageHeight,
-        deviceScaleFactor: 2
+        deviceScaleFactor
     });
 
     const recorder = new PuppeteerScreenRecorder(page, {
         fps: 60,
         videoFrame: {
-            width: pageWidth,
-            height: pageHeight,
+            width: recordWidth,
+            height: recordHeight,
         },
     })
 
