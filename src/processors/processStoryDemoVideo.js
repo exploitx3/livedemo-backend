@@ -274,7 +274,7 @@ async function processStoryDemoVideo(sharedConfig, params, callback) {
         .then(async (videoLocation) => {
             console.log(videoLocation)
 
-            await enhanceVideoQuality(videoName)
+            // await enhanceVideoQuality(videoName)
 
             const bgMusic = storyDemo.custom && storyDemo.custom.backgroundMusic
             if (bgMusic && bgMusic.isActive && bgMusic.backgroundMusicUrl) {
