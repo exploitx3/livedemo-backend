@@ -115,6 +115,7 @@ export const connect = async () => {
     // With serverless, better to fail fast if not connected.
     // directConnection: true, //used for running adhoc scripts which skip replicaSet config discovery
     bufferCommands: false, // Disable mongoose buffering
+    directConnection: true,
   })
 
   await conn.asPromise()

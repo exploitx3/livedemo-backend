@@ -24,6 +24,8 @@ import postCustomThemeHandler from './handlers/postCustomTheme.js'
 import postCustomMiscHandler from './handlers/postCustomMisc.js'
 import postCustomSecurityHandler from './handlers/postCustomSecurity.js'
 import postCustomBackgroundHandler from './handlers/postCustomBackground.js'
+import postCustomBackgroundMusicHandler from './handlers/postCustomBackgroundMusic.js'
+import postCustomBackgroundMusicUploadHandler from './handlers/postCustomBackgroundMusicUpload.js'
 import postCustomVariablesHandler from './handlers/postCustomVariables.js'
 import patchCustomVariablesHandler from './handlers/patchCustomVariables.js'
 import deleteCustomVariablesHandler from './handlers/deleteCustomVariables.js'
@@ -472,9 +474,9 @@ const uploadAudio = multer({
         files: 1,
     },
     fileFilter: function (req, file, callback) {
-        var ext = path.extname(file.originalname)
-        if (!file && (file && file.mimetype !== 'audio/mpeg')) {
-            return callback(new Error('Only Audio files are allowed'))
+        const allowed = ['audio/mpeg', 'audio/wav', 'audio/wave', 'audio/x-wav']
+        if (!allowed.includes(file.mimetype)) {
+            return callback(new Error('Only mp3 and wav audio files are allowed'))
         }
         callback(null, true)
     },
@@ -512,6 +514,10 @@ app.post('/workspaces/:workspaceId/stories/:storyId/custom/misc', [setupMongo], 
 app.post('/workspaces/:workspaceId/stories/:storyId/custom/security', [setupMongo], postCustomSecurityHandler)
 
 app.post('/workspaces/:workspaceId/stories/:storyId/custom/background', [setupMongo], postCustomBackgroundHandler)
+
+app.post('/workspaces/:workspaceId/stories/:storyId/custom/backgroundMusic', [setupMongo], postCustomBackgroundMusicHandler)
+
+app.post('/workspaces/:workspaceId/stories/:storyId/custom/backgroundMusic/uploadBackgroundMusic', [setupMongo, uploadAudio.single('backgroundMusic')], postCustomBackgroundMusicUploadHandler)
 
 app.post('/workspaces/:workspaceId/stories/:storyId/custom/variables', [setupMongo], postCustomVariablesHandler)
 

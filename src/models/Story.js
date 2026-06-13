@@ -74,6 +74,11 @@ const Story = new mongoose.Schema({
                 wallpaperImage: {type: String, default: ''},
                 padding: {type: Number, default: 24},
             },
+            backgroundMusic: {
+                isActive: {type: Boolean, default: false},
+                backgroundMusicUrl: {type: String, default: ''},
+                backgroundMusicVolume: {type: Number, default: 50},
+            },
             variables: [
                 {
                     name: String,

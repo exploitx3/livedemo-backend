@@ -374,6 +374,12 @@ child-src 'self'
   http://*.hsforms.com
   https://*.hsforms.com
   blob: ;
+
+media-src 'self'
+  https://livedemo-cdn.s3.amazonaws.com
+  https://livedemo-cdn.s3.us-east-1.amazonaws.com
+  https://d1tmqwkaq9ygb3.cloudfront.net
+  blob: ;
 `
 
             function parseCspToMap(cspString) {
@@ -441,7 +447,8 @@ child-src 'self'
                     //     'img-src \'self\' https://livedemo-cdn.s3.amazonaws.com https://*.mux.com \'unsafe-inline\' data: *; ' +
                     //     'font-src \'self\' https://fonts.googleapis.com https://fonts.gstatic.com data: ;' +
                     //     `frame-src 'self' blob: ${ENV.STORIES_API} https://www.google.com;`,
-                    'Content-Security-Policy': normalizedCsp
+                    'Content-Security-Policy': normalizedCsp,
+                    'Permissions-Policy': 'autoplay=*',
                 }
             }
 
