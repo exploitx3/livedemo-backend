@@ -489,6 +489,49 @@ function uploadBufferImage(imageBuff, mimeType, imageName) {
 
 }
 
+
+function uploadBufferBackgroundAudio(audioBuff, mimeType, audioName) {
+    const s3Client = new S3Client({
+        region: 'us-east-1',
+        credentials: {
+            accessKeyId: ENV.AWS_ACCESS_KEY_ID,
+            secretAccessKey: ENV.AWS_SECRET_ACCESS_KEY
+        }
+    })
+
+    console.log('AWS_ACCESS_KEY_ID ' + ENV.AWS_ACCESS_KEY_ID)
+    console.log('AWS_SECRET_ACCESS_KEY ' + ENV.AWS_SECRET_ACCESS_KEY)
+
+
+    let uploadParams = {
+        Bucket: 'livedemo-cdn',
+        Key: 'story-background-audios/' + audioName,
+        Body: audioBuff,
+        ACL: 'public-read',
+        ContentType: mimeType
+    }
+
+    return new Promise(async (resolve, reject) => {
+        try {
+            const upload = new Upload({
+                client: s3Client,
+                params: uploadParams
+            })
+
+            const uploadResult = await upload.done()
+
+            console.log('successfully uploaded the image!')
+            resolve(uploadResult)
+        } catch (error) {
+            console.log(error)
+            console.log('Error uploading data: ', error)
+            reject(error)
+        }
+    })
+
+}
+
+
 function uploadScreenImage(imageBuff, mimeType, imageName) {
     const s3Client = new S3Client({
         region: 'us-east-1',
@@ -847,6 +890,7 @@ export default {
     findNodeByNodeName,
     findNodeByTagValue,
     uploadBufferImage,
+    uploadBufferBackgroundAudio,
     uploadScreenImage,
     uploadStepAudio,
     getClientIpData,
