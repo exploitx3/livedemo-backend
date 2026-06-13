@@ -11,6 +11,9 @@ const configsArr = [
   processDemoActivityEvents
 ]
 
+// Video jobs (record + ffmpeg enhance/mix + gif) can exceed monq's 5 min default watchdog
+const MONQ_JOB_CALLBACK_WATCHDOG_TIMEOUT = Number(process.env.MONQ_JOB_CALLBACK_WATCHDOG_TIMEOUT) || 1800000 // 30 minutes
+
 export default (sharedConfig) => {
   return {
     allQueueNames: configsArr
@@ -24,6 +27,7 @@ export default (sharedConfig) => {
       }),
     workerConfig: {
       collection: 'jobs-monq',
+      jobCallbackWatchdogTimeout: MONQ_JOB_CALLBACK_WATCHDOG_TIMEOUT,
       callbacks: configsArr.reduce((accum, config) => {
         config.jobNames.forEach(jobName => {
           accum[jobName] = (params, callback) => {
