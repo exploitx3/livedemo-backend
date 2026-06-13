@@ -85,6 +85,92 @@ async function mp4ToGif(videoName) {
 
 }
 
+async function enhanceVideoQuality(videoName) {
+    const inputVideo = `${ENV.TMP_FOLDER}/${videoName}.mp4`
+    const outputVideo = `${ENV.TMP_FOLDER}/${videoName}_hq.mp4`
+
+    const resolvedFfmpegPath = await getFfmpegPath()
+
+    return new Promise((resolve, reject) => {
+        const child = childProcess.spawn(
+            resolvedFfmpegPath,
+            [
+                '-y',
+                '-i', inputVideo,
+                '-c:v', 'libx264',
+                '-crf', '18',           // 0=lossless, 23=default, 18=visually near-lossless
+                '-preset', 'slow',      // slower preset = better compression at same quality
+                '-pix_fmt', 'yuv420p',  // max browser/player compatibility
+                '-movflags', '+faststart', // streaming-friendly
+                '-vf', 'fps=60',        // ensure consistent framerate
+                outputVideo,
+            ]
+        )
+
+        child.on('error', (err) => {
+            reject(new Error(`ffmpeg spawn error: ${err.message}`))
+        })
+
+        child.stderr.on('data', (data) => {
+            console.log(`[enhanceQuality] ${data.toString()}`)
+        })
+
+        child.on('close', async (code) => {
+            if (code === 0) {
+                await fsp.rename(outputVideo, inputVideo)
+                console.log(`Quality enhanced for ${videoName}.mp4`)
+                resolve(inputVideo)
+            } else {
+                reject(new Error(`ffmpeg quality enhance failed with code ${code}`))
+            }
+        })
+    })
+}
+
+async function mixBackgroundAudio(videoName, audioUrl) {
+    const inputVideo = `${ENV.TMP_FOLDER}/${videoName}.mp4`
+    const outputVideo = `${ENV.TMP_FOLDER}/${videoName}_audio.mp4`
+
+    const resolvedFfmpegPath = await getFfmpegPath()
+
+    return new Promise((resolve, reject) => {
+        const child = childProcess.spawn(
+            resolvedFfmpegPath,
+            [
+                '-y',
+                '-i', inputVideo,
+                '-stream_loop', '-1',
+                '-i', audioUrl,
+                '-c:v', 'copy',
+                '-c:a', 'aac',
+                '-b:a', '128k',
+                '-shortest',
+                '-map', '0:v:0',
+                '-map', '1:a:0',
+                outputVideo,
+            ]
+        )
+
+        child.on('error', (err) => {
+            reject(new Error(`ffmpeg spawn error: ${err.message}`))
+        })
+
+        child.stderr.on('data', (data) => {
+            console.log(`[mixAudio] ${data.toString()}`)
+        })
+
+        child.on('close', async (code) => {
+            if (code === 0) {
+                await fsp.rename(outputVideo, inputVideo)
+                console.log(`Audio mixed into ${videoName}.mp4`)
+                resolve(inputVideo)
+            } else {
+                reject(new Error(`ffmpeg audio mix failed with code ${code}`))
+            }
+        })
+    })
+}
+
 async function recordStoryDemo(videoName, pageWidth, pageHeight, pageUrl) {
     const browser = await puppeteer.launch({
         executablePath: '/usr/bin/google-chrome',
@@ -103,7 +189,7 @@ async function recordStoryDemo(videoName, pageWidth, pageHeight, pageUrl) {
     await page.setViewport({
         width: pageWidth,
         height: pageHeight,
-        deviceScaleFactor: 1
+        deviceScaleFactor: 2
     });
 
     const recorder = new PuppeteerScreenRecorder(page, {
@@ -181,8 +267,16 @@ async function processStoryDemoVideo(sharedConfig, params, callback) {
                 `${ENV.STORY_API}/workspaces/${workspaceId}/stories/${storyId}/preview?autoplay=true&autoplayDelay=3`
             )
         })
-        .then((videoLocation) => {
+        .then(async (videoLocation) => {
             console.log(videoLocation)
+
+            await enhanceVideoQuality(videoName)
+
+            const bgMusic = storyDemo.custom && storyDemo.custom.backgroundMusic
+            if (bgMusic && bgMusic.isActive && bgMusic.backgroundMusicUrl) {
+                console.log(`Mixing background audio: ${bgMusic.backgroundMusicUrl}`)
+                await mixBackgroundAudio(videoName, bgMusic.backgroundMusicUrl)
+            }
 
             return mp4ToGif(videoName)
                 .then((gifLocation) => {
