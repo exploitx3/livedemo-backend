@@ -362,6 +362,12 @@ async function processStoryDemoVideo(sharedConfig, params, callback) {
         })
         .then((storyContentDoc) => {
 
+            if(!userEmail) {
+                console.log('No user email found, skipping email')
+
+                return storyContentDoc
+            }
+            
             return sendEmail(Templates.storyDemoContentCreated,{
                 demoName: storyDemo.name,
                 videoUrl: storyContentDoc.videoUrl,
@@ -370,6 +376,9 @@ async function processStoryDemoVideo(sharedConfig, params, callback) {
                 [userEmail],
                 Models
             )
+            .then((emailDoc) => {
+                return storyContentDoc
+            })
         })
         .then((storyContentDoc) => {
             console.log('processStoryDemoVideo completed - end')
