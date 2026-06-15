@@ -677,7 +677,7 @@ function enqueueProcessStoryDemo(storyDemoId) {
 
   return new Promise((resolve, reject) => {
     let jobName = 'processStoryDemo'
-    queue.enqueue(jobName, { storyDemoId }, function (err, job) {
+    queue.enqueue(jobName, { storyDemoId }, { priority: 1 }, function (err, job) {
       if (err) {
         reject(err)
       }
