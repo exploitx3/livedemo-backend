@@ -695,7 +695,7 @@ function enqueueProcessAutoRecording(autoRecordingId) {
 
   return new Promise((resolve, reject) => {
     let jobName = 'processAutoRecording'
-    queue.enqueue(jobName, { autoRecordingId }, function (err, job) {
+    queue.enqueue(jobName, { autoRecordingId }, {priority: 1}, function (err, job) {
       if (err) {
         reject(err)
       }
