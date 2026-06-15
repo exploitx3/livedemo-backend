@@ -171,7 +171,7 @@ const options = {
     cert: fs.readFileSync('./certs/cert.pem')
 }
 
-async function setupWorker() {
+async function setupWorkers() {
     console.log(process.env)
 
     const client = monq(process.env.DB_URI || 'mongodb://localhost:27017/livedemo_app')
@@ -188,9 +188,12 @@ async function setupWorker() {
 
 
     const worker = client.worker(processorsConfig.allQueueNames, processorsConfig.workerConfig)
+    const videoWorker = client.worker(processorsConfig.videoQueueNames, processorsConfig.videoWorkerConfig)
     worker.start()
+    videoWorker.start()
 
-    console.log('Consumer started')
+    console.log('Story consumer started')
+    console.log('Video consumer started')
 
 }
 
@@ -630,7 +633,7 @@ async function setup() {
 
 
 if (ENV.ENABLE_CONSUMER) {
-    setupWorker()
+    setupWorkers()
 }
 
 if (ENV.ENABLE_API) {

@@ -6,9 +6,13 @@ import processDemoActivityEvents from './processDemoActivityEvents.js'
 const configsArr = [
   // publishLiveDemo
   processStoryDemo,
-  processStoryDemoVideo,
   processAutoRecording,
   processDemoActivityEvents
+]
+
+
+const videoConfigsArr = [
+  processStoryDemoVideo,
 ]
 
 // Video jobs (record + ffmpeg enhance/mix + gif) can exceed monq's 5 min default watchdog
@@ -37,7 +41,28 @@ export default (sharedConfig) => {
 
         return accum
       }, {})
+    },
+    videoQueueNames: videoConfigsArr
+      .reduce((accum, config) => {
+        accum = accum.concat(config.queueNames)
+        return accum
+      }, [])
+      .filter(function (value, index, self) {
 
+        return self.indexOf(value) === index
+      }),
+    videoWorkerConfig: {
+      collection: 'jobs-monq',
+      jobCallbackWatchdogTimeout: MONQ_JOB_CALLBACK_WATCHDOG_TIMEOUT,
+      callbacks: videoConfigsArr.reduce((accum, config) => {
+        config.jobNames.forEach(jobName => {
+          accum[jobName] = (params, callback) => {
+            return config.handler(sharedConfig, params, callback)
+          }
+        })
+
+        return accum
+      }, {})
     }
   }
 }
