@@ -211,7 +211,8 @@ async function recordStoryDemo(videoName, pageWidth, pageHeight, pageUrl) {
     try {
 
         await page.goto(pageUrl, {
-            waitUntil: 'load'
+            waitUntil: 'load',
+            timeout: 180 * 1000 // 3 minutes
         });
 
         await recorder.start(tempFileLocation)
