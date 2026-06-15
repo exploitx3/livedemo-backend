@@ -76,7 +76,7 @@
     "mongoose-aggregate-paginate-v2": "^1.0.42",
     "mongoose-long": "^0.8.0",
     "mongoose-paginate-v2": "^1.9.3",
-    "monq": "git+https://git@github.com/exploitx3/monq.git#release-1.0.0",
+    "monq": "git+https://git@github.com/exploitx3/monq.git#release-1.0.1",
     "multer": "^1.4.5-lts.1",
     "object-fit-videos": "^1.0.4",
     "openai": "^6.10.0",

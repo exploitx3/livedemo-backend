@@ -216,8 +216,8 @@ importers:
         specifier: ^1.9.3
         version: 1.9.3(mongoose@9.3.2(@aws-sdk/credential-providers@3.1015.0)(socks@2.8.7))
       monq:
-        specifier: git+https://git@github.com/exploitx3/monq.git#release-1.0.0
-        version: https://codeload.github.com/exploitx3/monq/tar.gz/c51eaebaf96a847d7e8eabc6e030e2b3cded05d3(@aws-sdk/credential-providers@3.1015.0)(socks@2.8.7)
+        specifier: git+https://git@github.com/exploitx3/monq.git#release-1.0.1
+        version: https://codeload.github.com/exploitx3/monq/tar.gz/fe809a556d2e454bb66f75330e43c340fe3da69f(@aws-sdk/credential-providers@3.1015.0)(socks@2.8.7)
       multer:
         specifier: ^1.4.5-lts.1
         version: 1.4.5-lts.2
@@ -5216,8 +5216,8 @@ packages:
     resolution: {integrity: sha512-4hMJA4vLAeNG6LnDwJImPYM+uJMVw+sFs7jtS/91OKOT7rzv19ytAAeswtAdWoinVBUVrzmClL/ZoPhcU5RL8w==}
     engines: {node: '>=20.19.0'}
 
-  monq@https://codeload.github.com/exploitx3/monq/tar.gz/c51eaebaf96a847d7e8eabc6e030e2b3cded05d3:
-    resolution: {tarball: https://codeload.github.com/exploitx3/monq/tar.gz/c51eaebaf96a847d7e8eabc6e030e2b3cded05d3}
+  monq@https://codeload.github.com/exploitx3/monq/tar.gz/fe809a556d2e454bb66f75330e43c340fe3da69f:
+    resolution: {tarball: https://codeload.github.com/exploitx3/monq/tar.gz/fe809a556d2e454bb66f75330e43c340fe3da69f}
     version: 1.0.0
 
   mpath@0.8.4:
@@ -6561,7 +6561,7 @@ packages:
 
   uuid@3.4.0:
     resolution: {integrity: sha512-HjSDRw6gZE5JMggctHBcjVak08+KEVhSIiDzFnT9S9aegmp85S/bReBVTb4QTFaRNptJ9kuYaNhnbNEOkbKb/A==}
-    deprecated: Please upgrade  to version 7 or higher.  Older versions may use Math.random() in certain circumstances, which is known to be problematic.  See https://v8.dev/blog/math-random for details.
+    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
     hasBin: true
 
   uuid@8.3.2:
@@ -13059,7 +13059,7 @@ snapshots:
       - snappy
       - socks
 
-  monq@https://codeload.github.com/exploitx3/monq/tar.gz/c51eaebaf96a847d7e8eabc6e030e2b3cded05d3(@aws-sdk/credential-providers@3.1015.0)(socks@2.8.7):
+  monq@https://codeload.github.com/exploitx3/monq/tar.gz/fe809a556d2e454bb66f75330e43c340fe3da69f(@aws-sdk/credential-providers@3.1015.0)(socks@2.8.7):
     dependencies:
       mongodb: 6.21.0(@aws-sdk/credential-providers@3.1015.0)(socks@2.8.7)
       mongojs: 3.1.0
