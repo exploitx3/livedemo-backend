@@ -243,6 +243,27 @@ const waitUntilDemoIsOver = async (page) => {
 
 const wait = (ms) => new Promise(res => setTimeout(res, ms));
 
+function getTempFilePaths(videoName) {
+    return [
+        `${ENV.TMP_FOLDER}/${videoName}.mp4`,
+        `${ENV.TMP_FOLDER}/${videoName}.gif`,
+        `${ENV.TMP_FOLDER}/${videoName}_hq.mp4`,
+        `${ENV.TMP_FOLDER}/${videoName}_audio.mp4`,
+    ]
+}
+
+async function cleanupTempFiles(videoName) {
+    await Promise.all(
+        getTempFilePaths(videoName).map((filePath) =>
+            fsp.rm(filePath, { force: true }).catch((err) => {
+                if (err.code !== 'ENOENT') {
+                    console.log(`Failed to remove temp file ${filePath}: ${err.message}`)
+                }
+            })
+        )
+    )
+}
+
 
 async function processStoryDemoVideo(sharedConfig, params, callback) {
     const {Models, axios} = sharedConfig
@@ -287,41 +308,22 @@ async function processStoryDemoVideo(sharedConfig, params, callback) {
                     console.log(gifLocation)
                 })
         })
-        .then(() => {
+        .then(async () => {
             const videoLocation = `${ENV.TMP_FOLDER}/${videoName}.mp4`
+            const gifLocation = `${ENV.TMP_FOLDER}/${videoName}.gif`
 
-            return fsp.readFile(videoLocation)
-                .then((buff) => {
-                    return flixHelpers.uploadStoryVideo(videoName, buff)
-                })
-                .then((videoUploadResult) => {
-                    return fsp.rm(videoLocation)
-                        .then(() => {
-                            return videoUploadResult
-                        })
-                })
+            const videoBuff = await fsp.readFile(videoLocation)
+            const videoUploadResult = await flixHelpers.uploadStoryVideo(videoName, videoBuff)
 
-        })
-        .then((videoUploadResult) => {
-            let gifLocation = `${ENV.TMP_FOLDER}/${videoName}.gif`
+            const gifBuff = await fsp.readFile(gifLocation)
+            const gifUploadResult = await flixHelpers.uploadStoryGif(videoName, gifBuff)
 
-            return fsp.readFile(gifLocation)
-                .then(buff => {
+            await cleanupTempFiles(videoName)
 
-                    return flixHelpers.uploadStoryGif(videoName, buff)
-                })
-                .then((gifUploadResult) => {
-                    return fsp.rm(gifLocation)
-                        .then(() => {
-                            return gifUploadResult
-                        })
-                })
-                .then((gifUploadResult) => {
-                    return {
-                        videoUploadResult: videoUploadResult,
-                        gifUploadResult: gifUploadResult
-                    }
-                })
+            return {
+                videoUploadResult,
+                gifUploadResult
+            }
         })
         .then(({videoUploadResult, gifUploadResult}) => {
 
@@ -389,11 +391,12 @@ async function processStoryDemoVideo(sharedConfig, params, callback) {
                 storyContentId: storyContentDoc._id
             })
         })
-        .catch(err => {
+        .catch((err) => {
             console.log('processStoryDemoVideo failed - end')
             console.log(err)
 
-            callback(err)
+            return cleanupTempFiles(videoName)
+                .then(() => callback(err))
         })
 
 
