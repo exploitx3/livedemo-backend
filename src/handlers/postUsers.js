@@ -108,6 +108,7 @@ const handler = function (req, res) {
 
         if (storyDemoFullDoc) {
           const newStoryId = new ObjectId()
+          const now = new Date()
 
           const screensArray = await Promise.all(
             storyDemoFullDoc.screens.map((screen) => {
@@ -115,7 +116,9 @@ const handler = function (req, res) {
               return new Models.Screen({
                 ...screen,
                 storyId: newStoryId,
-                workspaceId: localWorkspaceId
+                workspaceId: localWorkspaceId,
+                createdAt: now,
+                updatedAt: now
               }).save()
             })
           )
@@ -127,7 +130,9 @@ const handler = function (req, res) {
             _id: newStoryId,
             userId: localUserId,
             workspaceId: localWorkspaceId,
-            screens: screenIds
+            screens: screenIds,
+            createdAt: now,
+            updatedAt: now
           }).save()
         }
       }
