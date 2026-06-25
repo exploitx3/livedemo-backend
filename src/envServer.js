@@ -9,7 +9,7 @@ export default {
   'SERVER_URL': process.env.SERVER_URL ? process.env.SERVER_URL : "",
   'INJECT_BUNDLE_HOST': process.env.INJECT_BUNDLE_HOST ? process.env.INJECT_BUNDLE_HOST : "",
   'PRIVATE_AUTH_TOKEN': process.env.PRIVATE_AUTH_TOKEN ? process.env.PRIVATE_AUTH_TOKEN : "",
-  'DB_URI': process.env.DB_URI ? process.env.DB_URI : "",
+  'DB_URI': process.env.DB_URI ? process.env.DB_URI : "mongodb://localhost:27017/livedemo_app",
   'DEMOS_FOLDER': process.env.DEMOS_FOLDER ? process.env.DEMOS_FOLDER : "",
   'STORIES_FOLDER': process.env.STORIES_FOLDER ? process.env.STORIES_FOLDER : "",
   'STORY_REQUESTS_FOLDER': process.env.STORY_REQUESTS_FOLDER ? process.env.STORY_REQUESTS_FOLDER : "",

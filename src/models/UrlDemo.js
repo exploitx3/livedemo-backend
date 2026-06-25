@@ -1,0 +1,19 @@
+import mongoose from 'mongoose'
+
+const UrlDemo = new mongoose.Schema(
+    {
+        url: { type: String, required: true },
+        browserSessionId: { type: String },
+        storyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Story' },
+        status: { type: String, default: 'processing', enum: ['processing', 'completed'] },
+    },
+    {
+        strict: true,
+        timestamps: { createdAt: true, updatedAt: true },
+    }
+)
+
+UrlDemo.index({ url: 1 })
+UrlDemo.index({ url: 1, status: 1 })
+
+export default UrlDemo

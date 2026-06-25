@@ -63,6 +63,7 @@ import DemoActivityEventSchema from './DemoActivityEvent.js'
 import HubspotTokenSchema from './HubspotToken.js'
 import CursorPositionsSchema from './CursorPositions.js'
 import TutorialSchema from './Tutorial.js'
+import UrlDemoSchema from './UrlDemo.js'
 
 
 // const ChannelSchema = require('./Channel')
@@ -224,6 +225,7 @@ export const initModels = (conn) => {
   conn.model('HubspotToken', HubspotTokenSchema)
   conn.model('CursorPositions', CursorPositionsSchema)
   conn.model('Tutorial', TutorialSchema)
+  conn.model('UrlDemo', UrlDemoSchema)
 
   // conn.model('Subscriber', SubscriberSchema)
 
@@ -301,6 +303,7 @@ export const getModels = (conn) => {
     HubspotToken: conn.model('HubspotToken'),
     CursorPositions: conn.model('CursorPositions'),
     Tutorial: conn.model('Tutorial'),
+    UrlDemo: conn.model('UrlDemo'),
 
     // Channel: conn.model('Channel'),
     // InstantMessagesChannel: conn.model('InstantMessagesChannel'),

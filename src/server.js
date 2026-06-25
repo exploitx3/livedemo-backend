@@ -147,6 +147,8 @@ import postDemoSuggestionsGenerateLiveDemoHandler from './handlers/postDemoSugge
 import postAuthorizeInstanceHandler from './handlers/postAuthorizeInstance.js'
 import postInstanceAuthenticateHandler from './handlers/postInstanceAuthenticate.js'
 import getTutorialsSearchHandler from './handlers/getTutorialsSearch.js'
+import postUrlDemosHandler from './handlers/postUrlDemos.js'
+import getUrlDemosHandler from './handlers/getUrlDemos.js'
 
 import multer from 'multer'
 
@@ -609,6 +611,10 @@ app.post('/workspaces/:workspaceId/demo-suggestions/:demoSuggestionId/generate-l
 // Public tutorial search — no auth required, IP rate-limited (5 req/s/IP)
 // Supports ?q=<term> for search and ?featured=true for carousel data
 app.get('/tutorials/search', [setupMongo, corsMiddleware], getTutorialsSearchHandler)
+
+// URL demo processing — no auth required, IP rate-limited (3 req/min/IP)
+app.post('/urldemos', [setupMongo, corsMiddleware], postUrlDemosHandler)
+app.get('/urldemos/:urlDemoId', [setupMongo, corsMiddleware], getUrlDemosHandler)
 
 console.log(ENV.ENV)
 let server
