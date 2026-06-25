@@ -12,7 +12,7 @@ const sesClient = new SESClient({
 })
 
 
-let templateNames = ['storyDemoContentCreated']
+let templateNames = ['emailVerification']
 // let templateNames = Object.keys(Templates)
 for (let i = 0; i < templateNames.length; i++) {
   let template = Templates[templateNames[i]]

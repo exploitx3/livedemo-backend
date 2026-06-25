@@ -63,6 +63,7 @@ const handler = function (req, res) {
         workspaces: userData.workspaces,
         subscriptions: userData.subscriptions,
         featureFlags: userData.featureFlags,
+        emailVerified: userData.emailVerified === true,
         token: requestBody.token
       }))
     })

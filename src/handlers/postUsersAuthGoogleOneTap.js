@@ -65,7 +65,7 @@ const handler = function (req, res) {
     const familyName = payload['family_name']
     const picture = payload['picture']
     const verifiedEmail = payload['email_verified']
-
+    
     // Find or create user
     let userObj = await Models.User.findOne({ 'googleProfile.email': email }).lean()
 
@@ -84,6 +84,7 @@ const handler = function (req, res) {
         name,
         email,
         password: '',
+        emailVerified: true,
         googleProfile: {
           email,
           familyName,

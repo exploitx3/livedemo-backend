@@ -2,13 +2,13 @@ import ResponseCodes from '../constants/ResponseCodes.js'
 import ENV from '../envServer.js'
 import { decodeReturnPathFromOAuthState } from '../helpers/sanitizeReturnPath.js'
 import authUtils from '../helpers/authUtils.js'
-import {sendEmail} from '../helpers/emails/emailsSender.js'
+import { sendEmail } from '../helpers/emails/emailsSender.js'
 import Templates from '../helpers/emails/templates/index.js'
 import { cloneUrlDemoStoriesForUser } from '../helpers/cloneUrlDemoStoriesForUser.js'
 import axios from 'axios'
 import mongoose from 'mongoose'
 
-const {ObjectId} = mongoose.Types
+const { ObjectId } = mongoose.Types
 
 function shouldRedirectToOnboarding(userDoc) {
     const onboardingGoals = userDoc?.onboarding?.goals
@@ -16,7 +16,7 @@ function shouldRedirectToOnboarding(userDoc) {
 }
 
 const handler = function (req, res) {
-    let {Models, conn} = req.mongo
+    let { Models, conn } = req.mongo
 
     return Promise.resolve().then(async () => {
         const GoogleCreds = ENV.OAUTH2Credentials?.Google
@@ -51,13 +51,13 @@ const handler = function (req, res) {
         const userRes = userInfoResponse.data
 
         // Find or create user
-        let userObj = await Models.User.findOne({'googleProfile.email': userRes.email}).lean()
+        let userObj = await Models.User.findOne({ 'googleProfile.email': userRes.email }).lean()
 
         if (userObj) {
             console.log('user found')
             // Update token data
             await Models.User.findOneAndUpdate(
-                {_id: userObj._id},
+                { _id: userObj._id },
                 {
                     'googleProfile.tokenData': {
                         accessToken: tokenRes.access_token,
@@ -68,13 +68,14 @@ const handler = function (req, res) {
                     }
                 }
             )
-            userObj = await Models.User.findOne({_id: userObj._id}).lean()
+            userObj = await Models.User.findOne({ _id: userObj._id }).lean()
         } else {
             // Create new user
             userObj = await new Models.User({
                 name: userRes.name,
                 email: userRes.email,
                 password: '',
+                emailVerified: true,
                 googleProfile: {
                     email: userRes.email,
                     familyName: userRes.family_name,
@@ -106,9 +107,9 @@ const handler = function (req, res) {
             }).save()
 
             userObj = await Models.User.findOneAndUpdate(
-                {_id: userObj._id},
-                {$push: {workspaces: newWorkspaceDoc._id}},
-                {new: true}
+                { _id: userObj._id },
+                { $push: { workspaces: newWorkspaceDoc._id } },
+                { new: true }
             ).lean()
 
             // Clone onboarding demo into the new workspace
@@ -173,7 +174,7 @@ const handler = function (req, res) {
         }
 
         // Check for workspaces with invited emails
-        const allWorkspaces = await Models.Workspace.find({}, {_id: 1, invitedEmails: 1}).lean()
+        const allWorkspaces = await Models.Workspace.find({}, { _id: 1, invitedEmails: 1 }).lean()
         let userWorkspaces = []
 
         for (let i = 0; i < allWorkspaces.length; i++) {
@@ -202,14 +203,14 @@ const handler = function (req, res) {
         let userDoc = userObj
         if (newWorkspaceIds.length > 0) {
             userDoc = await Models.User.findOneAndUpdate(
-                {_id: userObj._id},
-                {$push: {workspaces: {$each: newWorkspaceIds}}},
-                {new: true}
+                { _id: userObj._id },
+                { $push: { workspaces: { $each: newWorkspaceIds } } },
+                { new: true }
             ).lean()
         }
 
         // Create auth token - need to get user document (not lean) for token creation
-        const userDocForToken = await Models.User.findOne({_id: userDoc._id})
+        const userDocForToken = await Models.User.findOne({ _id: userDoc._id })
         const authTokenDoc = await authUtils.createTokenForUser(userDocForToken, Models.AuthToken)
 
         // Redirect to frontend with token (return path from OAuth state set at google-link)

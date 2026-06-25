@@ -42,6 +42,7 @@ const UserSchema = new mongoose.Schema({
     cards: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Card' }],
     deleted: {type: Boolean, default: false},
     timezone: {type: String, default: ''},
+    emailVerified: {type: Boolean, default: false},
     workspaces: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Workspace' }],
     subscriptions: [
       { type: mongoose.Schema.Types.ObjectId, ref: 'Subscription' }

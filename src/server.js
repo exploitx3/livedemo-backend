@@ -106,6 +106,8 @@ import getUsersAuthGoogleLinkHandler from './handlers/getUsersAuthGoogleLink.js'
 import postUsersAuthGoogleLinkHandler from './handlers/postUsersAuthGoogleLink.js'
 import getUsersAuthGoogleCallbackHandler from './handlers/getUsersAuthGoogleCallback.js'
 import postUsersAuthGoogleOneTapHandler from './handlers/postUsersAuthGoogleOneTap.js'
+import postUsersSendEmailVerifyHandler from './handlers/postUsersSendEmailVerify.js'
+import postUsersCheckEmailVerifyHandler from './handlers/postUsersCheckEmailVerify.js'
 import getIntegrationsHubspotCallbackHandler from './handlers/getIntegrationsHubspotCallback.js'
 import postLogoutHandler from './handlers/postLogout.js'
 import postCloseAccountHandler from './handlers/postCloseAccount.js'
@@ -332,6 +334,10 @@ app.post('/users/auth/google-link', postUsersAuthGoogleLinkHandler)
 app.get('/users/auth/google-callback', [setupMongo], getUsersAuthGoogleCallbackHandler)
 
 app.post('/users/auth/google-one-tap', [setupMongo], postUsersAuthGoogleOneTapHandler)
+
+app.post('/users/send-email-verify', [setupMongo], postUsersSendEmailVerifyHandler)
+
+app.post('/users/check-email-verify', [setupMongo], postUsersCheckEmailVerifyHandler)
 
 app.get('/integrations/hubspot-callback', [setupMongo], getIntegrationsHubspotCallbackHandler)
 

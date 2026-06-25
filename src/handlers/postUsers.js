@@ -5,13 +5,12 @@ import authUtils from '../helpers/authUtils.js'
 import { sendEmail } from '../helpers/emails/emailsSender.js'
 import Templates from '../helpers/emails/templates/index.js'
 import { cloneUrlDemoStoriesForUser } from '../helpers/cloneUrlDemoStoriesForUser.js'
+import {
+  createAndSendEmailVerificationCode,
+  getPostAuthRedirectPath,
+} from '../helpers/emailVerificationHelpers.js'
 import mongoose from 'mongoose'
 const { ObjectId } = mongoose.Types
-
-function shouldRedirectToOnboarding(userDoc) {
-  const onboardingGoals = userDoc?.onboarding?.goals
-  return !Array.isArray(onboardingGoals) || onboardingGoals.length === 0
-}
 
 const handler = function (req, res) {
   let { Models, conn } = req.mongo
@@ -68,7 +67,8 @@ const handler = function (req, res) {
       const userData = {
         email,
         password,
-        name
+        name,
+        emailVerified: false
       }
 
       // Save user to database (password will be hashed by User model pre-save hook)
@@ -165,25 +165,32 @@ const handler = function (req, res) {
           }
         })
     })
-    .then((newUserData) => {
-      // Send welcome email (if template exists)
-      const fullNameArray = requestBody.fullName ? requestBody.fullName.split(' ') : []
-      const firstName = fullNameArray.length ? fullNameArray[0] : requestBody.fullName
+    // .then((newUserData) => {
+    //   // Send welcome email (if template exists)
+    //   const fullNameArray = requestBody.fullName ? requestBody.fullName.split(' ') : []
+    //   const firstName = fullNameArray.length ? fullNameArray[0] : requestBody.fullName
 
-      if (Templates.newAutoGenAccountCreated) {
-        return sendEmail(Templates.newAutoGenAccountCreated, {
-          name: firstName,
-        }, [requestBody.email], Models)
-          .then(() => {
-            return newUserData
-          })
-          .catch((err) => {
-            console.log('Email send error:', err)
-            return newUserData
-          })
-      } else {
-        return Promise.resolve(newUserData)
-      }
+    //   if (Templates.newAutoGenAccountCreated) {
+    //     return sendEmail(Templates.newAutoGenAccountCreated, {
+    //       name: firstName,
+    //     }, [requestBody.email], Models)
+    //       .then(() => {
+    //         return newUserData
+    //       })
+    //       .catch((err) => {
+    //         console.log('Email send error:', err)
+    //         return newUserData
+    //       })
+    //   } else {
+    //     return Promise.resolve(newUserData)
+    //   }
+    // })
+    .then((newUserData) => {
+      return createAndSendEmailVerificationCode(newUserData, Models)
+        .catch((err) => {
+          console.log('Email verification code send error:', err)
+        })
+        .then(() => newUserData)
     })
     .then((newUserData) => {
       // Convert to JSON for token creation
@@ -209,7 +216,7 @@ const handler = function (req, res) {
       }
     })
     .then(({ savedUserData, authTokenData }) => {
-      const redirectPath = shouldRedirectToOnboarding(savedUserData) ? '/onboarding' : '/'
+      const redirectPath = getPostAuthRedirectPath(savedUserData)
       const resultResponse = {
         statusCode: ResponseCodes['200_OK'],
         headers: {
@@ -229,6 +236,7 @@ const handler = function (req, res) {
         email: savedUserData.email,
         timezone: savedUserData.timezone,
         featureFlags: savedUserData.featureFlags,
+        emailVerified: savedUserData.emailVerified === true,
         token: authTokenData.token,
         redirectPath
       }))

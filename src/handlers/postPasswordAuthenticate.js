@@ -2,11 +2,7 @@ import ResponseCodes from '../constants/ResponseCodes.js'
 import userValidators from '../helpers/validators/userValidators.js'
 import authUtils from '../helpers/authUtils.js'
 import { cloneUrlDemoStoriesForUser } from '../helpers/cloneUrlDemoStoriesForUser.js'
-
-function shouldRedirectToOnboarding(userDoc) {
-  const onboardingGoals = userDoc?.onboarding?.goals
-  return !Array.isArray(onboardingGoals) || onboardingGoals.length === 0
-}
+import { getPostAuthRedirectPath } from '../helpers/emailVerificationHelpers.js'
 
 const handler = function (req, res) {
   let { Models, conn } = req.mongo
@@ -80,7 +76,7 @@ const handler = function (req, res) {
       }
     })
     .then(({ userDataSaved, authToken }) => {
-      const redirectPath = shouldRedirectToOnboarding(userDataSaved) ? '/onboarding' : '/'
+      const redirectPath = getPostAuthRedirectPath(userDataSaved)
       const resultResponse = {
         statusCode: ResponseCodes['200_OK'],
         headers: {
@@ -102,6 +98,7 @@ const handler = function (req, res) {
         token: authToken.token,
         workspaceMembers: userDataSaved.workspaceMembers,
         featureFlags: userDataSaved.featureFlags,
+        emailVerified: userDataSaved.emailVerified === true,
         redirectPath
       }))
     })

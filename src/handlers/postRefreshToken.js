@@ -79,6 +79,7 @@ const handler = function (req, res) {
         timezone: userData.timezone,
         workspaceMembers: userData.workspaceMembers,
         featureFlags: userData.featureFlags,
+        emailVerified: userData.emailVerified === true,
         token: authTokenDoc.token
       }))
     })
