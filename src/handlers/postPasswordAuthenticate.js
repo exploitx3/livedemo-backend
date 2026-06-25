@@ -1,6 +1,7 @@
 import ResponseCodes from '../constants/ResponseCodes.js'
 import userValidators from '../helpers/validators/userValidators.js'
 import authUtils from '../helpers/authUtils.js'
+import { cloneUrlDemoStoriesForUser } from '../helpers/cloneUrlDemoStoriesForUser.js'
 
 function shouldRedirectToOnboarding(userDoc) {
   const onboardingGoals = userDoc?.onboarding?.goals
@@ -67,6 +68,16 @@ const handler = function (req, res) {
             authToken
           }
         })
+    })
+    .then(({ userDataSaved, authToken }) => {
+      const browserSessionId = requestBody.browserSessionId || null
+      if(browserSessionId) {
+        return cloneUrlDemoStoriesForUser(browserSessionId, userDataSaved, Models)
+          .catch(err => console.error('[postPasswordAuthenticate] cloneUrlDemoStoriesForUser error', err))
+          .then(() => ({ userDataSaved, authToken }))
+      } else {
+        return Promise.resolve({ userDataSaved, authToken })
+      }
     })
     .then(({ userDataSaved, authToken }) => {
       const redirectPath = shouldRedirectToOnboarding(userDataSaved) ? '/onboarding' : '/'

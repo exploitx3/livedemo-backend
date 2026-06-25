@@ -24,22 +24,34 @@ export function sanitizeReturnPath(path) {
 
 const MAX_STATE_LEN = 3000
 
-export function encodeReturnPathForOAuthState(path) {
+export function encodeReturnPathForOAuthState(path, browserSessionId) {
   const safe = sanitizeReturnPath(path)
-  return Buffer.from(safe, 'utf8').toString('base64url')
+  const payload = { returnPath: safe }
+  if (browserSessionId && typeof browserSessionId === 'string') {
+    payload.browserSessionId = browserSessionId.slice(0, 256)
+  }
+  return Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url')
 }
 
 export function decodeReturnPathFromOAuthState(state) {
   if (!state || typeof state !== 'string') {
-    return '/'
+    return { returnPath: '/' }
   }
   if (state.length > MAX_STATE_LEN) {
-    return '/'
+    return { returnPath: '/' }
   }
   try {
     const decoded = Buffer.from(state, 'base64url').toString('utf8')
-    return sanitizeReturnPath(decoded)
+    const parsed = JSON.parse(decoded)
+    if (parsed && typeof parsed === 'object' && typeof parsed.returnPath === 'string') {
+      return {
+        returnPath: sanitizeReturnPath(parsed.returnPath),
+        browserSessionId: typeof parsed.browserSessionId === 'string' ? parsed.browserSessionId : null
+      }
+    }
+    // Legacy: plain string state
+    return { returnPath: sanitizeReturnPath(decoded) }
   } catch {
-    return '/'
+    return { returnPath: '/' }
   }
 }

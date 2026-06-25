@@ -16,7 +16,7 @@ export function buildGoogleAuthorizeUrl(creds, state) {
   return u.toString()
 }
 
-export function buildGoogleLoginLink(returnTo) {
+export function buildGoogleLoginLink(returnTo, browserSessionId) {
   const GoogleCreds = ENV.OAUTH2Credentials?.Google
   if (!GoogleCreds) {
     return null
@@ -26,6 +26,6 @@ export function buildGoogleLoginLink(returnTo) {
     returnTo != null && returnTo !== ''
       ? sanitizeReturnPath(typeof returnTo === 'string' ? returnTo : String(returnTo))
       : '/'
-  const oauthState = encodeReturnPathForOAuthState(safeReturn)
+  const oauthState = encodeReturnPathForOAuthState(safeReturn, browserSessionId)
   return buildGoogleAuthorizeUrl(GoogleCreds, oauthState)
 }

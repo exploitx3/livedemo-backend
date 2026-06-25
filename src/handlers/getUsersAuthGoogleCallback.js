@@ -4,6 +4,7 @@ import { decodeReturnPathFromOAuthState } from '../helpers/sanitizeReturnPath.js
 import authUtils from '../helpers/authUtils.js'
 import {sendEmail} from '../helpers/emails/emailsSender.js'
 import Templates from '../helpers/emails/templates/index.js'
+import { cloneUrlDemoStoriesForUser } from '../helpers/cloneUrlDemoStoriesForUser.js'
 import axios from 'axios'
 import mongoose from 'mongoose'
 
@@ -212,7 +213,16 @@ const handler = function (req, res) {
         const authTokenDoc = await authUtils.createTokenForUser(userDocForToken, Models.AuthToken)
 
         // Redirect to frontend with token (return path from OAuth state set at google-link)
-        const returnPath = decodeReturnPathFromOAuthState(req.query.state)
+        const decodedState = decodeReturnPathFromOAuthState(req.query.state)
+        const returnPath = decodedState.returnPath
+        const browserSessionId = decodedState.browserSessionId || null
+
+        if (browserSessionId) {
+            await cloneUrlDemoStoriesForUser(browserSessionId, userDoc, Models).catch(err =>
+                console.error('[getUsersAuthGoogleCallback] cloneUrlDemoStoriesForUser error', err)
+            )
+        }
+
         const redirectPath = shouldRedirectToOnboarding(userDoc) ? '/onboarding' : returnPath
         const encodedPage = encodeURIComponent(redirectPath)
         const redirectUrl = `${ENV.SERVER_URL}/auth/?page=${encodedPage}&token=${authTokenDoc.token}`

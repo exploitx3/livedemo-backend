@@ -4,6 +4,7 @@ import userValidators from '../helpers/validators/userValidators.js'
 import authUtils from '../helpers/authUtils.js'
 import { sendEmail } from '../helpers/emails/emailsSender.js'
 import Templates from '../helpers/emails/templates/index.js'
+import { cloneUrlDemoStoriesForUser } from '../helpers/cloneUrlDemoStoriesForUser.js'
 import mongoose from 'mongoose'
 const { ObjectId } = mongoose.Types
 
@@ -196,6 +197,16 @@ const handler = function (req, res) {
             authTokenData
           }
         })
+    })
+    .then(({ savedUserData, authTokenData }) => {
+      const browserSessionId = requestBody.browserSessionId || null
+      if(browserSessionId) {
+        return cloneUrlDemoStoriesForUser(browserSessionId, savedUserData, Models)
+          .catch(err => console.error('[postUsers] cloneUrlDemoStoriesForUser error', err))
+          .then(() => ({ savedUserData, authTokenData }))
+      } else {
+        return Promise.resolve({ savedUserData, authTokenData })
+      }
     })
     .then(({ savedUserData, authTokenData }) => {
       const redirectPath = shouldRedirectToOnboarding(savedUserData) ? '/onboarding' : '/'

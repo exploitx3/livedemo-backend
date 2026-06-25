@@ -28,7 +28,7 @@ const handler = function (req, res) {
       )
     })
     .then(() => {
-      const loginLink = buildGoogleLoginLink(req.query.returnTo)
+      const loginLink = buildGoogleLoginLink(req.query.returnTo, req.query.browserSessionId)
 
       if (!loginLink) {
         const error = new Error('Google OAuth not configured')
