@@ -18,12 +18,17 @@ const ipLimiter = LambdaRateLimiter({
     uniqueTokenPerInterval: 2000,
 })
 
-function enqueueProcessUrlDemo(urlDemoId) {
+function enqueueProcessUrlDemo(urlDemoId, userId) {
     const client = monq(ENV.DB_URI || 'mongodb://localhost:27017/livedemo_app')
     const queue = client.queue('urlDemos', { collection: 'jobs-monq' })
 
+    const jobData = { urlDemoId }
+    if (userId) {
+        jobData.userId = userId
+    }
+
     return new Promise((resolve, reject) => {
-        queue.enqueue('processUrlDemo', { urlDemoId }, function (err, job) {
+        queue.enqueue('processUrlDemo', jobData, function (err, job) {
             if (err) {
                 return reject(err)
             }
@@ -31,6 +36,15 @@ function enqueueProcessUrlDemo(urlDemoId) {
             resolve()
         })
     })
+}
+
+async function tryGetAuthUserId(req, Models) {
+    try {
+        const { authUser } = await helpers.authReq(req, Models)
+        return authUser?._id?.toString() || null
+    } catch {
+        return null
+    }
 }
 
 const handler = function (req, res) {
@@ -53,16 +67,17 @@ const handler = function (req, res) {
             res.send(JSON.stringify({ error: 'Too many requests' }))
             throw Object.assign(new Error('rate-limited'), { handled: true })
         })
-        .then(() => {
+        .then(() => tryGetAuthUserId(req, Models))
+        .then((userId) => {
             const validated = helpers.validateBody(req.body, postUrlDemosValidator)
-            return validated.value.url
+            return { url: validated.value.url, userId }
         })
-        .then((url) => {
+        .then(({ url, userId }) => {
             return Models.UrlDemo.findOne({ url, status: 'completed' })
                 .lean()
-                .then((existing) => ({ url, existing }))
+                .then((existing) => ({ url, existing, userId }))
         })
-        .then(({ url, existing }) => {
+        .then(({ url, existing, userId }) => {
             if (existing) {
                 return existing
             }
@@ -72,7 +87,7 @@ const handler = function (req, res) {
                 .save()
                 .then((urlDemoDoc) => {
 
-                    return enqueueProcessUrlDemo(urlDemoDoc._id.toString())
+                    return enqueueProcessUrlDemo(urlDemoDoc._id.toString(), userId)
                         .catch((err) => {
                             console.error('Failed to enqueue processUrlDemo:', err)
                         })
