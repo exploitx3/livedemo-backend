@@ -7,7 +7,6 @@ import Templates from '../helpers/emails/templates/index.js'
 import { cloneUrlDemoStoriesForUser } from '../helpers/cloneUrlDemoStoriesForUser.js'
 import axios from 'axios'
 import mongoose from 'mongoose'
-
 const { ObjectId } = mongoose.Types
 
 function shouldRedirectToOnboarding(userDoc) {
@@ -166,6 +165,7 @@ const handler = function (req, res) {
                 if (Templates.newAutoGenAccountCreated) {
                     await sendEmail(Templates.newAutoGenAccountCreated, {
                         name: userObj.googleProfile.givenName,
+                        unsubscribeToken: userObj.emailConfig?.unsubscribeToken || '',
                     }, [userObj.googleProfile.email], Models)
                 }
             } catch (err) {

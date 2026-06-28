@@ -108,6 +108,11 @@ import getUsersAuthGoogleCallbackHandler from './handlers/getUsersAuthGoogleCall
 import postUsersAuthGoogleOneTapHandler from './handlers/postUsersAuthGoogleOneTap.js'
 import postUsersSendEmailVerifyHandler from './handlers/postUsersSendEmailVerify.js'
 import postUsersCheckEmailVerifyHandler from './handlers/postUsersCheckEmailVerify.js'
+import postUsersUnsubscribeHandler from './handlers/postUsersUnsubscribe.js'
+import postLaunchLinksHandler from './handlers/postLaunchLinks.js'
+import patchLaunchLinksHandler from './handlers/patchLaunchLinks.js'
+import postLaunchSubscribeHandler from './handlers/postLaunchSubscribe.js'
+import getLaunchConfigHandler from './handlers/getLaunchConfig.js'
 import getIntegrationsHubspotCallbackHandler from './handlers/getIntegrationsHubspotCallback.js'
 import postLogoutHandler from './handlers/postLogout.js'
 import postCloseAccountHandler from './handlers/postCloseAccount.js'
@@ -338,6 +343,13 @@ app.post('/users/auth/google-one-tap', [setupMongo], postUsersAuthGoogleOneTapHa
 app.post('/users/send-email-verify', [setupMongo], postUsersSendEmailVerifyHandler)
 
 app.post('/users/check-email-verify', [setupMongo], postUsersCheckEmailVerifyHandler)
+
+app.post('/users/unsubscribe', [setupMongo], postUsersUnsubscribeHandler)
+
+app.post('/launch/links', [setupMongo], postLaunchLinksHandler)
+app.patch('/launch/links/:linkId', [setupMongo], patchLaunchLinksHandler)
+app.post('/launch/subscribe', [setupMongo], postLaunchSubscribeHandler)
+app.get('/launch/:id', [setupMongo], getLaunchConfigHandler)
 
 app.get('/integrations/hubspot-callback', [setupMongo], getIntegrationsHubspotCallbackHandler)
 

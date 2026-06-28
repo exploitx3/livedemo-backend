@@ -1,3 +1,4 @@
+import crypto from 'crypto'
 import mongoose from 'mongoose'
 import bcrypt from 'bcryptjs'
 import OnboardingGoalsTypes from '../constants/OnboardingGoalsTypes.js'
@@ -33,6 +34,11 @@ const UserSchema = new mongoose.Schema({
       type: String,
       unique: true,
       index: true
+    },
+    emailConfig: {
+      isSubscribed: { type: Boolean, default: true },
+      unsubscribeToken: { type: String, default: () => crypto.randomUUID() },
+      unsubscribedAt: { type: Date, default: null },
     },
     password: String,
     name: { type: String, default: '' },

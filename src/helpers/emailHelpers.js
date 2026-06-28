@@ -1,4 +1,5 @@
 import crypto from 'crypto'
+import ENV from '../envServer.js'
 import { sendEmail } from './emails/emailsSender.js'
 import Templates from './emails/templates/index.js'
 import { EmailVerificationCodeStatuses } from '../models/EmailVerificationCode.js'
@@ -44,19 +45,17 @@ export async function createAndSendEmailVerificationCode(userDoc, Models) {
   return verificationDoc
 }
 
-export async function sendWelcomeEmail(userDoc, Models) {
-  const firstName = getFirstName(userDoc)
-
-  if (Templates.newAutoGenAccountCreated) {
-    return sendEmail(Templates.newAutoGenAccountCreated, {
-      name: firstName,
-    }, [userDoc.email], Models)
-      .catch((err) => {
-        console.log('Welcome email send error:', err)
-      })
+export function buildUnsubscribeUrl(unsubscribeToken) {
+  const serverUrl = (ENV.SERVER_URL || '').replace(/\/$/, '')
+  if (!serverUrl || !unsubscribeToken) {
+    return ''
   }
 
-  return Promise.resolve()
+  const params = new URLSearchParams({
+    unsubscribeToken,
+  })
+
+  return `${serverUrl}/unsubscribe?${params.toString()}`
 }
 
 export function shouldRedirectToEmailVerify(userDoc) {

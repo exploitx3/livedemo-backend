@@ -212,11 +212,15 @@ const handler = function (req, res) {
       const authUrl = `${ENV.SERVER_URL}/register`
       const ownerName = authUserDoc.name
 
-      return sendEmail(Templates.userInvite, {
-        ownerName: ownerName,
-        newUserEmail: email,
-        directLoginLink: authUrl
-      }, [email], Models)
+      return Models.User.findOne({ email }, { emailConfig: 1 }).lean()
+        .then((inviteeUser) => {
+          return sendEmail(Templates.userInvite, {
+            ownerName: ownerName,
+            newUserEmail: email,
+            directLoginLink: authUrl,
+            unsubscribeToken: inviteeUser?.emailConfig?.unsubscribeToken || '',
+          }, [email], Models)
+        })
         .then(async () => {
           if (activeSubscription) {
             await Models.Subscription.findOneAndUpdate(

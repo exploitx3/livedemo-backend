@@ -2,7 +2,7 @@ import ResponseCodes from '../constants/ResponseCodes.js'
 import userValidators from '../helpers/validators/userValidators.js'
 import authUtils from '../helpers/authUtils.js'
 import { cloneUrlDemoStoriesForUser } from '../helpers/cloneUrlDemoStoriesForUser.js'
-import { getPostAuthRedirectPath } from '../helpers/emailVerificationHelpers.js'
+import { getPostAuthRedirectPath } from '../helpers/emailHelpers.js'
 
 const handler = function (req, res) {
   let { Models, conn } = req.mongo

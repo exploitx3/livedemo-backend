@@ -161,6 +161,7 @@ const handler = function (req, res) {
         if (Templates.newAutoGenAccountCreated) {
           await sendEmail(Templates.newAutoGenAccountCreated, {
             name: givenName,
+            unsubscribeToken: userObj.emailConfig?.unsubscribeToken || '',
           }, [email], Models)
         }
       } catch (err) {

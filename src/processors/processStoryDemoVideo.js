@@ -363,18 +363,24 @@ async function processStoryDemoVideo(sharedConfig, params, callback) {
                     return storyContentDoc
                 })
         })
-        .then((storyContentDoc) => {
+        .then(async (storyContentDoc) => {
 
             if(!userEmail) {
                 console.log('No user email found, skipping email')
 
                 return storyContentDoc
             }
+
+            const userDoc = await Models.User.findOne(
+              { email: userEmail },
+              { emailConfig: 1 }
+            ).lean()
             
             return sendEmail(Templates.storyDemoContentCreated,{
                 demoName: storyDemo.name,
                 videoUrl: storyContentDoc.videoUrl,
-                gifUrl: storyContentDoc.gifUrl
+                gifUrl: storyContentDoc.gifUrl,
+                unsubscribeToken: userDoc?.emailConfig?.unsubscribeToken || '',
             },
                 [userEmail],
                 Models

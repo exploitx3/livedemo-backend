@@ -1,7 +1,7 @@
 import helpers from '../helpers/livedemoHelpers.js'
 import ResponseCodes from '../constants/ResponseCodes.js'
 import LambdaRateLimiter from 'lambda-rate-limiter'
-import { createAndSendEmailVerificationCode } from '../helpers/emailVerificationHelpers.js'
+import { createAndSendEmailVerificationCode } from '../helpers/emailHelpers.js'
 
 const sendEmailVerifyLimiter = LambdaRateLimiter({
   interval: 30000,

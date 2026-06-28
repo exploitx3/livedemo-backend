@@ -8,7 +8,7 @@ import { cloneUrlDemoStoriesForUser } from '../helpers/cloneUrlDemoStoriesForUse
 import {
   createAndSendEmailVerificationCode,
   getPostAuthRedirectPath,
-} from '../helpers/emailVerificationHelpers.js'
+} from '../helpers/emailHelpers.js'
 import mongoose from 'mongoose'
 const { ObjectId } = mongoose.Types
 
@@ -173,10 +173,9 @@ const handler = function (req, res) {
     //   if (Templates.newAutoGenAccountCreated) {
     //     return sendEmail(Templates.newAutoGenAccountCreated, {
     //       name: firstName,
+    //       unsubscribeToken: newUserData.emailConfig?.unsubscribeToken || '',
     //     }, [requestBody.email], Models)
-    //       .then(() => {
-    //         return newUserData
-    //       })
+    //       .then(() => newUserData)
     //       .catch((err) => {
     //         console.log('Email send error:', err)
     //         return newUserData

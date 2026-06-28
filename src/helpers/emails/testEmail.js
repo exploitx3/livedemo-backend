@@ -2,6 +2,7 @@ import uploadToGmail from './gmail/uploadRenderedTemplateToGmail.js'
 import renderTemplate from './renderTemplateExamples.js'
 import updateTemplate from './updateTemplates.js'
 import templates from './templates/index.js'
+import newAutoGenAccountCreatedProps from './templates/newAutoGenAccountCreated/newAutoGenAccountCreated.props.js'
 
 import { sendEmail } from './emailsSender.js'
 // Test Locally
@@ -30,9 +31,7 @@ setupDB()
   .then(conn => getModels(conn))
   .then(Models => {
 
-    return sendEmail(templates.newAutoGenAccountCreated, {
-      name: 'New User Test',
-    }, ['george@livedemo.ai'], Models)
+    return sendEmail(templates.newAutoGenAccountCreated, newAutoGenAccountCreatedProps, ['george@livedemo.ai'], Models)
 
     // return sendEmail(templates.userInvite, {
     //   ownerName: 'Georgi',

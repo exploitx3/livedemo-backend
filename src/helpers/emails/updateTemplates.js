@@ -51,10 +51,10 @@ function updateTemplate(template) {
 
 }
 
-// updateTemplate(Templates.newAutoGenAccountCreated)
-// updateTemplate(Templates.storyDemoContentCreated)
+updateTemplate(Templates.newAutoGenAccountCreated)
+updateTemplate(Templates.storyDemoContentCreated)
 // updateTemplate(Templates.changePassword)
-// updateTemplate(Templates.userInvite)
+updateTemplate(Templates.userInvite)
 // updateTemplate(Templates.workspaceMemberInvite)
 // updateTemplate(Templates.workspaceReport)
 

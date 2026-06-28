@@ -65,6 +65,9 @@ import CursorPositionsSchema from './CursorPositions.js'
 import TutorialSchema from './Tutorial.js'
 import UrlDemoSchema from './UrlDemo.js'
 import EmailVerificationCodeSchema from './EmailVerificationCode.js'
+import LaunchLinkSchema from './LaunchLink.js'
+import LaunchSubscriberSchema from './LaunchSubscriber.js'
+import LaunchConfigSchema from './LaunchConfig.js'
 
 
 // const ChannelSchema = require('./Channel')
@@ -228,6 +231,9 @@ export const initModels = (conn) => {
   conn.model('Tutorial', TutorialSchema)
   conn.model('UrlDemo', UrlDemoSchema)
   conn.model('EmailVerificationCode', EmailVerificationCodeSchema)
+  conn.model('LaunchLink', LaunchLinkSchema)
+  conn.model('LaunchSubscriber', LaunchSubscriberSchema)
+  conn.model('LaunchConfig', LaunchConfigSchema)
 
   // conn.model('Subscriber', SubscriberSchema)
 
@@ -307,6 +313,9 @@ export const getModels = (conn) => {
     Tutorial: conn.model('Tutorial'),
     UrlDemo: conn.model('UrlDemo'),
     EmailVerificationCode: conn.model('EmailVerificationCode'),
+    LaunchLink: conn.model('LaunchLink'),
+    LaunchSubscriber: conn.model('LaunchSubscriber'),
+    LaunchConfig: conn.model('LaunchConfig'),
 
     // Channel: conn.model('Channel'),
     // InstantMessagesChannel: conn.model('InstantMessagesChannel'),

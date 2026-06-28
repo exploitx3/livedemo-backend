@@ -11,6 +11,9 @@ function validateBody(body) {
         .items(Joi.string().valid(...Object.values(OnboardingGoalsTypes.ONBOARDING_GOALS)))
         .optional(),
     }).optional(),
+    emailConfig: Joi.object().keys({
+      isSubscribed: Joi.boolean().optional(),
+    }).optional(),
   })
 
   const result = schema.validate(body)

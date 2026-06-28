@@ -5,8 +5,9 @@ import checkEmailVerifyValidator from '../helpers/validators/users/checkEmailVer
 import { EmailVerificationCodeStatuses } from '../models/EmailVerificationCode.js'
 import {
   getPostAuthRedirectPath,
-  sendWelcomeEmail,
-} from '../helpers/emailVerificationHelpers.js'
+} from '../helpers/emailHelpers.js'
+import { sendEmail } from '../helpers/emails/emailsSender.js'
+import Templates from '../helpers/emails/templates/index.js'
 
 const handler = function (req, res) {
   let { Models } = req.mongo
@@ -96,7 +97,21 @@ const handler = function (req, res) {
         return
       }
 
-      return sendWelcomeEmail(updatedUser, Models).then(() => updatedUser)
+      const fullNameArray = updatedUser.name ? updatedUser.name.split(' ') : []
+      const firstName = fullNameArray.length ? fullNameArray[0] : updatedUser.name
+
+      if (Templates.newAutoGenAccountCreated) {
+        return sendEmail(Templates.newAutoGenAccountCreated, {
+          name: firstName,
+          unsubscribeToken: updatedUser.emailConfig?.unsubscribeToken || '',
+        }, [updatedUser.email], Models)
+          .catch((err) => {
+            console.log('Welcome email send error:', err)
+          })
+          .then(() => updatedUser)
+      }
+
+      return Promise.resolve(updatedUser)
     })
     .then((updatedUser) => {
       if (!updatedUser) {

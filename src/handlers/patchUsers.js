@@ -43,6 +43,7 @@ const handler = function (req, res) {
     .then((userData) => {
       const newTimezone = requestBody.timezone
       const newOnboardingGoals = requestBody.onboarding?.goals
+      const newIsSubscribed = requestBody.emailConfig?.isSubscribed
       let hasUpdates = false
 
       let updateObj = {}
@@ -54,6 +55,12 @@ const handler = function (req, res) {
 
       if (Array.isArray(newOnboardingGoals)) {
         updateObj['onboarding.goals'] = newOnboardingGoals
+        hasUpdates = true
+      }
+
+      if (typeof newIsSubscribed === 'boolean') {
+        updateObj['emailConfig.isSubscribed'] = newIsSubscribed
+        updateObj['emailConfig.unsubscribedAt'] = newIsSubscribed ? null : new Date()
         hasUpdates = true
       }
 
@@ -87,6 +94,7 @@ const handler = function (req, res) {
         name: userData.name,
         timezone: userData.timezone,
         onboarding: userData.onboarding,
+        emailConfig: userData.emailConfig,
       }))
     })
     .catch((error) => {
