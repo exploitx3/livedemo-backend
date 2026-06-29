@@ -124,6 +124,8 @@ import postWorkspaceRemoveUserHandler from './handlers/postWorkspaceRemoveUser.j
 import postPaymentChargeHandler from './handlers/postPaymentCharge.js'
 import postCheckoutSessionHandler from './handlers/postCheckoutSession.js'
 import postVerifyCheckoutSessionHandler from './handlers/postVerifyCheckoutSession.js'
+import postBillingPortalHandler from './handlers/postBillingPortal.js'
+import postPaymentsWebhookHandler from './handlers/postPaymentsWebhook.js'
 import postPaymentFreeActivateHandler from './handlers/postPaymentFreeActivate.js'
 import postPaymentAfterPaymentHandler from './handlers/postPaymentAfterPayment.js'
 import postVerifyPaymentChargeHandler from './handlers/postVerifyPaymentCharge.js'
@@ -216,6 +218,9 @@ function setupMongo(req, res, next) {
     req.mongo = { conn, Models }
     next()
 }
+
+// Stripe webhook must receive the raw body before JSON body parsers run
+app.post('/payments/webhook', [setupMongo, express.raw({ type: 'application/json' })], postPaymentsWebhookHandler)
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json({limit: '5000mb', extended: true}))
@@ -362,6 +367,8 @@ app.get('/cards', [setupMongo], getCardsHandler)
 app.delete('/cards/:cardId', [setupMongo], deleteCardHandler)
 
 app.get('/charges', [setupMongo], getChargesHandler)
+
+app.post('/users/billing-portal', [setupMongo], postBillingPortalHandler)
 
 app.post('/payments/charge', [setupMongo], postPaymentChargeHandler)
 

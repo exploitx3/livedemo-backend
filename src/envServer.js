@@ -50,6 +50,7 @@ export default {
     return oauth2Creds
   })(),
   'STRIPE_SECRET_KEY': process.env.STRIPE_SECRET_KEY ? process.env.STRIPE_SECRET_KEY : "",
+  'STRIPE_WEBHOOK_SECRET': process.env.STRIPE_WEBHOOK_SECRET ? process.env.STRIPE_WEBHOOK_SECRET : "",
   'TMP_FOLDER': process.env.TMP_FOLDER ? process.env.TMP_FOLDER : "",
   'PROCESS_DEMO_ACTIVITY_EVENTS': process.env.PROCESS_DEMO_ACTIVITY_EVENTS
     ? ['true', '1', 'yes'].includes(process.env.PROCESS_DEMO_ACTIVITY_EVENTS.toLowerCase())

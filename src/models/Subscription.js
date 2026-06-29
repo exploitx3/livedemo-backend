@@ -16,6 +16,7 @@ const Subscription = new mongoose.Schema({
     },
     autoPay: { type: Boolean, default: false },
     expired: { type: Boolean, default: false },
+    cancelAtPeriodEnd: { type: Boolean, default: false },
     expireDate: { type: Date },
     active: { type: Boolean, default: false },
     // exportsAllowed: { type: Number, default: 0 },
