@@ -4,6 +4,10 @@ import monq from 'monq'
 import LambdaRateLimiter from 'lambda-rate-limiter'
 import helpers from '../helpers/livedemoHelpers.js'
 import postUrlDemosValidator from '../helpers/validators/urlDemos/postUrlDemosValidator.js'
+import { cloneUrlDemoWithStoryForUser } from '../helpers/cloneUrlDemoStoriesForUser.js'
+import mongoose from 'mongoose';
+
+const { ObjectId } = mongoose.Types;
 
 const CORS_HEADERS = {
     'Access-Control-Max-Age': 600,
@@ -18,13 +22,16 @@ const ipLimiter = LambdaRateLimiter({
     uniqueTokenPerInterval: 2000,
 })
 
-function enqueueProcessUrlDemo(urlDemoId, userId) {
+function enqueueProcessUrlDemo(urlDemoId, userId, shouldCreateStandard) {
     const client = monq(ENV.DB_URI || 'mongodb://localhost:27017/livedemo_app')
     const queue = client.queue('urlDemos', { collection: 'jobs-monq' })
 
     const jobData = { urlDemoId }
     if (userId) {
         jobData.userId = userId
+    }
+    if (shouldCreateStandard) {
+        jobData.shouldCreateStandard = shouldCreateStandard
     }
 
     return new Promise((resolve, reject) => {
@@ -38,10 +45,10 @@ function enqueueProcessUrlDemo(urlDemoId, userId) {
     })
 }
 
-async function tryGetAuthUserId(req, Models) {
+async function tryGetAuthUser(req, Models) {
     try {
         const { authUser } = await helpers.authReq(req, Models)
-        return authUser?._id?.toString() || null
+        return authUser || null
     } catch {
         return null
     }
@@ -67,31 +74,70 @@ const handler = function (req, res) {
             res.send(JSON.stringify({ error: 'Too many requests' }))
             throw Object.assign(new Error('rate-limited'), { handled: true })
         })
-        .then(() => tryGetAuthUserId(req, Models))
-        .then((userId) => {
+        .then(() => tryGetAuthUser(req, Models))
+        .then((userDoc) => {
             const validated = helpers.validateBody(req.body, postUrlDemosValidator)
-            return { url: validated.value.url, userId }
+            return { url: validated.value.url, userDoc, userId: userDoc?._id?.toString() || null }
         })
-        .then(({ url, userId }) => {
-            return Models.UrlDemo.findOne({ url, status: 'completed' })
-                .lean()
-                .then((existing) => ({ url, existing, userId }))
-        })
-        .then(({ url, existing, userId }) => {
-            if (existing) {
-                return existing
-            }
+        .then(({ url, userDoc, userId }) => {
 
             const { browserSessionId } = req.body
-            return new Models.UrlDemo({ url, browserSessionId: browserSessionId || '' })
-                .save()
-                .then((urlDemoDoc) => {
 
-                    return enqueueProcessUrlDemo(urlDemoDoc._id.toString(), userId)
-                        .catch((err) => {
-                            console.error('Failed to enqueue processUrlDemo:', err)
+            return Models.UrlDemo.findOne({ url, type: 'standard' })
+                .lean()
+                .then((standardUrlDemoDoc) => {
+
+                    if (standardUrlDemoDoc && browserSessionId && !userId) {
+                        return new Models.UrlDemo({
+                            ...standardUrlDemoDoc,
+                            _id: new ObjectId(),
+                            type: 'browsed',
+                            browserSessionId: browserSessionId || ''
                         })
-                        .then(() => urlDemoDoc)
+                            .save()
+                            .then((urlDemoDoc) => {
+                                return urlDemoDoc
+                            })
+                    } else if (standardUrlDemoDoc && !browserSessionId && !userId) {
+
+                        return standardUrlDemoDoc
+                    } else if (standardUrlDemoDoc && userId) {
+
+                        return Models.UrlDemo.findOne({ url, type: 'owned', userId })
+                            .then((foundUrlDemoDoc) => {
+                                if (foundUrlDemoDoc) {
+                                    return foundUrlDemoDoc
+                                } else {
+
+                                    const firstWorkspace = userDoc?.workspaces?.[0]
+                                    const workspaceId = firstWorkspace?._id || firstWorkspace
+                                    if (!workspaceId) {
+                                        return null
+                                    }
+
+                                    return cloneUrlDemoWithStoryForUser(standardUrlDemoDoc, userId, workspaceId, browserSessionId || '', Models)
+                                }
+                            })
+
+                    } else if (!standardUrlDemoDoc && userId) {
+                        const type = 'owned'
+                        const shouldCreateStandard = true
+
+                        return new Models.UrlDemo({ url, type, browserSessionId: browserSessionId || '' })
+                            .save()
+                            .then((urlDemoDoc) => {
+
+                                return enqueueProcessUrlDemo(urlDemoDoc._id.toString(), userId, shouldCreateStandard)
+                                    .catch((err) => {
+                                        console.error('Failed to enqueue processUrlDemo:', err)
+                                    })
+                                    .then(() => urlDemoDoc)
+                            })
+
+                    } else if (standardUrlDemoDoc && !userId && !browserSessionId) {
+                        return standardUrlDemoDoc
+                    }
+
                 })
         })
         .then((urlDemoDoc) => {
@@ -109,5 +155,4 @@ const handler = function (req, res) {
             res.send(JSON.stringify({ error: 'Internal server error' }))
         })
 }
-
 export default handler
