@@ -112,16 +112,16 @@ const handler = function (req, res) {
                                     const firstWorkspace = userDoc?.workspaces?.[0]
                                     const workspaceId = firstWorkspace?._id || firstWorkspace
                                     if (!workspaceId) {
-                                        return null
+                                        throw new Error('No workspace found for user')
                                     }
 
                                     return cloneUrlDemoWithStoryForUser(standardUrlDemoDoc, userId, workspaceId, browserSessionId || '', Models)
                                 }
                             })
 
-                    } else if (!standardUrlDemoDoc && userId) {
-                        const type = 'owned'
-                        const shouldCreateStandard = true
+                    } else if (!standardUrlDemoDoc) {
+                        const type = !!userId ? 'owned' : 'browsed'
+                        const shouldCreateStandard = type === 'owned'
 
                         return new Models.UrlDemo({ url, type, browserSessionId: browserSessionId || '' })
                             .save()
@@ -134,8 +134,6 @@ const handler = function (req, res) {
                                     .then(() => urlDemoDoc)
                             })
 
-                    } else if (standardUrlDemoDoc && !userId && !browserSessionId) {
-                        return standardUrlDemoDoc
                     }
 
                 })
