@@ -75,6 +75,7 @@ const handler = async function (req, res) {
       line_items: lineItems,
       success_url: successUrl,
       cancel_url: cancelUrl,
+      allow_promotion_codes: true,
       metadata: {
         userId: authUserDoc._id.toString(),
         workspaceId: workspaceId.toString(),
