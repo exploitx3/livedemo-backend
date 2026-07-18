@@ -348,7 +348,7 @@ Return **only JSON** matching this schema:
 
         for (const imageId of uniqueImageIds) {
             try {
-                await openai.files.del(imageId);
+                await openai.files.delete(imageId);
                 console.log(`autoRecordingManager - deleteAllUploadedOpenAiImages() - Deleted OpenAI image file: ${imageId}`);
             } catch (err) {
                 console.warn(`autoRecordingManager - deleteAllUploadedOpenAiImages() - Failed to delete OpenAI image file ${imageId}:`, err.message || err);
