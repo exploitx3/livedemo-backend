@@ -57,4 +57,5 @@ export default {
     : "",
   'ONBOARDING_DEMO_STORY_ID': process.env.ONBOARDING_DEMO_STORY_ID ? process.env.ONBOARDING_DEMO_STORY_ID : "",
   'ONBOARDING_DEMO_WORKSPACE_ID': process.env.ONBOARDING_DEMO_WORKSPACE_ID ? process.env.ONBOARDING_DEMO_WORKSPACE_ID : "",
+  'IPWHO_API_KEY': process.env.IPWHO_API_KEY ? process.env.IPWHO_API_KEY : "",
 }

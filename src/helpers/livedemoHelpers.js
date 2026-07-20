@@ -710,7 +710,7 @@ function findNodeByTagValue(searchAttr, searchAttrValue, nodes) {
 
 
 function getClientIpData(clientIp) {
-    return axios.get(`https://ipwho.is/${clientIp}`)
+    return axios.get(`https://ipwho.is/${clientIp}?apiKey=${ENV.IPWHO_API_KEY}`)
         .then((res) => {
 
             return res.data
