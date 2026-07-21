@@ -709,11 +709,60 @@ function findNodeByTagValue(searchAttr, searchAttrValue, nodes) {
 }
 
 
-function getClientIpData(clientIp) {
-    return axios.get(`https://ipwho.is/${clientIp}?apiKey=${ENV.IPWHO_API_KEY}`)
-        .then((res) => {
+function mapIpWhoOrgResponse(payload) {
+    const data = payload?.data
+    const geo = data?.geoLocation || {}
+    const tz = data?.timezone || {}
+    const flag = data?.flag || {}
+    const countryCode = geo.countryCode || ''
 
-            return res.data
+    // Keep same shape as legacy ipwho.is so session/auto-recording writers stay unchanged.
+    return {
+        ip: data?.ip,
+        continent: geo.continent,
+        continent_code: geo.continentCode,
+        country: geo.country,
+        country_code: countryCode,
+        region: geo.region,
+        city: geo.city,
+        latitude: geo.latitude,
+        longitude: geo.longitude,
+        is_eu: geo.is_in_eu,
+        postal: geo.postal_Code,
+        calling_code: typeof geo.dial_code === 'string'
+            ? geo.dial_code.replace(/^\+/, '')
+            : geo.dial_code,
+        flag: {
+            img: flag.flag_Icon
+                || (countryCode
+                    ? `https://flagcdn.com/${countryCode.toLowerCase()}.svg`
+                    : undefined),
+            emoji: flag.flag_Icon,
+            emoji_unicode: flag.flag_unicode,
+        },
+        timezone: {
+            id: tz.time_zone,
+            abbr: tz.abbr,
+            is_dst: tz.is_dst,
+            offset: tz.offset,
+            utc: tz.utc,
+            current_time: tz.current_time,
+        },
+    }
+}
+
+function getClientIpData(clientIp) {
+    return axios.get(`https://api.ipwho.org/ip/${clientIp}`, {
+        params: {
+            apiKey: ENV.IPWHO_API_KEY,
+        },
+    })
+        .then((res) => {
+            if (!res.data?.success || !res.data?.data) {
+                throw new Error(`ipwho.org lookup failed for ${clientIp}`)
+            }
+
+            return mapIpWhoOrgResponse(res.data)
         })
 }
 
