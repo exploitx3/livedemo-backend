@@ -40,6 +40,22 @@ const handler = function (req, res) {
                     storyDocGlobal = storyDoc
                     return Models.Screen.findOne({_id: screenId}).lean()
                         .then((screenDoc) => {
+                            if (screenDoc && screenDoc.recordingRole) {
+                                const error = new Error('Copying rrweb screens is not supported')
+                                error.resultResponse = {
+                                    statusCode: ResponseCodes['409_CONFLICT'],
+                                    headers: {
+                                        'Access-Control-Max-Age': 600,
+                                        'Access-Control-Allow-Origin': '*',
+                                        'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept',
+                                        'Access-Control-Allow-Credentials': true,
+                                    },
+                                    body: JSON.stringify({
+                                        message: 'Copying rrweb (DOM demo) screens is not supported in v1'
+                                    })
+                                }
+                                throw error
+                            }
                             return {
                                 screenDoc: screenDoc,
                             }

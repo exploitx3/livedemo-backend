@@ -7,8 +7,6 @@ const options = {
 }
 
 import ScreenStepSchema from './ScreenStep.js'
-// const ScreenTransitionSchema = require('./ScreenTransition')
-
 import ScreenTransitionSchema from './ScreenTransition.js'
 import ScreenPageTransitionSchema from './ScreenPageTransition.js'
 
@@ -18,6 +16,14 @@ const ScreenPage = new mongoose.Schema({
     width: { type: mongoose.Number},
     height: { type: mongoose.Number},
 
+    // rrweb DOM-demo screens (absent on legacy static HTML screens)
+    recordingRole: { type: String, enum: ['base', 'delta'] },
+    baseScreenId:  { type: mongoose.Schema.Types.ObjectId, ref: 'Screen' },
+    snapshotPath:  { type: String },
+    eventsPath:    { type: String },
+    eventCount:    { type: Number },
+    fromTimeMs:    { type: Number },
+    toTimeMs:      { type: Number },
 
   }, options
 )

@@ -1,10 +1,9 @@
 import helpers from '../helpers/livedemoHelpers.js'
 import ResponseCodes from '../constants/ResponseCodes.js'
+import { httpError } from '../helpers/rrwebScreenGuards.js'
 
 const handler = function (req, res) {
   let { Models, conn } = req.mongo
-
-  let requestBody = null
 
   let workspaceId = req.params.workspaceId
   let storyId = req.params.storyId
@@ -17,13 +16,44 @@ const handler = function (req, res) {
     })
     .then(({ authUser }) => {
       authUserDoc = authUser
-
-      // let validatedBody = validateBody(req.body, postStepValidator)
-      // requestBody = validatedBody.value
-
       helpers.validateUserHasAccessToWorkspace(authUserDoc, workspaceId)
     })
-    .then(() => {
+    .then(async () => {
+      const screenDoc = await Models.Screen.findOne({ _id: screenId }).lean()
+      if (!screenDoc) {
+        httpError(ResponseCodes['404_NOT_FOUND'], 'Screen not found')
+      }
+
+      // Guard: block deleting a base that has linked deltas
+      if (screenDoc.recordingRole === 'base') {
+        const linkedDelta = await Models.Screen.findOne({
+          storyId,
+          recordingRole: 'delta',
+          baseScreenId: screenId,
+        }).lean()
+        if (linkedDelta) {
+          httpError(
+            ResponseCodes['409_CONFLICT'],
+            'Cannot delete a base screen that still has linked delta screens'
+          )
+        }
+      }
+
+      // Guard: deleting a delta is allowed only if it is the last delta of its chain by index
+      if (screenDoc.recordingRole === 'delta') {
+        const laterDelta = await Models.Screen.findOne({
+          storyId,
+          recordingRole: 'delta',
+          baseScreenId: screenDoc.baseScreenId,
+          index: { $gt: screenDoc.index },
+        }).lean()
+        if (laterDelta) {
+          httpError(
+            ResponseCodes['409_CONFLICT'],
+            'Cannot delete a middle delta; only the last delta of a chain may be deleted'
+          )
+        }
+      }
 
       return Models.Screen.findOneAndDelete({ _id: screenId })
         .then(() => {
@@ -63,9 +93,8 @@ const handler = function (req, res) {
         headers: {
           'Access-Control-Max-Age': 600,
           'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept', // Required for CORS support to work
-          // Required for CORS support to work
-          'Access-Control-Allow-Credentials': true, // Required for cookies, authorization headers with HTTPS
+          'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept',
+          'Access-Control-Allow-Credentials': true,
         },
         body: JSON.stringify({})
       }
@@ -80,23 +109,18 @@ const handler = function (req, res) {
 
       let resultResponse
       if (error.resultResponse) {
-
         resultResponse = error.resultResponse
       } else {
-
-
         resultResponse = {
           statusCode: ResponseCodes['500_INTERNAL_SERVER_ERROR'],
           headers: {
             'Access-Control-Max-Age': 600,
             'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept', // Required for CORS support to work
-            // Required for CORS support to work
-            'Access-Control-Allow-Credentials': true, // Required for cookies, authorization headers with HTTPS
+            'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept',
+            'Access-Control-Allow-Credentials': true,
           },
           body: ''
         }
-
       }
 
       res.set(resultResponse.headers)

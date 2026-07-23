@@ -27,6 +27,16 @@ const Screen = new mongoose.Schema({
 
     index: { type: Number },
     imageUrl: {type: String},
+
+    // rrweb DOM-demo fields (also on Screen_Page; must live on base Screen so
+    // Story.populate('screens') does not strip them under strict mode)
+    recordingRole: { type: String, enum: ['base', 'delta'] },
+    baseScreenId:  { type: mongoose.Schema.Types.ObjectId, ref: 'Screen' },
+    snapshotPath:  { type: String },
+    eventsPath:    { type: String },
+    eventCount:    { type: Number },
+    fromTimeMs:    { type: Number },
+    toTimeMs:      { type: Number },
   }, options
 )
 

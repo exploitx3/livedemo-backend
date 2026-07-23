@@ -25,13 +25,36 @@ const handler = function (req, res) {
             helpers.validateUserHasAccessToWorkspace(authUserDoc, requestBody.workspaceId)
         }).then(() => {
 
-            return new Models.Story({
+            const storyFields = {
                 name: requestBody.name,
                 workspaceId: requestBody.workspaceId,
                 userId: authUserDoc.id,
                 status: StoryStatuses.UPLOADING,
                 screens: [],
-            }).save()
+            }
+            if (requestBody.recordingType) {
+                storyFields.recordingType = requestBody.recordingType
+            }
+            if (requestBody.rrweb) {
+                storyFields.rrweb = requestBody.rrweb
+            }
+            if (requestBody.tabInfo) {
+                storyFields.tabInfo = requestBody.tabInfo
+            } else if (requestBody.rrweb && requestBody.rrweb.viewport) {
+                storyFields.tabInfo = {
+                    width: requestBody.rrweb.viewport.width,
+                    height: requestBody.rrweb.viewport.height,
+                }
+            }
+            if (requestBody.windowMeasures) {
+                storyFields.windowMeasures = requestBody.windowMeasures
+            } else if (requestBody.rrweb && requestBody.rrweb.viewport) {
+                storyFields.windowMeasures = {
+                    innerWidth: requestBody.rrweb.viewport.width,
+                    innerHeight: requestBody.rrweb.viewport.height,
+                }
+            }
+            return new Models.Story(storyFields).save()
         })
         .then((newStory) => {
             console.log('Story created')

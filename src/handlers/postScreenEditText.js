@@ -1,19 +1,7 @@
 import helpers from '../helpers/livedemoHelpers.js'
 import postScreenEditTextValidator from '../helpers/validators/stories/screens/postScreenEditTextValidator.js'
-import short from 'short-uuid'
 import ResponseCodes from '../constants/ResponseCodes.js'
-import fsp from 'fs/promises'
-
-import * as parse5Obj from 'parse5'
-const {parse5} = parse5Obj
-import parse5Helper from 'parse5-helper'
-
-import { DOMParser, XMLSerializer } from '@xmldom/xmldom'
-import xpath from 'xpath'
-import jsdom from 'jsdom'
-const { JSDOM } = jsdom
-
-const SCREENDOC_ENCODING = 'utf-8'
+import { editRrwebScreenText } from '../helpers/editRrwebScreenText.js'
 
 const handler = function (req, res) {
   let { Models, conn } = req.mongo
@@ -44,41 +32,61 @@ const handler = function (req, res) {
         _id: screenId
       }).lean()
     })
-    .then((screenDoc) => {
+    .then(async (screenDoc) => {
+      if (!screenDoc) {
+        const error = new Error('Screen not found')
+        error.resultResponse = {
+          statusCode: ResponseCodes['404_NOT_FOUND'],
+          headers: {
+            'Access-Control-Max-Age': 600,
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept',
+            'Access-Control-Allow-Credentials': true,
+          },
+          body: JSON.stringify({ message: 'Screen not found' }),
+        }
+        throw error
+      }
 
-      return fsp.readFile(screenDoc.contentPath, { encoding: SCREENDOC_ENCODING })
-        .then((contentString) => {
-          let { selector, text } = requestBody
-          // let doc = new DOMParser().parseFromString(contentString)
+      // Legacy static HTML PageScreens are no longer editable / captured.
+      // Only rrweb DOM screens (recordingRole) support Edit Text.
+      if (!screenDoc.recordingRole) {
+        const error = new Error('EditText is only supported for DOM (rrweb) screens')
+        error.resultResponse = {
+          statusCode: ResponseCodes['400_BAD_REQUEST'],
+          headers: {
+            'Access-Control-Max-Age': 600,
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept',
+            'Access-Control-Allow-Credentials': true,
+          },
+          body: JSON.stringify({ message: 'EditText is only supported for DOM (rrweb) screens' }),
+        }
+        throw error
+      }
 
-          // const { document : doc} = parseHTML(contentString)
+      const nodeId = parseInt(requestBody.selector, 10)
+      if (!Number.isFinite(nodeId)) {
+        const error = new Error('Invalid rrweb node id')
+        error.resultResponse = {
+          statusCode: ResponseCodes['400_BAD_REQUEST'],
+          headers: {
+            'Access-Control-Max-Age': 600,
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept',
+            'Access-Control-Allow-Credentials': true,
+          },
+          body: JSON.stringify({ message: 'Invalid rrweb node id' }),
+        }
+        throw error
+      }
 
-
-          const doc = parse5.parse(contentString)
-
-          //
-          // let doc= new JSDOM(contentString, {
-          //   parsingMode: 'xml',
-          //   resources: "usable"
-          // })
-          let foundNode = helpers.findNodeByTagValue('livedemo_id', selector, doc.childNodes)
-          let editNode = helpers.findNodeByNodeName('#text', [foundNode])
-
-          if (!editNode) {
-            throw new Error('Node not found')
-          }
-
-          console.log(editNode)
-          editNode.value = text
-
-          // const documentString = new XMLSerializer().serializeToString(document)
-
-          // let documentString = doc.serialize()
-          // let documentString = doc.toString()
-          let documentString = parse5.serialize(doc)
-
-          return fsp.writeFile(screenDoc.contentPath, documentString)
-        })
+      return editRrwebScreenText({
+        Models,
+        screenDoc,
+        nodeId,
+        text: requestBody.text,
+      })
     })
     .then(() => {
 

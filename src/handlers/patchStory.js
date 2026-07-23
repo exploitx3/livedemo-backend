@@ -35,11 +35,16 @@ const handler = function(req, res){
     .then(async () => {
 
       let name = requestBody.name
+      let status = requestBody.status
 
       let updateObj = {}
 
       if(name || name === '') {
         updateObj.name = name
+      }
+
+      if(status) {
+        updateObj.status = status
       }
 
       return Models.Story.findOneAndUpdate({ _id: storyId },  { $set: updateObj }, {

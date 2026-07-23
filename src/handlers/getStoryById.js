@@ -49,7 +49,7 @@ const handler = function (req, res) {
               model: 'CursorPositions',
             }
           ],
-          select: '_id name type screens steps customTransitions width height imageUrl index asset playbackRate popups zoomSpans zoomSpan startTime endTime cursorPositions',
+          select: '_id name type screens steps customTransitions width height imageUrl index asset playbackRate popups zoomSpans zoomSpan startTime endTime cursorPositions recordingRole baseScreenId fromTimeMs toTimeMs eventCount',
         })
         .populate('content.contentId')
 

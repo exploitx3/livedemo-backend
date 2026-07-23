@@ -65,7 +65,7 @@ const handler = function (req, res) {
                             model: 'CursorPositions',
                         }
                     ],
-                    select: '_id name steps type cursorPositions customTransitions width height imageUrl index imageUrl asset playbackRate popups zoomSpans startTime endTime playbackRate',
+                    select: '_id name steps type cursorPositions customTransitions width height imageUrl index imageUrl asset playbackRate popups zoomSpans startTime endTime playbackRate recordingRole baseScreenId fromTimeMs toTimeMs eventCount',
                     options: {sort: {'index': 1}}
                 })
                 .lean()
@@ -162,6 +162,13 @@ const handler = function (req, res) {
                         step.screenType = screen.type
                         step.screenWidth = screen.width
                         step.screenHeight = screen.height
+                        if (screen.recordingRole) {
+                            step.recordingRole = screen.recordingRole
+                            step.baseScreenId = screen.baseScreenId
+                            step.fromTimeMs = screen.fromTimeMs
+                            step.toTimeMs = screen.toTimeMs
+                            step.eventCount = screen.eventCount
+                        }
 
 
                         return step
@@ -172,7 +179,14 @@ const handler = function (req, res) {
                             screenId: screen._id,
                             screenWidth: screen.width,
                             screenHeight: screen.height,
-                            screenType: screen.type
+                            screenType: screen.type,
+                            ...(screen.recordingRole ? {
+                                recordingRole: screen.recordingRole,
+                                baseScreenId: screen.baseScreenId,
+                                fromTimeMs: screen.fromTimeMs,
+                                toTimeMs: screen.toTimeMs,
+                                eventCount: screen.eventCount,
+                            } : {})
                         })
                     }
 

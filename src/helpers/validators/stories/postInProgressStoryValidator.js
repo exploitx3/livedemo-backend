@@ -15,6 +15,17 @@ function validateBody(body) {
         throw new Error('incorrect workspaceId')
       }
     }).required(),
+    recordingType: Joi.string().valid('video_screenshot', 'html_delta').optional(),
+    rrweb: Joi.object().keys({
+      version: Joi.string().optional(),
+      href: Joi.string().optional().allow(''),
+      viewport: Joi.object().keys({
+        width: Joi.number().optional(),
+        height: Joi.number().optional(),
+      }).optional(),
+    }).optional(),
+    tabInfo: Joi.object().optional(),
+    windowMeasures: Joi.object().optional(),
   })
 
   const result = schema.validate(body)

@@ -93,6 +93,16 @@ const Story = new mongoose.Schema({
 
         thumbnailImageUrl: {type: String, default: ''},
 
+        recordingType: { type: String, enum: ['video_screenshot', 'html_delta'], default: 'video_screenshot' },
+        rrweb: {
+            version:  { type: String },
+            href:     { type: String },
+            viewport: {
+                width:  { type: Number },
+                height: { type: Number },
+            },
+        },
+
         links: [
             {type: String, ref: 'Link'}
         ],

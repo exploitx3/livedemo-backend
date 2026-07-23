@@ -1,6 +1,7 @@
 import helpers from '../helpers/livedemoHelpers.js'
 import patchScreenValidator from '../helpers/validators/stories/screens/patchScreenValidator.js'
 import ResponseCodes from '../constants/ResponseCodes.js'
+import { httpError, wouldBreakRrwebChainOrder } from '../helpers/rrwebScreenGuards.js'
 
 import ENV from '../envServer.js'
 const { STORY_REQUESTS_FOLDER } = ENV
@@ -59,6 +60,32 @@ const handler = function (req, res) {
         updateObj.name = name
       }
 
+      if (index || index === 0) {
+        const allScreens = await Models.Screen.find({ storyId }).lean()
+        const proposed = allScreens.map((s) => {
+          if (String(s._id) === String(screenId)) {
+            return {
+              _id: s._id,
+              index,
+              recordingRole: s.recordingRole,
+              baseScreenId: s.baseScreenId,
+              fromTimeMs: s.fromTimeMs,
+            }
+          }
+          return {
+            _id: s._id,
+            index: s.index,
+            recordingRole: s.recordingRole,
+            baseScreenId: s.baseScreenId,
+            fromTimeMs: s.fromTimeMs,
+          }
+        })
+        const breakReason = wouldBreakRrwebChainOrder(proposed)
+        if (breakReason) {
+          httpError(ResponseCodes['409_CONFLICT'], breakReason)
+        }
+      }
+
       return Models.Screen.db.collection('screens').findOneAndUpdate({ _id: new ObjectId(screenId) },  { $set: updateObj }, {
         returnDocument: 'after'
       })
@@ -70,9 +97,8 @@ const handler = function (req, res) {
         headers: {
           'Access-Control-Max-Age': 600,
           'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept', // Required for CORS support to work
-          // Required for CORS support to work
-          'Access-Control-Allow-Credentials': true, // Required for cookies, authorization headers with HTTPS
+          'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept',
+          'Access-Control-Allow-Credentials': true,
         }
       }
 
@@ -85,23 +111,18 @@ const handler = function (req, res) {
 
       let resultResponse
       if (error.resultResponse) {
-
         resultResponse = error.resultResponse
       } else {
-
-
         resultResponse = {
           statusCode: ResponseCodes['500_INTERNAL_SERVER_ERROR'],
           headers: {
             'Access-Control-Max-Age': 600,
             'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept', // Required for CORS support to work
-            // Required for CORS support to work
-            'Access-Control-Allow-Credentials': true, // Required for cookies, authorization headers with HTTPS
+            'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept',
+            'Access-Control-Allow-Credentials': true,
           },
           body: ''
         }
-
       }
 
       res.set(resultResponse.headers)

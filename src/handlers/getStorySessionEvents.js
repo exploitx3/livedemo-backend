@@ -32,7 +32,13 @@ const handler = function (req, res) {
 
 
 
-      return Models.SessionEvent.find({workspaceId: workspaceId, sessionId: sessionDoc._id}).sort({'eventData.timestamp': 1}).limit(200).lean()
+      // No low event cap: iframe contents are attached via later mutation events
+      // (isAttachIframe). Truncating the stream leaves Analytics with an empty
+      // iframe shell (chrome/tooltips play, demo surface stays white).
+      return Models.SessionEvent.find({
+        workspaceId: workspaceId,
+        sessionId: sessionDoc._id,
+      }).sort({ 'eventData.timestamp': 1 }).lean()
     })
     .then((sessionEvents) => {
 

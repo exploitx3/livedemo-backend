@@ -3,32 +3,16 @@ const SCREENDOC_ENCODING = 'utf-8'
 import ENV from '../envServer.js'
 import ResponseCodes from '../constants/ResponseCodes.js'
 import fsp from 'fs/promises'
+import { decodeRrwebEvents } from '../helpers/rrwebEventNames.js'
 
 const handler = function (req, res) {
   let { Models, conn } = req.mongo
 
-  let requestBody = null
-
   let workspaceId = req.params.workspaceId
   let storyId = req.params.storyId
   let screenId = req.params.screenId
-  let authUserDoc = null
 
   return Promise.resolve().then(async () => {
-
-      // return authReq(req)
-    })
-    // .then(({ authUser }) => {
-    //   authUserDoc = authUser
-    //
-    //   let validatedBody = validateBody(req.body, patchScreenValidator)
-    //   requestBody = validatedBody.value
-    //
-    //   validateUserHasAccessToWorkspace(authUserDoc, workspaceId)
-    // })
-    .then(async () => {
-
-
       return Models.Screen.findOne({
           _id: screenId
         })
@@ -48,86 +32,89 @@ const handler = function (req, res) {
           })
         .lean()
     })
-    .then((screenDoc) => {
+    .then(async (screenDoc) => {
+      // rrweb screens: return events JSON, skip HTML domain-script injection
+      if (screenDoc && screenDoc.recordingRole) {
+        const eventsPath = screenDoc.recordingRole === 'base'
+          ? screenDoc.snapshotPath
+          : screenDoc.eventsPath
 
-      if(screenDoc.contentPath) {
+        if (!eventsPath) {
+          return { screenDoc, events: [] }
+        }
+
+        const eventsString = await fsp.readFile(eventsPath, { encoding: SCREENDOC_ENCODING })
+        let events = []
+        try {
+          events = decodeRrwebEvents(JSON.parse(eventsString))
+        } catch (e) {
+          console.log('Failed to parse rrweb events', e)
+          events = []
+        }
+
+        return { screenDoc, events, isRrweb: true }
+      }
+
+      if (screenDoc && screenDoc.contentPath) {
         return fsp.readFile(screenDoc.contentPath, { encoding: SCREENDOC_ENCODING })
           .then((contentString) => {
-
-
-            // let indexOfHeadStart = contentString.indexOf('<head livedemo_id="top_1">')
-
-
             let scriptToAppend = `<script>document.domain = "${ENV.URL_COMMON_DOMAIN}"</script>\n`
             scriptToAppend += '<style>@keyframes pulse {\n\t0% {\n\t\ttransform: scale(0.98);\n\t\tbox-shadow: 0 0 0 0 rgba(16, 112, 255, 0.7);\n\t}\n\n\t70% {\n\t\ttransform: scale(1);\n\t\tbox-shadow: 0 0 0 10px rgba(16, 112, 255, 0);\n\t}\n\n\t100% {\n\t\ttransform: scale(0.98);\n\t\tbox-shadow: 0 0 0 0 rgba(16, 112, 255, 0);\n\t}\n}</style>'
-
-            // scriptToAppend += '<script src="https://cdn.lr-in-prod.com/LogRocket.min.js" crossorigin="anonymous"></script>\n' +
-            //   '<script>window.LogRocket && window.LogRocket.init(\'dotxvj/livedemo\', {  mergeIframes: true});</script>\n'
-
-            // '<script>\n' +
-            // 'history.pushState(null, null, location.href);\n' +
-            // '    window.onpopstate = function () {\n' +
-            // '      history.go(1);\n' +
-            // '    };\n' +
-            // '</script>'
 
             let respBodyFinal = contentString.replace(/(<\s*head[\W\w]*?[^>]*>)/, '$1\n' + scriptToAppend)
 
             screenDoc.contentString = respBodyFinal
 
-            return screenDoc
+            return { screenDoc, content: respBodyFinal, isRrweb: false }
           })
-      } else {
-
-        return screenDoc
       }
 
-
+      return { screenDoc, content: undefined, isRrweb: false }
     })
-    .then((screenDoc) => {
+    .then((payload) => {
 
       const resultResponse = {
         statusCode: ResponseCodes['200_OK'],
         headers: {
           'Access-Control-Max-Age': 600,
           'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept', // Required for CORS support to work
-          // Required for CORS support to work
-          'Access-Control-Allow-Credentials': true, // Required for cookies, authorization headers with HTTPS
+          'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept',
+          'Access-Control-Allow-Credentials': true,
         }
       }
 
       res.set(resultResponse.headers)
       res.status(resultResponse.statusCode)
-      res.send(
-        JSON.stringify({
-          screenDoc: screenDoc,
-          content: screenDoc.contentString
-        })
-      )
+
+      if (payload.isRrweb) {
+        res.send(JSON.stringify({
+          screenDoc: payload.screenDoc,
+          events: payload.events,
+        }))
+      } else {
+        res.send(JSON.stringify({
+          screenDoc: payload.screenDoc,
+          content: payload.content,
+        }))
+      }
     })
     .catch((error) => {
       console.log(error)
 
       let resultResponse
       if (error.resultResponse) {
-
         resultResponse = error.resultResponse
       } else {
-
-
         resultResponse = {
           statusCode: ResponseCodes['500_INTERNAL_SERVER_ERROR'],
           headers: {
             'Access-Control-Max-Age': 600,
             'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept', // Required for CORS support to work
-            // Required for CORS support to work
-            'Access-Control-Allow-Credentials': true, // Required for cookies, authorization headers with HTTPS
+            'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept',
+            'Access-Control-Allow-Credentials': true,
           },
           body: ''
         }
-
       }
 
       res.set(resultResponse.headers)

@@ -689,6 +689,24 @@ function enqueueProcessStoryDemo(storyDemoId) {
 }
 
 
+function enqueueProcessStoryDemoDom(storyDemoId) {
+  const client = monq(ENV.DB_URI || 'mongodb://localhost:27017/livedemo_app')
+  const queue = client.queue('storyDemos', { collection: 'jobs-monq' })
+
+  return new Promise((resolve, reject) => {
+    let jobName = 'processStoryDemoDom'
+    queue.enqueue(jobName, { storyDemoId }, { priority: 1 }, function (err, job) {
+      if (err) {
+        reject(err)
+      }
+      console.log('Enqueued:', job.data)
+      resolve()
+    })
+
+  })
+}
+
+
 function enqueueProcessAutoRecording(autoRecordingId) {
   const client = monq(ENV.DB_URI || 'mongodb://localhost:27017/livedemo_app')
   const queue = client.queue('autoRecordings', { collection: 'jobs-monq' })
@@ -776,6 +794,7 @@ export default {
   getCursorPositionIdsForVideoSegment,
   insertStoryCursorPositions,
   enqueueProcessStoryDemo,
+  enqueueProcessStoryDemoDom,
   enqueueProcessStoryDemoVideo,
   enqueueProcessAutoRecording
 

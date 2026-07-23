@@ -7,6 +7,8 @@ import monq from 'monq'
 import path from 'path'
 
 import postScreensHandler from './handlers/postScreens.js'
+import postStoryDomRecordingEventsHandler from './handlers/postStoryDomRecordingEvents.js'
+import postStoryDomRecordingFinishHandler from './handlers/postStoryDomRecordingFinish.js'
 import postStoriesHandler from './handlers/postStories.js'
 import postDesktopStoriesHandler from './handlers/postDesktopStories.js'
 import postEmptyStoryHandler from './handlers/postEmptyStory.js'
@@ -276,6 +278,8 @@ app.get('/livedemos/:storyId', [setupMongo], getLiveDemoPreviewHandler)
 app.delete('/workspaces/:workspaceId/stories/:storyId', [setupMongo], deleteStoryHandler)
 
 app.post('/workspaces/:workspaceId/stories/:storyId/screens', [setupMongo], postScreensHandler)
+app.post('/workspaces/:workspaceId/stories/:storyId/domRecording/events', [setupMongo], postStoryDomRecordingEventsHandler)
+app.post('/workspaces/:workspaceId/stories/:storyId/domRecording/finish', [setupMongo], postStoryDomRecordingFinishHandler)
 
 
 app.post('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/transitions', [setupMongo], postTransitionsHandler)
