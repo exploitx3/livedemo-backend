@@ -130,7 +130,8 @@
     "webpack": "^5.95.0",
     "webpack-cli": "^5.1.4",
     "webpack-node-externals": "^3.0.0",
-    "xpath": "0.0.32"
+    "xpath": "0.0.32",
+    "sequenzy": "^0.10.4"
   },
   "devDependencies": {
     "@esbuild-kit/cjs-loader": "^2.4.4",

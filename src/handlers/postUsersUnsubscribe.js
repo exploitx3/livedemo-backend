@@ -2,6 +2,7 @@ import helpers from '../helpers/livedemoHelpers.js'
 import ResponseCodes from '../constants/ResponseCodes.js'
 import unsubscribeValidator from '../helpers/validators/oldLambdaRoutes/users/unsubscribeValidator.js'
 import LambdaRateLimiter from 'lambda-rate-limiter'
+import { unsubscribeSubscriber } from '../helpers/sequenzy/sequenzyClient.js'
 
 const corsHeaders = {
   'Access-Control-Max-Age': 600,
@@ -75,7 +76,9 @@ const handler = function (req, res) {
         { new: true }
       )
     })
-    .then(() => {
+    .then((updatedUser) => {
+      // Fire-and-forget — LiveDemo unsubscribe already succeeded.
+      unsubscribeSubscriber(updatedUser || {})
       res.set(corsHeaders)
       res.status(ResponseCodes['200_OK'])
       res.send(JSON.stringify({

@@ -8,6 +8,7 @@ import {
 } from '../helpers/emailHelpers.js'
 import { sendEmail } from '../helpers/emails/emailsSender.js'
 import Templates from '../helpers/emails/templates/index.js'
+import { syncSignupSubscriber } from '../helpers/sequenzy/sequenzyClient.js'
 
 const handler = function (req, res) {
   let { Models } = req.mongo
@@ -99,6 +100,9 @@ const handler = function (req, res) {
 
       const fullNameArray = updatedUser.name ? updatedUser.name.split(' ') : []
       const firstName = fullNameArray.length ? fullNameArray[0] : updatedUser.name
+
+      // SES keeps day-0 welcome; Sequenzy sequence should start at Day 1+.
+      syncSignupSubscriber(updatedUser, Models, { source: 'password' })
 
       if (Templates.newAutoGenAccountCreated) {
         return sendEmail(Templates.newAutoGenAccountCreated, {

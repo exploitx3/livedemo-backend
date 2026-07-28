@@ -323,6 +323,9 @@ importers:
       sass-loader:
         specifier: 7.1.0
         version: 7.1.0(webpack@5.105.2)
+      sequenzy:
+        specifier: ^0.10.4
+        version: 0.10.4
       sharp:
         specifier: ^0.34.5
         version: 0.34.5
@@ -6025,6 +6028,9 @@ packages:
   send@0.19.2:
     resolution: {integrity: sha512-VMbMxbDeehAxpOtWJXlcUS5E8iXh6QmN+BkRX1GARS3wRaXEEgzCcB10gTQazO42tpNIya8xIyNx8fll1OFPrg==}
     engines: {node: '>= 0.8.0'}
+
+  sequenzy@0.10.4:
+    resolution: {integrity: sha512-w7NyE0ljPGp8Q0wBlh+pzdD9nEeFwdaDwnoqDbsZDVVtk2RovUr9e0xl+BmFv/8saAmQbP2E9l7AqLrBaQgmKA==}
 
   serialize-javascript@7.0.4:
     resolution: {integrity: sha512-DuGdB+Po43Q5Jxwpzt1lhyFSYKryqoNjQSA9M92tyw0lyHIOur+XCalOUe0KTJpyqzT8+fQ5A0Jf7vCx/NKmIg==}
@@ -13961,6 +13967,8 @@ snapshots:
       statuses: 2.0.2
     transitivePeerDependencies:
       - supports-color
+
+  sequenzy@0.10.4: {}
 
   serialize-javascript@7.0.4: {}
 

@@ -40,6 +40,11 @@ const UserSchema = new mongoose.Schema({
       unsubscribeToken: { type: String, default: () => crypto.randomUUID() },
       unsubscribedAt: { type: Date, default: null },
     },
+    sequenzy: {
+      subscriberId: { type: String, default: '' },
+      syncedAt: { type: Date, default: null },
+      lastSyncError: { type: String, default: null },
+    },
     password: String,
     name: { type: String, default: '' },
     workspaceMembers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'WorkspaceMember' }],

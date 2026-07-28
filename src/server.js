@@ -128,6 +128,7 @@ import postCheckoutSessionHandler from './handlers/postCheckoutSession.js'
 import postVerifyCheckoutSessionHandler from './handlers/postVerifyCheckoutSession.js'
 import postBillingPortalHandler from './handlers/postBillingPortal.js'
 import postPaymentsWebhookHandler from './handlers/postPaymentsWebhook.js'
+import postWebhooksSequenzyHandler from './handlers/postWebhooksSequenzy.js'
 import postPaymentFreeActivateHandler from './handlers/postPaymentFreeActivate.js'
 import postPaymentAfterPaymentHandler from './handlers/postPaymentAfterPayment.js'
 import postVerifyPaymentChargeHandler from './handlers/postVerifyPaymentCharge.js'
@@ -223,6 +224,7 @@ function setupMongo(req, res, next) {
 
 // Stripe webhook must receive the raw body before JSON body parsers run
 app.post('/payments/webhook', [setupMongo, express.raw({ type: 'application/json' })], postPaymentsWebhookHandler)
+app.post('/webhooks/sequenzy', [setupMongo, express.raw({ type: 'application/json' })], postWebhooksSequenzyHandler)
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json({limit: '5000mb', extended: true}))

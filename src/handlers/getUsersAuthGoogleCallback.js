@@ -3,6 +3,7 @@ import ENV from '../envServer.js'
 import { decodeReturnPathFromOAuthState } from '../helpers/sanitizeReturnPath.js'
 import authUtils from '../helpers/authUtils.js'
 import { sendEmail } from '../helpers/emails/emailsSender.js'
+import { syncSignupSubscriber } from '../helpers/sequenzy/sequenzyClient.js'
 import Templates from '../helpers/emails/templates/index.js'
 import { cloneUrlDemoStoriesForUser } from '../helpers/cloneUrlDemoStoriesForUser.js'
 import axios from 'axios'
@@ -159,6 +160,9 @@ const handler = function (req, res) {
                         })
                 }
             }
+
+            // SES keeps day-0 welcome; Sequenzy sequence should start at Day 1+.
+            syncSignupSubscriber(userObj, Models, { source: 'google' })
 
             // Send welcome email (if template exists)
             try {

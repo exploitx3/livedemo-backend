@@ -2,6 +2,7 @@ import ResponseCodes from '../constants/ResponseCodes.js'
 import ENV from '../envServer.js'
 import authUtils from '../helpers/authUtils.js'
 import { sendEmail } from '../helpers/emails/emailsSender.js'
+import { syncSignupSubscriber } from '../helpers/sequenzy/sequenzyClient.js'
 import Templates from '../helpers/emails/templates/index.js'
 import mongoose from 'mongoose'
 const { ObjectId } = mongoose.Types
@@ -155,6 +156,9 @@ const handler = function (req, res) {
           }).save()
         }
       }
+
+      // SES keeps day-0 welcome; Sequenzy sequence should start at Day 1+.
+      syncSignupSubscriber(userObj, Models, { source: 'google' })
 
       // Send welcome email (if template exists)
       try {

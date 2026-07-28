@@ -49,6 +49,11 @@ export default {
     
     return oauth2Creds
   })(),
+  'SEQUENZY_API_KEY': process.env.SEQUENZY_API_KEY ? process.env.SEQUENZY_API_KEY : "",
+  'SEQUENZY_ENABLED': process.env.SEQUENZY_ENABLED !== undefined
+    ? ['true', '1', 'yes'].includes(String(process.env.SEQUENZY_ENABLED).toLowerCase())
+    : false,
+  'SEQUENZY_WEBHOOK_SECRET': process.env.SEQUENZY_WEBHOOK_SECRET ? process.env.SEQUENZY_WEBHOOK_SECRET : "",
   'STRIPE_SECRET_KEY': process.env.STRIPE_SECRET_KEY ? process.env.STRIPE_SECRET_KEY : "",
   'STRIPE_WEBHOOK_SECRET': process.env.STRIPE_WEBHOOK_SECRET ? process.env.STRIPE_WEBHOOK_SECRET : "",
   'TMP_FOLDER': process.env.TMP_FOLDER ? process.env.TMP_FOLDER : "",
