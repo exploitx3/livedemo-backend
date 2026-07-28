@@ -158,7 +158,7 @@ const handler = function (req, res) {
       }
 
       // SES keeps day-0 welcome; Sequenzy sequence should start at Day 1+.
-      syncSignupSubscriber(userObj, Models, { source: 'google' })
+      void syncSignupSubscriber(userObj, Models, { source: 'google' }).catch(() => {})
 
       // Send welcome email (if template exists)
       try {

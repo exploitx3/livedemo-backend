@@ -102,7 +102,7 @@ const handler = function (req, res) {
       const firstName = fullNameArray.length ? fullNameArray[0] : updatedUser.name
 
       // SES keeps day-0 welcome; Sequenzy sequence should start at Day 1+.
-      syncSignupSubscriber(updatedUser, Models, { source: 'password' })
+      void syncSignupSubscriber(updatedUser, Models, { source: 'password' }).catch(() => {})
 
       if (Templates.newAutoGenAccountCreated) {
         return sendEmail(Templates.newAutoGenAccountCreated, {

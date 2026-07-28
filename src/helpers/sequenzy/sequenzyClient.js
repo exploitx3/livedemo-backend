@@ -51,6 +51,8 @@ export async function syncSignupSubscriber(userDoc, Models, { source } = {}) {
       },
       optInMode: 'confirmed',
       enrollInSequences: true,
+      // SDK default (omit) = ALL company lists; sequences-only signup should not dump into every list.
+      lists: [],
       duplicateStrategy: 'merge',
     })
 

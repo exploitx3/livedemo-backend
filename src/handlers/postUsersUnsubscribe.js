@@ -78,7 +78,7 @@ const handler = function (req, res) {
     })
     .then((updatedUser) => {
       // Fire-and-forget — LiveDemo unsubscribe already succeeded.
-      unsubscribeSubscriber(updatedUser || {})
+      void unsubscribeSubscriber(updatedUser || {}).catch(() => {})
       res.set(corsHeaders)
       res.status(ResponseCodes['200_OK'])
       res.send(JSON.stringify({
