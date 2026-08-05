@@ -3,7 +3,6 @@ import ResponseCodes from '../constants/ResponseCodes.js'
 import mongoose from 'mongoose'
 
 const { ObjectId } = mongoose.Types
-const LOCKED_REQUIRED_NAMES = new Set(['name', 'email'])
 
 const handler = function (req, res) {
   let { Models } = req.mongo
@@ -31,21 +30,6 @@ const handler = function (req, res) {
       let field = (formDoc.fields || []).find((f) => String(f._id) === String(fieldId))
       if (!field) {
         throw new Error('Form field not found')
-      }
-
-      // Name/email always required for leads — never allow delete
-      if (LOCKED_REQUIRED_NAMES.has(field.name)) {
-        let err = new Error('Cannot delete name or email fields')
-        err.resultResponse = {
-          statusCode: ResponseCodes['400_BAD_REQUEST'],
-          headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept',
-            'Access-Control-Allow-Credentials': true,
-          },
-          body: JSON.stringify({ message: err.message }),
-        }
-        throw err
       }
 
       let fieldObjectId = ObjectId.isValid(fieldId) ? new ObjectId(fieldId) : fieldId
