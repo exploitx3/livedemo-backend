@@ -29,17 +29,13 @@ const handler = function (req, res) {
     })
     .then(() => {
 
-      const title = requestBody.title
       const type = requestBody.type
       const hubspot = requestBody.hubspot
-
-      
+      const useCaptcha = requestBody.useCaptcha
+      const showTopLabels = requestBody.showTopLabels
+      const showBackground = requestBody.showBackground
 
       let updateObj = {}
-
-      if (title) {
-        updateObj['title'] = title
-      }
 
       if (type) {
         updateObj['type'] = type
@@ -47,6 +43,18 @@ const handler = function (req, res) {
 
       if (hubspot) {
         updateObj['hubspot'] = hubspot
+      }
+
+      if (useCaptcha !== undefined) {
+        updateObj['useCaptcha'] = useCaptcha
+      }
+
+      if (showTopLabels !== undefined) {
+        updateObj['showTopLabels'] = showTopLabels
+      }
+
+      if (showBackground !== undefined) {
+        updateObj['showBackground'] = showBackground
       }
 
       if (Object.keys(updateObj).length !== 0) {

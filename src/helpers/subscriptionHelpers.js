@@ -131,6 +131,7 @@ export const PAID_PLAN_USER_FEATURE_FLAGS = {
   'featureFlags.allowRemoveWatermark': true,
   'featureFlags.showMp4GifsExport': true,
   'featureFlags.allowForms': true,
+  'featureFlags.allowEmbed': true,
   'featureFlags.allowPersonalization': true,
 }
 

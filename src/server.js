@@ -45,6 +45,9 @@ import deleteStoryHandler from './handlers/deleteStory.js'
 import patchStepHandler from './handlers/patchStep.js'
 import postFormsHandler from './handlers/postForms.js'
 import patchFormHandler from './handlers/patchForm.js'
+import postFormFieldsHandler from './handlers/postFormFields.js'
+import patchFormFieldsHandler from './handlers/patchFormFields.js'
+import deleteFormFieldsHandler from './handlers/deleteFormFields.js'
 import postLeadsFormHandler from './handlers/postLeadsForm.js'
 import getWorkspaceLibraryHandler from './handlers/getWorkspaceLibrary.js'
 import postScreenUploadHandler from './handlers/postScreenUpload.js'
@@ -595,6 +598,12 @@ app.post('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/steps/:ste
 app.post('/workspaces/:workspaceId/forms', [setupMongo], postFormsHandler)
 
 app.patch('/workspaces/:workspaceId/forms/:formId', [setupMongo], patchFormHandler)
+
+app.post('/workspaces/:workspaceId/forms/:formId/fields', [setupMongo], postFormFieldsHandler)
+
+app.patch('/workspaces/:workspaceId/forms/:formId/fields/:fieldId', [setupMongo], patchFormFieldsHandler)
+
+app.delete('/workspaces/:workspaceId/forms/:formId/fields/:fieldId', [setupMongo], deleteFormFieldsHandler)
 
 app.post('/leads/forms/:formId/', [setupMongo], postLeadsFormHandler)
 

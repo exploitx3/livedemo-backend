@@ -12,9 +12,8 @@ const Lead = new mongoose.Schema({
     screenId: { type: mongoose.Schema.Types.ObjectId, ref: 'screenId' },
     workspaceId: { type: mongoose.Schema.Types.ObjectId, ref: 'Workspace' },
     sessionId: { type: mongoose.Schema.Types.ObjectId, ref: 'Session' },
-    data: {
-
-    }
+    // Mixed: shortText/selector strings, checkbox booleans, any future field types
+    data: { type: mongoose.Schema.Types.Mixed, default: {} }
   }, options
 )
 

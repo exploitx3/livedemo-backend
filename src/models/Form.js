@@ -1,4 +1,6 @@
 import mongoose from 'mongoose'
+import FormFieldTypes from '../constants/FormFieldTypes.js'
+
 const options = {
   strict: true,
   timestamps: { createdAt: true, updatedAt: true },
@@ -11,16 +13,26 @@ const FormSchema = new mongoose.Schema({
   fields: [{
     label: {type: String, default: ''},
     name: {type: String, default: ''},
-    type: {type: String, default: 'shortText'}, // shortText
+    type: {type: String, default: FormFieldTypes.SHORT_TEXT}, // shortText, selector, checkbox
     required: {type: Boolean, default: true},
-    typeData: {}
+    index: {type: Number, default: 0},
+    // selector: { options: [{ key, value }] }; checkbox: { checked }
+    typeData: {
+      options: [{
+        key: {type: String, default: ''},
+        value: {type: String, default: ''}
+      }],
+      checked: {type: Boolean, default: false}
+    }
   }],
   hubspot: {
     formId: {type: String, default: ''},
     portalId: {type: String, default: ''},
     embedVersion: {type: Number, default: 2},
   },
-  title: {type: String, default: 'Get in touch with us'},
+  useCaptcha: {type: Boolean, default: false},
+  showTopLabels: {type: Boolean, default: false},
+  showBackground: {type: Boolean, default: false},
   workspaceId: { type: mongoose.Schema.Types.ObjectId, ref: 'Workspace' },
   storyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Story' },
   stepId: { type: mongoose.Schema.Types.ObjectId, ref: 'ScreenStep' },

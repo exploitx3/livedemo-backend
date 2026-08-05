@@ -105,6 +105,10 @@ const handler = function (req, res) {
         updateObj['steps.$.view.popup.showPreviewImage'] = stepView.popup.showPreviewImage
       }
 
+      if (stepView && stepView.popup && stepView.popup.previewImageUrl !== undefined) {
+        updateObj['steps.$.view.popup.previewImageUrl'] = stepView.popup.previewImageUrl
+      }
+
       if (stepView && stepView.viewType) {
         updateObj['steps.$.view.viewType'] = stepView.viewType
       }

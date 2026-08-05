@@ -66,6 +66,7 @@ const UserSchema = new mongoose.Schema({
       allowRemoveWatermark: { type: Boolean, default: false},
       showMp4GifsExport: { type: Boolean, default: false},
       allowForms: { type: Boolean, default: false},
+      allowEmbed: { type: Boolean, default: false},
       allowPersonalization: { type: Boolean, default: false},
     },
     onboarding: {

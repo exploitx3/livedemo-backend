@@ -62,7 +62,6 @@ const handler = function (req, res) {
       if (newScreenDoc.popups.type === popupTypes.FORM && !newScreenDoc.popups.formId) {
 
         let newForm = new Models.Form({
-          title: 'Get in touch with us',
           fields: [
             {
               label: 'Name',
@@ -77,6 +76,9 @@ const handler = function (req, res) {
               typeData: {}
             }
           ],
+          useCaptcha: false,
+          showTopLabels: false,
+          showBackground: false,
           storyId: storyId,
           screenId: screenId,
           workspaceId: workspaceId,
@@ -86,7 +88,9 @@ const handler = function (req, res) {
           .then((newFormDoc) => {
             return Models.Screen_Screenshot.findOneAndUpdate({ _id: screenId }, {
                 $set: {
-                  ['popups.formId']: newFormDoc._id
+                  ['popups.formId']: newFormDoc._id,
+                  ['popups.alignment']: 'center',
+                  ['popups.showPreviewImage']: false,
                 }
               }, {
                 new: true,

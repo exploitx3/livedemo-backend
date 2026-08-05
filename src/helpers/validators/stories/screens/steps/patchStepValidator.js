@@ -39,6 +39,7 @@ function validateBody(body) {
         showOverlay: Joi.boolean().optional(),
         overlayBackgroundColor: Joi.string().allow('').optional(),
         showPreviewImage: Joi.boolean().optional(),
+        previewImageUrl: Joi.string().allow('').optional(),
         title: Joi.string().allow('').optional(),
         description: Joi.string().allow('').optional(),
         alignment: Joi.string().optional(),

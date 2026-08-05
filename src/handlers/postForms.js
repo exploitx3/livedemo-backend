@@ -1,6 +1,7 @@
 import helpers from '../helpers/livedemoHelpers.js'
 import ResponseCodes from '../constants/ResponseCodes.js'
 import FormTypes from '../constants/FormTypes.js'
+import FormFieldTypes from '../constants/FormFieldTypes.js'
 import postFormValidator from '../helpers/validators/forms/postFormValidator.js'
 
 const handler = function (req, res) {
@@ -29,22 +30,28 @@ const handler = function (req, res) {
       let formType = FormTypes[type.toUpperCase()]
 
       let newForm = new Models.Form({
-        title: 'Get in touch with us',
         type: formType,
         fields: [
           {
             label: 'Name',
             name: 'name',
+            type: FormFieldTypes.SHORT_TEXT,
             required: true,
+            index: 0,
             typeData: {}
           },
           {
             label: 'Email',
             name: 'email',
+            type: FormFieldTypes.SHORT_TEXT,
             required: true,
+            index: 1,
             typeData: {}
           }
         ],
+        useCaptcha: false,
+        showTopLabels: false,
+        showBackground: false,
         storyId: storyId,
         stepId: stepId,
         screenId: screenId,
@@ -60,7 +67,9 @@ const handler = function (req, res) {
       if(type === FormTypes.STEP) {
         return Models.Screen.findOneAndUpdate({ _id: screenId, 'steps._id': stepId }, {
             $set: {
-              'steps.$.view.popup.formId': newFormDoc._id
+              'steps.$.view.popup.formId': newFormDoc._id,
+              'steps.$.view.popup.alignment': 'center',
+              'steps.$.view.popup.showPreviewImage': false,
             }
           }, {
             new: true,
@@ -73,7 +82,9 @@ const handler = function (req, res) {
       } else if(type === FormTypes.TRANSITION) {
         return Models.Screen.findOneAndUpdate({ _id: screenId,'customTransitions._id': transitionId }, {
             $set: {
-              'customTransitions.$.popup.formId': newFormDoc._id
+              'customTransitions.$.popup.formId': newFormDoc._id,
+              'customTransitions.$.popup.alignment': 'center',
+              'customTransitions.$.popup.showPreviewImage': false,
             }
           }, {
             new: true,

@@ -4,38 +4,74 @@ import ResponseCodes from '../constants/ResponseCodes.js'
 import axios from 'axios'
 import ENV from '../envServer.js'
 import monq from 'monq'
+import FormFieldTypes from '../constants/FormFieldTypes.js'
 
 const FORM_FIELD_NAME = {
   EMAIL: 'email',
   NAME: 'name',
 }
 
+function isFieldFilled(fieldObj, value) {
+  if (fieldObj.type === FormFieldTypes.CHECKBOX) {
+    if (!fieldObj.required) {
+      return true
+    }
+    return value === true || value === 'true'
+  }
+
+  return value !== undefined && value !== null && String(value).length > 0
+}
+
+function isFieldValid(fieldObj, value) {
+  if (fieldObj.name === FORM_FIELD_NAME.EMAIL) {
+    return validator.isEmail(String(value))
+  }
+
+  if (fieldObj.name === FORM_FIELD_NAME.NAME) {
+    let str = String(value)
+    return str.length > 3 && str.length < 255
+  }
+
+  // selector / checkbox / company / website / custom: no extra validation for now
+  return true
+}
+
+function normalizeFieldValue(fieldObj, value) {
+  if (fieldObj.type === FormFieldTypes.CHECKBOX) {
+    return value === true || value === 'true'
+  }
+
+  return value
+}
+
 function validateBodyFromForm(formDoc, body) {
-  let fieldsObj = formDoc.fields.reduce((accum, field) => {
+  let fieldsObj = (formDoc.fields || []).reduce((accum, field) => {
     accum[field.name] = field
 
     return accum
   }, {})
 
-  let jsonBody = body
+  let jsonBody = body || {}
 
   let bodyFields = Object.entries(jsonBody).reduce((accum, [key, value]) => {
     if (fieldsObj[key]) {
-
-      accum[key] = value
+      accum[key] = normalizeFieldValue(fieldsObj[key], value)
     }
 
     return accum
   }, {})
 
   let allRequiredFieldsAreFilled = Object.values(fieldsObj).every(fieldObj => {
-    if (fieldObj.required) {
+    // name/email always required — they have custom format validation
+    let isRequired = !!fieldObj.required
+      || fieldObj.name === FORM_FIELD_NAME.NAME
+      || fieldObj.name === FORM_FIELD_NAME.EMAIL
 
-      return !!bodyFields[fieldObj.name]
-    } else {
-
+    if (!isRequired) {
       return true
     }
+
+    return isFieldFilled(fieldObj, bodyFields[fieldObj.name])
   })
 
   if (!allRequiredFieldsAreFilled) {
@@ -43,18 +79,7 @@ function validateBodyFromForm(formDoc, body) {
   }
 
   let allFiledsAreValid = Object.entries(bodyFields).every(([key, value]) => {
-
-    if (key === FORM_FIELD_NAME.EMAIL) {
-
-      let isValueValid = validator.isEmail(value)
-      return isValueValid
-    }
-
-    if (key === FORM_FIELD_NAME.NAME) {
-
-      let isValueValid = value.length > 3 && value.length < 255
-      return isValueValid
-    }
+    return isFieldValid(fieldsObj[key], value)
   })
 
   if (!allFiledsAreValid) {
@@ -108,16 +133,19 @@ const handler = function (req, res) {
   let captchaToken = req.body && req.body.captchaToken
   let livedemoSessionId = req.headers ? req.headers.livedemosessionid : ''
 
-  return validateCaptcha(captchaToken)
-    .then(async () => {
-
-      return Models.Form.findOne({ _id: formId }).lean()
-    })
+  return Models.Form.findOne({ _id: formId }).lean()
     .then((formDoc) => {
       if (!formDoc) {
         throw new Error('Form not found')
       }
 
+      if (formDoc.useCaptcha) {
+        return validateCaptcha(captchaToken).then(() => formDoc)
+      }
+
+      return formDoc
+    })
+    .then((formDoc) => {
       let bodyFields = validateBodyFromForm(formDoc, req.body)
 
 
