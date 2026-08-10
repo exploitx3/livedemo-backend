@@ -1,8 +1,8 @@
 import fsp from 'fs/promises'
 import ENV from '../envServer.js'
 import StoryStatuses from '../constants/StoryStatuses.js'
-import pkg from 'mongodb'
-const { ObjectId } = pkg
+import mongoose from 'mongoose'
+const { ObjectId } = mongoose.Types
 import flixHelpers from '../helpers/flixHelpers.js'
 import { segmentRrwebEvents } from '../helpers/domDeltaSegmenter.js'
 import { stringifyRrwebEvents } from '../helpers/rrwebEventNames.js'

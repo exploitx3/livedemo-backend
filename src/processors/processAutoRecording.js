@@ -2,8 +2,6 @@ import fsp from 'fs/promises'
 import ENV_VARS from '../envServer.js'
 import StoryStatuses from '../constants/StoryStatuses.js'
 import ScreenTypes from '../constants/ScreenTypes.js'
-import pkg from 'mongodb'
-const {ObjectId} = pkg
 import flixHelpers from '../helpers/flixHelpers.js'
 import he from 'he'
 import AutoRecordingStatuses from "../constants/AutoRecordingStatuses.js"
