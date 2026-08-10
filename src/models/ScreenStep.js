@@ -45,8 +45,8 @@ const ScreenStepSchema = new mongoose.Schema({
         gotoType: {type: String}, // screen | website | next | none
         gotoWebsite: {type: String},
         gotoScreen: {type: mongoose.Schema.Types.ObjectId, ref: 'Screen'},
-        textColor: {type: String, default: '#FFFFFF'},// buttonColor
-        backgroundColor: {type: String, default: '#1070ff'},// buttonColor
+        textColor: {type: String, default: null},
+        backgroundColor: {type: String, default: null},
 
       }]
     },
