@@ -82,6 +82,23 @@ const handler = function (req, res) {
 
             let newScreenId = new ObjectId()
 
+            // Clone embedded steps with unique _ids (keep data, drop old ids so mongoose regenerates)
+            screenDoc.steps = (screenDoc.steps || []).map((step) => {
+                const {_id, createdAt, updatedAt, ...stepData} = step
+                if (stepData.zoomSpan && stepData.zoomSpan._id) {
+                    delete stepData.zoomSpan._id
+                    delete stepData.zoomSpan.createdAt
+                    delete stepData.zoomSpan.updatedAt
+                }
+                if (stepData.view?.popup?.buttons) {
+                    stepData.view.popup.buttons = stepData.view.popup.buttons.map((btn) => {
+                        const {_id: btnId, ...btnData} = btn
+                        return btnData
+                    })
+                }
+                return stepData
+            })
+
             let storyDir = `${ENV.STORIES_FOLDER}/${storyId}`
             let newScreenDir = `${storyDir}/${newScreenId}.html`
 

@@ -58,7 +58,7 @@ const handler = function (req, res) {
                     buttons: [
                         {
                             index: 0,
-                            text: 'Next',
+                            text: 'Get Started',
                             gotoType: 'next',
                             gotoScreen: nextScreen._id,
                         }

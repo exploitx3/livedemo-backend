@@ -41,7 +41,7 @@ const ScreenStepSchema = new mongoose.Schema({
       previewImageUrl: {type: String, default: ''},
       buttons: [{
         index: {type: Number, default: 0},
-        text: {type: String, default: "Next"}, // screen | website | none
+        text: {type: String, default: "Get Started"}, // screen | website | none
         gotoType: {type: String}, // screen | website | next | none
         gotoWebsite: {type: String},
         gotoScreen: {type: mongoose.Schema.Types.ObjectId, ref: 'Screen'},

@@ -61,7 +61,7 @@ const Story = new mongoose.Schema({
             },
             misc: {
                 isActive: {type: Boolean, default: false},
-                confettiOnLastStep: {type: Boolean, default: true},
+                confettiOnLastStep: {type: Boolean, default: false},
                 isOmniBarDisabled: {type: Boolean, default: false},
                 isLiveDemoWatermarkEnabled: {type: Boolean, default: true},
                 isTabsEnabled: {type: Boolean, default: true},
