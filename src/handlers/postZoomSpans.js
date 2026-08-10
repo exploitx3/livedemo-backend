@@ -31,7 +31,10 @@ const handler = function (req, res) {
             return Models.Screen.findById(screenId)
         })
         .then((screenDoc) => {
-            const {startTime, duration, width, height, editorWidth, editorHeight, offsetX, offsetY} = requestBody
+            const {startTime, duration, width, height, editorWidth, editorHeight} = requestBody
+                // Center the zoom box in the editor; clamp so it stays on-screen
+                const offsetX = Math.max(0, Math.min((editorWidth - width) / 2, editorWidth - width))
+                const offsetY = Math.max(0, Math.min((editorHeight - height) / 2, editorHeight - height))
 
                 return new Models.ZoomSpanVideo({
                     startTime,
