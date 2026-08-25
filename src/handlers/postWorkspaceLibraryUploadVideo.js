@@ -59,14 +59,7 @@ const handler = function (req, res) {
                   index: newScreenIndex,
                   userId: authUserDoc.id,
                   type: ScreenTypes.SCREEN_VIDEO,
-                  steps: [
-                    {
-                      index: 0,
-                      view: {
-                        viewType: 'none',
-                      }
-                    }
-                  ]
+                  steps: []
                 }).save()
 
               })

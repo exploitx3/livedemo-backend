@@ -59,7 +59,7 @@ function buildHotspotSteps({ frameX, frameY, targetText, targetHTML, targetEleme
         frameX,
         frameY,
       },
-      type: 'hotspot',
+      viewType: 'hotspot',
       content: contentText,
     },
     elementData: {
@@ -104,15 +104,10 @@ function deltaScreenName(delta, deltaCounter) {
 }
 
 /**
- * Same idea as Flix final screenshot: duplicate end-state screen with no hotspot.
+ * Flix-style empty end-state screen: no CTA / no overlay step.
  */
 function buildEmptyFinalSteps() {
-  return [{
-    index: 0,
-    view: {
-      viewType: 'none',
-    },
-  }]
+  return []
 }
 
 async function ensureStoryDir(storyId) {

@@ -39,8 +39,9 @@ const handler = function (req, res) {
         }
       }
 
-      // Flix-style: CTA for click into K lives on screen K-1. Clear that hotspot
-      // so the previous screen does not still describe the removed click.
+      // Flix-style: CTA for click into K lives on screen K-1. After deleting K, that
+      // hotspot still advances to the new next screen — only scrub the stale copy /
+      // element metadata that described the removed click.
       if (screenDoc.recordingRole === 'delta' && screenDoc.baseScreenId) {
         const prevScreen = await Models.Screen.findOne({
           storyId,
@@ -58,7 +59,12 @@ const handler = function (req, res) {
           let changed = false
           prevScreen.steps.forEach((step) => {
             if (step && step.view && step.view.viewType === 'hotspot') {
-              step.view.viewType = 'none'
+              step.view.content = '<p>Click here</p>'
+              if (step.elementData) {
+                step.elementData.targetHTML = ''
+                step.elementData.targetText = ''
+                step.elementData.targetElementType = 'element'
+              }
               changed = true
             }
           })

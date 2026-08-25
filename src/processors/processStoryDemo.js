@@ -236,14 +236,7 @@ async function processStoryDemo(sharedConfig, params, callback) {
                                             event.startTime,
                                             event.endTime
                                         ),
-                                        steps: [
-                                            {
-                                                index: 0,
-                                                view: {
-                                                    viewType: 'none',
-                                                }
-                                            }
-                                        ]
+                                        steps: [],
                                     })
                                 }
 
@@ -263,7 +256,7 @@ async function processStoryDemo(sharedConfig, params, callback) {
                                                     frameX: event.frameX,
                                                     frameY: event.frameY,
                                                 },
-                                                type: 'hotspot',
+                                                viewType: 'hotspot',
                                                 content: contentText,
                                             },
                                             elementData: {

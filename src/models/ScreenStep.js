@@ -11,7 +11,7 @@ const options = {
 const ScreenStepSchema = new mongoose.Schema({
   index: { type: Number }, //View, Action
   view: {
-    viewType: {type: String, default: 'hotspot'}, // hotspot, pointer, popup, none
+    viewType: {type: String, default: 'hotspot'}, // hotspot, pointer, popup
     pointer: {
       selector: {type: String, default: ''},
       selectorLocation: {
