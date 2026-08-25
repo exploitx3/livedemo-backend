@@ -17,19 +17,44 @@ const handler = function (req, res) {
       helpers.validateUserHasAccessToWorkspace(authUserDoc, workspaceId)
     })
     .then(async () => {
-
-
-      return Models.Workspace.findOne({
-          _id: workspaceId
-        })
-        .populate('library.pages', '_id name index imageUrl', null, { sort: { index: 1 } })
+      const foundWorkspace = await Models.Workspace.findOne({
+        _id: workspaceId,
+      })
         .populate('library.screenshots', '_id name index imageUrl', null, { sort: { index: 1 } })
         .populate('library.videos', '_id name index asset.playback_ids', null, { sort: { index: 1 } })
-      // .populate('screens', ['_id', 'name', 'steps', 'customTransitions', 'imageUrl', 'index', 'imageUrl'], null, { sort: { 'index': 1 } })
-    })
-    .then((foundWorkspace) => {
-      const libraryObj = foundWorkspace.library
 
+      if (!foundWorkspace) {
+        const error = new Error('Workspace not found')
+        error.resultResponse = {
+          statusCode: ResponseCodes['404_NOT_FOUND'],
+          headers: {
+            'Access-Control-Max-Age': 600,
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept',
+            'Access-Control-Allow-Credentials': true,
+          },
+          body: JSON.stringify({ message: 'Workspace not found' }),
+        }
+        throw error
+      }
+
+      // All Screen_Pages in the workspace (incl. rrweb base/delta), newest first.
+      const allPages = await Models.Screen.find({
+        workspaceId,
+        type: 'Screen_Page',
+      })
+        .select('_id name index imageUrl recordingRole baseScreenId type updatedAt')
+        .sort({ updatedAt: -1 })
+        .lean()
+
+      const lib = foundWorkspace.library || {}
+      return {
+        pages: allPages,
+        screenshots: lib.screenshots || [],
+        videos: lib.videos || [],
+      }
+    })
+    .then((libraryObj) => {
       const resultResponse = {
         statusCode: ResponseCodes['200_OK'],
         headers: {

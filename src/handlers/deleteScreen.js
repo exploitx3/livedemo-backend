@@ -39,19 +39,33 @@ const handler = function (req, res) {
         }
       }
 
-      // Guard: deleting a delta is allowed only if it is the last delta of its chain by index
-      if (screenDoc.recordingRole === 'delta') {
-        const laterDelta = await Models.Screen.findOne({
+      // Flix-style: CTA for click into K lives on screen K-1. Clear that hotspot
+      // so the previous screen does not still describe the removed click.
+      if (screenDoc.recordingRole === 'delta' && screenDoc.baseScreenId) {
+        const prevScreen = await Models.Screen.findOne({
           storyId,
-          recordingRole: 'delta',
-          baseScreenId: screenDoc.baseScreenId,
-          index: { $gt: screenDoc.index },
-        }).lean()
-        if (laterDelta) {
-          httpError(
-            ResponseCodes['409_CONFLICT'],
-            'Cannot delete a middle delta; only the last delta of a chain may be deleted'
-          )
+          index: { $lt: screenDoc.index },
+          $or: [
+            { _id: screenDoc.baseScreenId },
+            {
+              recordingRole: 'delta',
+              baseScreenId: screenDoc.baseScreenId,
+            },
+          ],
+        }).sort({ index: -1 })
+
+        if (prevScreen && Array.isArray(prevScreen.steps) && prevScreen.steps.length) {
+          let changed = false
+          prevScreen.steps.forEach((step) => {
+            if (step && step.view && step.view.viewType === 'hotspot') {
+              step.view.viewType = 'none'
+              changed = true
+            }
+          })
+          if (changed) {
+            prevScreen.markModified('steps')
+            await prevScreen.save()
+          }
         }
       }
 
@@ -77,6 +91,10 @@ const handler = function (req, res) {
                 })
               })
 
+              // Empty story after last screen — nothing to reindex
+              if (!updateOps.length) {
+                return { ok: 1 }
+              }
 
               return Models.Screen.bulkWrite(updateOps)
             })

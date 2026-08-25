@@ -35,6 +35,7 @@ import postScreenEditTextHandler from './handlers/postScreenEditText.js'
 import patchScreenHandler from './handlers/patchScreen.js'
 import postStoryUpdateScreenOrderHandler from './handlers/postStoryUpdateScreenOrder.js'
 import postScreenCopyHandler from './handlers/postScreenCopy.js'
+import postScreenBaseMergeHandler from './handlers/postScreenBaseMerge.js'
 import postCreateScreenFromFrameHandler from './handlers/postCreateScreenFromFrame.js'
 import getScreenPreviewHandler from './handlers/getScreenPreview.js'
 import getStoryPreviewHandler from './handlers/getStoryPreview.js'
@@ -65,6 +66,7 @@ import patchScreenPopupsHandler from './handlers/patchScreenPopups.js'
 import getStorySessionsHandler from './handlers/getStorySessions.js'
 import postWorkspaceLibraryUploadScreenshotHandler from './handlers/postWorkspaceLibraryUploadScreenshot.js'
 import postWorkspaceLibraryUploadVideoHandler from './handlers/postWorkspaceLibraryUploadVideo.js'
+import postWorkspaceLibraryUploadPageHandler from './handlers/postWorkspaceLibraryUploadPage.js'
 // import postStoryAddScreenHandler from './handlers/postStoryAddScreen.js'
 import postStepZoomSpansHandler from './handlers/postStepZoomSpans.js'
 import patchStepZoomSpanHandler from './handlers/patchStepZoomSpan.js'
@@ -576,6 +578,8 @@ app.post('/workspaces/:workspaceId/stories/:storyId/updateScreenOrder', [setupMo
 
 app.post('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/copy', [setupMongo], postScreenCopyHandler)
 
+app.post('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/baseMerge', [setupMongo], postScreenBaseMergeHandler)
+
 app.post('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/createScreenFromFrame', [setupMongo], postCreateScreenFromFrameHandler)
 
 app.get('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/preview', [setupMongo], getScreenPreviewHandler)
@@ -621,6 +625,7 @@ app.get('/workspaces/:workspaceId/stories/:storyId/sessions/:sessionId/events', 
 
 app.post('/workspaces/:workspaceId/library/uploadScreenshot', [setupMongo], postWorkspaceLibraryUploadScreenshotHandler)
 app.post('/workspaces/:workspaceId/library/uploadVideo', [setupMongo], postWorkspaceLibraryUploadVideoHandler)
+app.post('/workspaces/:workspaceId/library/uploadPage', [setupMongo], postWorkspaceLibraryUploadPageHandler)
 
 app.post('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/steps/:stepId/zoomSpans', [setupMongo], postStepZoomSpansHandler)
 app.patch('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/steps/:stepId/zoomSpans/:zoomSpanId', [setupMongo], patchStepZoomSpanHandler)

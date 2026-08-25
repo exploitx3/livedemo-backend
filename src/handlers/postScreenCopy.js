@@ -62,21 +62,47 @@ const handler = function (req, res) {
                         })
                 })
         })
-        .then(({screenDoc}) => {
-            let promiseArray = []
-            let firstIndexToMove = screenDoc.index + 1
-            for (let i = firstIndexToMove; i < storyDocGlobal.screens.length; i++) {
+        .then(async ({screenDoc}) => {
+            // Insert after editor's current screen when provided (Library import into
+            // DOM demos). In-story duplicate falls back to source index. Else append.
+            const afterScreenId = req.body && req.body.afterScreenId
+                ? String(req.body.afterScreenId)
+                : null
+            let insertIndex
 
-                let promise = Models.Screen.findOneAndUpdate({_id: storyDocGlobal.screens[i]._id}, {
-                    $inc:{index: 1}
-                })
-                promiseArray.push(promise)
+            if (afterScreenId) {
+                const afterDoc = await Models.Screen.findOne({
+                    _id: afterScreenId,
+                    storyId,
+                }).lean()
+                if (!afterDoc) {
+                    const error = new Error('afterScreenId not found in this story')
+                    error.resultResponse = {
+                        statusCode: ResponseCodes['404_NOT_FOUND'],
+                        headers: {
+                            'Access-Control-Max-Age': 600,
+                            'Access-Control-Allow-Origin': '*',
+                            'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept',
+                            'Access-Control-Allow-Credentials': true,
+                        },
+                        body: JSON.stringify({ message: 'afterScreenId not found in this story' }),
+                    }
+                    throw error
+                }
+                insertIndex = afterDoc.index + 1
+            } else if (screenDoc.storyId && String(screenDoc.storyId) === String(storyId)) {
+                insertIndex = screenDoc.index + 1
+            } else {
+                const last = await Models.Screen.findOne({ storyId }).sort({ index: -1 }).lean()
+                insertIndex = last ? last.index + 1 : 0
             }
 
-            return Promise.all(promiseArray)
-                .then((promiseResults) => {
-                    return {screenDoc, nextIndex: ++screenDoc.index}
-                })
+            await Models.Screen.updateMany(
+                { storyId, index: { $gte: insertIndex } },
+                { $inc: { index: 1 } },
+            )
+
+            return { screenDoc, nextIndex: insertIndex }
         })
         .then(async ({screenDoc, nextIndex}) => {
 
