@@ -49,6 +49,7 @@ function validateBody(body) {
       placement: Joi.string().optional(),
       showHeader: Joi.boolean().optional(),
       showFooter: Joi.boolean().optional(),
+      hideBackButton: Joi.boolean().optional(),
       showStepNumbers: Joi.boolean().optional(),
       nextButtonText: Joi.string().allow('').optional(),
     }).optional(),

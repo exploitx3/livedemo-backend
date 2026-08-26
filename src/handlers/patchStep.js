@@ -125,6 +125,10 @@ const handler = function (req, res) {
         updateObj['steps.$.view.showFooter'] = stepView.showFooter
       }
 
+      if (stepView && stepView.hideBackButton !== undefined) {
+        updateObj['steps.$.view.hideBackButton'] = stepView.hideBackButton
+      }
+
       if (stepView && stepView.nextButtonText) {
         updateObj['steps.$.view.nextButtonText'] = stepView.nextButtonText
       }

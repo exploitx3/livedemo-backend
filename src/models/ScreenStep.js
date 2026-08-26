@@ -55,6 +55,7 @@ const ScreenStepSchema = new mongoose.Schema({
     showStepNumbers: {type: Boolean, default: true},
     showHeader: {type: Boolean, default: false},
     showFooter: {type: Boolean, default: false},
+    hideBackButton: {type: Boolean, default: false},
     /*
       top, top-start, top-end
       bottom, bottom-start, bottom-end
