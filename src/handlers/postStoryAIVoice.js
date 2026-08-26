@@ -4,6 +4,7 @@ import aiHelpers from '../helpers/aiHelpers.js'
 import postStoryAIVoiceValidator from '../helpers/validators/stories/postStoryAIVoice.js'
 import ResponseCodes from '../constants/ResponseCodes.js'
 import AudioTypes from '../constants/AudioTypes.js'
+import StepViewTypes from '../constants/StepViewTypes.js'
 
 // const ENV = require('../envServer')
 import ENV from '../envServer.js'
@@ -92,6 +93,11 @@ const handler = function (req, res) {
             }, [])
 
             let filteredSteps = steps.map(step => {
+                // Skip popup steps — no story-wide AI voiceover on modals
+                if (step.view && step.view.viewType === StepViewTypes.POPUP) {
+                    return false
+                }
+
                 let text = deserializeToTextRecursive(parse5.parseFragment(step.view.content), '')
 
                 if (text) {

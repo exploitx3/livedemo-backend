@@ -43,6 +43,7 @@ import postStepsHandler from './handlers/postSteps.js'
 import deleteScreenHandler from './handlers/deleteScreen.js'
 import deleteStepHandler from './handlers/deleteStep.js'
 import deleteStoryHandler from './handlers/deleteStory.js'
+import postStoryCloneHandler from './handlers/postStoryClone.js'
 import patchStepHandler from './handlers/patchStep.js'
 import postFormsHandler from './handlers/postForms.js'
 import patchFormHandler from './handlers/patchForm.js'
@@ -283,6 +284,7 @@ app.patch('/workspaces/:workspaceId/stories/:storyId', [setupMongo], patchStoryH
 app.get('/livedemos/:storyId', [setupMongo], getLiveDemoPreviewHandler)
 
 app.delete('/workspaces/:workspaceId/stories/:storyId', [setupMongo], deleteStoryHandler)
+app.post('/workspaces/:workspaceId/stories/:storyId/clone', [setupMongo], postStoryCloneHandler)
 
 app.post('/workspaces/:workspaceId/stories/:storyId/screens', [setupMongo], postScreensHandler)
 app.post('/workspaces/:workspaceId/stories/:storyId/domRecording/events', [setupMongo], postStoryDomRecordingEventsHandler)
