@@ -1,13 +1,15 @@
 import helpers from '../helpers/livedemoHelpers.js'
-import postAddScreenValidator from '../helpers/validators/stories/postAddScreen.js'
 import ResponseCodes from '../constants/ResponseCodes.js'
+import { historyCounts } from '../helpers/storyRevisions.js'
 
+// Version-history list (newest first) + undo/redo counts.
+// ?limit=0 returns counts only — the frontend uses that on editor load so the
+// browser never holds revision payloads in memory.
 const handler = function (req, res) {
   let { Models, conn } = req.mongo
 
   let workspaceId = req.params.workspaceId
   let storyId = req.params.storyId
-  let requestBody = null
   let authUserDoc = null
 
   return Promise.resolve().then(async () => {
@@ -16,59 +18,58 @@ const handler = function (req, res) {
     })
     .then(({ authUser }) => {
       authUserDoc = authUser
-      let validatedBody = helpers.validateBody(req.body, postAddScreenValidator)
-      requestBody = validatedBody.value
-
       helpers.validateUserHasAccessToWorkspace(authUserDoc, workspaceId)
     })
     .then(async () => {
-      let screenId = requestBody.screenId
+      const limit = req.query.limit !== undefined ? Number(req.query.limit) : 100
 
-      return Models.Story.findOneAndUpdate({
-        _id: storyId
-      }, {
-        $addToSet: { screens: screenId }
-      }, { new: true })
+      const revisions = limit > 0
+        ? await Models.StoryRevision
+            .find({ storyId, kind: 'undo' })
+            .sort({ _id: -1 })
+            .limit(limit)
+            .select('_id actionLabel scope screenId createdAt')
+            .lean()
+        : []
+
+      const counts = await historyCounts(Models, storyId)
+
+      return { revisions, ...counts }
     })
-    .then((newStoryDoc) => {
+    .then((result) => {
 
       const resultResponse = {
         statusCode: ResponseCodes['200_OK'],
         headers: {
           'Access-Control-Max-Age': 600,
           'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept', // Required for CORS support to work
-          // Required for CORS support to work
-          'Access-Control-Allow-Credentials': true, // Required for cookies, authorization headers with HTTPS
-        }
+          'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept',
+          'Access-Control-Allow-Credentials': true,
+        },
+        body: JSON.stringify(result)
       }
 
       res.set(resultResponse.headers)
       res.status(resultResponse.statusCode)
-      res.send(JSON.stringify(newStoryDoc.screens))
+      res.send(resultResponse.body)
     })
     .catch((error) => {
       console.log(error)
 
       let resultResponse
       if (error.resultResponse) {
-
         resultResponse = error.resultResponse
       } else {
-
-
         resultResponse = {
           statusCode: ResponseCodes['500_INTERNAL_SERVER_ERROR'],
           headers: {
             'Access-Control-Max-Age': 600,
             'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept', // Required for CORS support to work
-            // Required for CORS support to work
-            'Access-Control-Allow-Credentials': true, // Required for cookies, authorization headers with HTTPS
+            'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept',
+            'Access-Control-Allow-Credentials': true,
           },
           body: ''
         }
-
       }
 
       res.set(resultResponse.headers)
@@ -77,4 +78,4 @@ const handler = function (req, res) {
     })
 }
 
-export default  handler
+export default handler

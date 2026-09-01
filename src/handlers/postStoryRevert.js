@@ -1,15 +1,17 @@
 import helpers from '../helpers/livedemoHelpers.js'
-import postUpdateScreenOrder from '../helpers/validators/stories/postUpdateScreenOrderValidator.js'
 import ResponseCodes from '../constants/ResponseCodes.js'
-import { httpError, wouldBreakRrwebChainOrder } from '../helpers/rrwebScreenGuards.js'
+import { httpError } from '../helpers/rrwebScreenGuards.js'
+import { undoOnce, historyCounts } from '../helpers/storyRevisions.js'
 
+// "Restore to this point in history" = undo every entry newer than the target,
+// plus the target itself. LIFO over pre-images makes that exactly equivalent to
+// a point-in-time restore of everything captured.
 const handler = function (req, res) {
   let { Models, conn } = req.mongo
 
-  let requestBody = null
-
   let workspaceId = req.params.workspaceId
   let storyId = req.params.storyId
+  let revisionId = req.params.revisionId
   let authUserDoc = null
 
   return Promise.resolve().then(async () => {
@@ -18,54 +20,33 @@ const handler = function (req, res) {
     })
     .then(({ authUser }) => {
       authUserDoc = authUser
-
-      let validatedBody = helpers.validateBody(req.body, postUpdateScreenOrder)
-      requestBody = validatedBody.value
-
       helpers.validateUserHasAccessToWorkspace(authUserDoc, workspaceId)
     })
     .then(async () => {
-      let screens = requestBody.screens
-
-      // Load recording metadata for proposed order validation
-      const screenIds = screens.map((s) => s._id)
-      const screenDocs = await Models.Screen.find({ _id: { $in: screenIds }, storyId }).lean()
-      const byId = new Map(screenDocs.map((s) => [String(s._id), s]))
-
-      const proposed = screens.map((s) => {
-        const doc = byId.get(String(s._id)) || {}
-        return {
-          _id: s._id,
-          index: s.index,
-          recordingRole: doc.recordingRole,
-          baseScreenId: doc.baseScreenId,
-        }
-      })
-
-      const breakReason = wouldBreakRrwebChainOrder(proposed)
-      if (breakReason) {
-        httpError(ResponseCodes['409_CONFLICT'], breakReason)
+      const target = await Models.StoryRevision
+        .findOne({ _id: revisionId, storyId, kind: 'undo' })
+        .select('_id')
+        .lean()
+      if (!target) {
+        httpError(ResponseCodes['404_NOT_FOUND'], 'Revision not found')
       }
 
-      let updateOps = []
-      screens.forEach((screen) => {
-
-        updateOps.push({
-          updateOne: {
-            filter: {
-              _id: screen._id,
-            },
-            update: {
-              index: screen.index,
-            }
-          }
-        })
+      // Every entry newer than the target, plus the target itself
+      let remaining = await Models.StoryRevision.countDocuments({
+        storyId, kind: 'undo', _id: { $gte: target._id }
       })
+      let lastUndone = null
+      while (remaining-- > 0) {
+        const rev = await undoOnce(Models, { storyId, workspaceId })
+        if (!rev) break
+        lastUndone = rev.actionLabel
+      }
 
+      const counts = await historyCounts(Models, storyId)
 
-      return Models.Screen.bulkWrite(updateOps)
+      return { undone: lastUndone, ...counts }
     })
-    .then((writeResult) => {
+    .then((result) => {
 
       const resultResponse = {
         statusCode: ResponseCodes['200_OK'],
@@ -74,12 +55,13 @@ const handler = function (req, res) {
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept',
           'Access-Control-Allow-Credentials': true,
-        }
+        },
+        body: JSON.stringify(result)
       }
 
       res.set(resultResponse.headers)
       res.status(resultResponse.statusCode)
-      res.send()
+      res.send(resultResponse.body)
     })
     .catch((error) => {
       console.log(error)
@@ -106,4 +88,4 @@ const handler = function (req, res) {
     })
 }
 
-export default  handler
+export default handler

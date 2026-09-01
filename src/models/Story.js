@@ -39,12 +39,6 @@ const Story = new mongoose.Schema({
             contentId: {type: mongoose.Schema.Types.ObjectId, ref: 'StoryContent'}
         },
         custom: {
-            header: {
-                isActive: {type: Boolean, default: false},
-                imageUrl: {type: String, default: ''},
-                personName: {type: String, default: ''},
-                text: {type: String, default: ''}
-            },
             theme: {
                 isActive: {type: Boolean, default: false},
                 stepBackgroundColor: {type: String, default: '#1070ff'}, // backgroundColor
@@ -52,6 +46,8 @@ const Story = new mongoose.Schema({
                 textColor: {type: String, default: '#FFFFFF'}, // textColor
                 buttonBackgroundColor: {type: String, default: '#1070ff'},// buttonColor
                 buttonTextColor: {type: String, default: '#FFFFFF'}, // buttonColor
+                fontFamily: {type: String, default: ''}, // google font name, empty = default font
+                showTooltipArrow: {type: Boolean, default: true},
                 watermarkConfig: {
                     imageUrl: {type: String, default: ''},
                     text: {type: String, default: ''},

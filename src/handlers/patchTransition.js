@@ -30,6 +30,9 @@ const handler = function (req, res) {
       const selector = requestBody.pointer && requestBody.pointer.selector
       const selectorLocation = requestBody.pointer && requestBody.pointer.selectorLocation
       const pointerPlacement = requestBody.pointer && requestBody.pointer.placement
+      const pointerTargetMode = requestBody.pointer && requestBody.pointer.targetMode
+      const pointerTooltipX = requestBody.pointer && requestBody.pointer.tooltipX
+      const pointerTooltipY = requestBody.pointer && requestBody.pointer.tooltipY
       const gotoType = requestBody.gotoType
       const gotoWebsite = requestBody.gotoWebsite
       const gotoScreen = requestBody.gotoScreen
@@ -52,6 +55,18 @@ const handler = function (req, res) {
 
       if (selectorLocation) {
         updateObj['customTransitions.$.pointer.selectorLocation'] = selectorLocation
+      }
+
+      if (pointerTargetMode) {
+        updateObj['customTransitions.$.pointer.targetMode'] = pointerTargetMode
+      }
+
+      if (pointerTooltipX !== undefined) {
+        updateObj['customTransitions.$.pointer.tooltipX'] = pointerTooltipX
+      }
+
+      if (pointerTooltipY !== undefined) {
+        updateObj['customTransitions.$.pointer.tooltipY'] = pointerTooltipY
       }
 
       if (gotoType) {

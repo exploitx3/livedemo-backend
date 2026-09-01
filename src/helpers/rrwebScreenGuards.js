@@ -20,13 +20,12 @@ export function httpError(statusCode, message) {
 /**
  * Returns a reason string when proposed order would break an rrweb chain, else null.
  *
- * Allows non-rrweb screens (screenshot/video/legacy page) between chain members so
- * Library imports can sit between Page screens. Still requires:
- * - every delta's base present, role base, and index > base
- * - within a chain, base first then deltas in capture (fromTimeMs) order
+ * The only ordering rule: a delta must sit somewhere after its base. Deltas may be
+ * reordered among themselves, and any other screen (screenshot/video/other base)
+ * may sit before, after, or between chain members.
  */
 export function wouldBreakRrwebChainOrder(screens) {
-  // screens: array of { _id, index, recordingRole, baseScreenId, fromTimeMs? }
+  // screens: array of { _id, index, recordingRole, baseScreenId }
   const byId = new Map(screens.map((s) => [String(s._id), s]))
 
   for (const screen of screens) {
@@ -42,35 +41,6 @@ export function wouldBreakRrwebChainOrder(screens) {
     }
     if (screen.index <= base.index) {
       return 'A delta screen cannot precede its base screen'
-    }
-  }
-
-  const chains = new Map()
-  for (const screen of screens) {
-    if (!screen.recordingRole) continue
-    const chainId = screen.recordingRole === 'base'
-      ? String(screen._id)
-      : String(screen.baseScreenId)
-    if (!chains.has(chainId)) chains.set(chainId, [])
-    chains.get(chainId).push(screen)
-  }
-
-  for (const [, members] of chains) {
-    members.sort((a, b) => a.index - b.index)
-    if (members[0].recordingRole !== 'base') {
-      return 'Chain order broken: base must come before its deltas'
-    }
-    for (let i = 1; i < members.length; i++) {
-      if (members[i].recordingRole !== 'delta') {
-        return 'Chain order broken: unexpected non-delta after base'
-      }
-      if (
-        members[i - 1].fromTimeMs != null &&
-        members[i].fromTimeMs != null &&
-        members[i].fromTimeMs < members[i - 1].fromTimeMs
-      ) {
-        return 'Cannot reorder deltas within an rrweb chain'
-      }
     }
   }
 

@@ -28,6 +28,8 @@ const handler = function (req, res) {
       let textColor = requestBody.textColor
       let buttonBackgroundColor = requestBody.buttonBackgroundColor
       let buttonTextColor = requestBody.buttonTextColor
+      let fontFamily = requestBody.fontFamily || ''
+      let showTooltipArrow = !!requestBody.showTooltipArrow
 
       let watermarkConfigIsActive = requestBody.watermarkConfig.isActive
       let watermarkConfigText = requestBody.watermarkConfig.text
@@ -42,6 +44,8 @@ const handler = function (req, res) {
           'custom.theme.textColor': textColor,
           'custom.theme.buttonBackgroundColor': buttonBackgroundColor,
           'custom.theme.buttonTextColor': buttonTextColor,
+          'custom.theme.fontFamily': fontFamily,
+          'custom.theme.showTooltipArrow': showTooltipArrow,
           'custom.theme.watermarkConfig.isActive': watermarkConfigIsActive,
           'custom.theme.watermarkConfig.text': watermarkConfigText,
           'custom.theme.watermarkConfig.url': watermarkConfigUrl,

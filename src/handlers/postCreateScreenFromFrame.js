@@ -46,7 +46,6 @@ const handler = function (req, res) {
   let workspaceId = req.params.workspaceId
   let storyId = req.params.storyId
   let screenId = req.params.screenId
-  let storyDocGlobal = null
   let authUserDoc = null
   let time = null
 
@@ -65,8 +64,6 @@ const handler = function (req, res) {
       if (!storyDoc) {
         notFound('Story not found')
       }
-      storyDocGlobal = storyDoc
-
       const screenInStory = storyDoc.screens.some((id) => id.toString() === screenId)
       if (!screenInStory) {
         notFound('Screen not found in story')
@@ -102,17 +99,13 @@ const handler = function (req, res) {
       const uploadResult = await helpers.uploadBufferImage(imageBuffer, 'image/png', imageName)
       const imageUrl = uploadResult.Location
 
-      const firstIndexToMove = videoScreenDoc.index + 1
-      const promiseArray = []
-      for (let i = firstIndexToMove; i < storyDocGlobal.screens.length; i++) {
-        promiseArray.push(
-          Models.Screen.findOneAndUpdate({ _id: storyDocGlobal.screens[i]._id }, { $inc: { index: 1 } }),
-        )
-      }
-
-      await Promise.all(promiseArray)
-
       const nextIndex = videoScreenDoc.index + 1
+
+      await Models.Screen.updateMany(
+        { storyId, index: { $gte: nextIndex } },
+        { $inc: { index: 1 } },
+      )
+
       const newScreenId = new ObjectId()
 
       const newScreenDoc = await new Models.Screen_Screenshot({

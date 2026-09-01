@@ -69,6 +69,18 @@ const handler = function (req, res) {
         updateObj['steps.$.view.pointer.placement'] = stepView.pointer.placement
       }
 
+      if (stepView && stepView.pointer && stepView.pointer.targetMode) {
+        updateObj['steps.$.view.pointer.targetMode'] = stepView.pointer.targetMode
+      }
+
+      if (stepView && stepView.pointer && stepView.pointer.tooltipX !== undefined) {
+        updateObj['steps.$.view.pointer.tooltipX'] = stepView.pointer.tooltipX
+      }
+
+      if (stepView && stepView.pointer && stepView.pointer.tooltipY !== undefined) {
+        updateObj['steps.$.view.pointer.tooltipY'] = stepView.pointer.tooltipY
+      }
+
       if (stepView && stepView.popup && stepView.popup.title) {
         updateObj['steps.$.view.popup.title'] = stepView.popup.title
       }
@@ -115,10 +127,6 @@ const handler = function (req, res) {
 
       if (stepView && stepView.showStepNumbers !== undefined) {
         updateObj['steps.$.view.showStepNumbers'] = stepView.showStepNumbers
-      }
-
-      if (stepView && stepView.showHeader !== undefined) {
-        updateObj['steps.$.view.showHeader'] = stepView.showHeader
       }
 
       if (stepView && stepView.showFooter !== undefined) {

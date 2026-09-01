@@ -137,6 +137,15 @@ const handler = function (req, res) {
 
             // htmlString += '<link href="https://fonts.cdnfonts.com/css/gagalin" rel="stylesheet">'
 
+            const themeFontFamily = (storyDoc.custom && storyDoc.custom.theme &&
+                /^[A-Za-z0-9 ]{1,50}$/.test(storyDoc.custom.theme.fontFamily || '') && storyDoc.custom.theme.fontFamily) || ''
+
+            if (themeFontFamily) {
+                htmlString += `    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>\n` +
+                    `    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=${encodeURIComponent(themeFontFamily).replace(/%20/g, '+')}:wght@400;500;600;700&display=swap"/>\n` +
+                    `    <style>:root{--ld-demo-font:'${themeFontFamily}', sans-serif;}</style>\n`
+            }
+
             // htmlString += '<script src="https://cdn.lr-in-prod.com/LogRocket.min.js" crossorigin="anonymous"></script>\n' +
             //   '<script>window.LogRocket && window.LogRocket.init(\'dotxvj/livedemo\', {  mergeIframes: true });</script>\n'
 
@@ -327,6 +336,7 @@ const handler = function (req, res) {
 
             let CSP = `default-src 'self' 'unsafe-eval' 'unsafe-inline' blob:
   https://cdn.jsdelivr.net
+  https://fonts.googleapis.com
   https://stream.mux.com
   ${ENV.STORIES_API} 
   ${ENV.LIVEDEMO_CDN_URL};

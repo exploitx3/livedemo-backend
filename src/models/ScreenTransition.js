@@ -18,6 +18,9 @@ const ScreenPageTransitionSchema = new mongoose.Schema({
       height: {type: Number, default: 50}
     },
     placement: {type: String, default: 'auto'},
+    targetMode: {type: String, default: 'select'},
+    tooltipX: {type: Number, default: 200},
+    tooltipY: {type: Number, default: 200},
   },
   hotspot: {
     frameX: { type: Number, default: 200 },

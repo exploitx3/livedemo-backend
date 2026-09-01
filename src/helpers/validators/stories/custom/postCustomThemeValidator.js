@@ -10,6 +10,9 @@ function validateBody(body) {
     textColor: Joi.string().required(),
     buttonBackgroundColor: Joi.string().required(),
     buttonTextColor: Joi.string().required(),
+    // google font family name, e.g. 'Open Sans'
+    fontFamily: Joi.string().allow('').regex(/^[A-Za-z0-9 ]{0,50}$/).default(''),
+    showTooltipArrow: Joi.boolean().default(true),
     watermarkConfig: {
       isActive: Joi.boolean().required(),
       text: Joi.string().allow('').required(),

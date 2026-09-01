@@ -20,7 +20,10 @@ function validateBody(body) {
         width: Joi.number().optional(),
         height: Joi.number().optional()
       }).optional(),
-      placement: Joi.string().optional()
+      placement: Joi.string().optional(),
+      targetMode: Joi.string().valid('pick', 'select', 'none').optional(),
+      tooltipX: Joi.number().optional(),
+      tooltipY: Joi.number().optional(),
     },
     nextButtonText: {type: String, default: 'Next'},
     showStepNumbers: {type: Boolean, default: true},

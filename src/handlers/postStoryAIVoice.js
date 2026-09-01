@@ -93,12 +93,12 @@ const handler = function (req, res) {
             }, [])
 
             let filteredSteps = steps.map(step => {
-                // Skip popup steps — no story-wide AI voiceover on modals
-                if (step.view && step.view.viewType === StepViewTypes.POPUP) {
-                    return false
-                }
+                // Popups have no view.content — their spoken text is the popup title.
+                let source = (step.view && step.view.viewType === StepViewTypes.POPUP)
+                    ? (step.view.popup && step.view.popup.title)
+                    : step.view.content
 
-                let text = deserializeToTextRecursive(parse5.parseFragment(step.view.content), '')
+                let text = deserializeToTextRecursive(parse5.parseFragment(source || ''), '')
 
                 if (text) {
                     return {

@@ -1,72 +1,55 @@
 import helpers from '../helpers/livedemoHelpers.js'
-import postUpdateScreenOrder from '../helpers/validators/stories/postUpdateScreenOrderValidator.js'
+import postUpdateStepOrder from '../helpers/validators/stories/postUpdateStepOrderValidator.js'
 import ResponseCodes from '../constants/ResponseCodes.js'
-import { httpError, wouldBreakRrwebChainOrder } from '../helpers/rrwebScreenGuards.js'
+import { httpError } from '../helpers/rrwebScreenGuards.js'
 
 const handler = function (req, res) {
-  let { Models, conn } = req.mongo
-
-  let requestBody = null
+  let { Models } = req.mongo
 
   let workspaceId = req.params.workspaceId
   let storyId = req.params.storyId
+  let screenId = req.params.screenId
   let authUserDoc = null
 
   return Promise.resolve().then(async () => {
-
       return helpers.authReq(req, Models)
     })
     .then(({ authUser }) => {
       authUserDoc = authUser
 
-      let validatedBody = helpers.validateBody(req.body, postUpdateScreenOrder)
-      requestBody = validatedBody.value
-
+      let validatedBody = helpers.validateBody(req.body, postUpdateStepOrder)
       helpers.validateUserHasAccessToWorkspace(authUserDoc, workspaceId)
+
+      return validatedBody.value
     })
-    .then(async () => {
-      let screens = requestBody.screens
+    .then(async (requestBody) => {
+      let steps = requestBody.steps
 
-      // Load recording metadata for proposed order validation
-      const screenIds = screens.map((s) => s._id)
-      const screenDocs = await Models.Screen.find({ _id: { $in: screenIds }, storyId }).lean()
-      const byId = new Map(screenDocs.map((s) => [String(s._id), s]))
+      let screen = await Models.Screen.findOne({ _id: screenId, storyId }).lean()
+      if (!screen) {
+        httpError(ResponseCodes['404_NOT_FOUND'], 'Screen not found')
+      }
 
-      const proposed = screens.map((s) => {
-        const doc = byId.get(String(s._id)) || {}
+      if (!screen.steps || screen.steps.length !== steps.length) {
+        httpError(ResponseCodes['400_BAD_REQUEST'], 'Step count mismatch')
+      }
+
+      let stepMap = new Map(screen.steps.map((step) => [String(step._id), step]))
+      let reorderedSteps = steps.map(({ _id, index }) => {
+        let existing = stepMap.get(String(_id))
+        if (!existing) {
+          httpError(ResponseCodes['400_BAD_REQUEST'], 'Unknown step id')
+        }
+
         return {
-          _id: s._id,
-          index: s.index,
-          recordingRole: doc.recordingRole,
-          baseScreenId: doc.baseScreenId,
+          ...existing,
+          index,
         }
       })
 
-      const breakReason = wouldBreakRrwebChainOrder(proposed)
-      if (breakReason) {
-        httpError(ResponseCodes['409_CONFLICT'], breakReason)
-      }
-
-      let updateOps = []
-      screens.forEach((screen) => {
-
-        updateOps.push({
-          updateOne: {
-            filter: {
-              _id: screen._id,
-            },
-            update: {
-              index: screen.index,
-            }
-          }
-        })
-      })
-
-
-      return Models.Screen.bulkWrite(updateOps)
+      return Models.Screen.updateOne({ _id: screenId }, { $set: { steps: reorderedSteps } })
     })
-    .then((writeResult) => {
-
+    .then(() => {
       const resultResponse = {
         statusCode: ResponseCodes['200_OK'],
         headers: {
@@ -74,7 +57,7 @@ const handler = function (req, res) {
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept',
           'Access-Control-Allow-Credentials': true,
-        }
+        },
       }
 
       res.set(resultResponse.headers)
@@ -96,7 +79,7 @@ const handler = function (req, res) {
             'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept',
             'Access-Control-Allow-Credentials': true,
           },
-          body: ''
+          body: '',
         }
       }
 
@@ -106,4 +89,4 @@ const handler = function (req, res) {
     })
 }
 
-export default  handler
+export default handler

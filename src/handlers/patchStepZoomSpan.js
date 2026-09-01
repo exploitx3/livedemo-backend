@@ -75,7 +75,9 @@ const handler = function (req, res) {
 
             if (Object.keys(updateObj).length !== 0) {
 
-                return Models.Screen_Screenshot.findOneAndUpdate({
+                // Base Screen model: steps/zoomSpan live on the base schema, so this
+                // works for any discriminator (Screenshot, Page) without a type filter.
+                return Models.Screen.findOneAndUpdate({
                     _id: new ObjectId(screenId),
                     'steps._id': new ObjectId(stepId)
                 }, {

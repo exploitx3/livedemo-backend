@@ -56,6 +56,7 @@ import AudioSchema from './Audio.js'
 import StoryContentSchema from './StoryContent.js'
 
 import LinkSchema from './Link.js'
+import StoryRevisionSchema from './StoryRevision.js'
 import AutoRecordingSchema from './AutoRecording.js'
 import AutoRecordingEventSchema from './AutoRecordingEvent.js'
 import DemoSuggestionSchema from './DemoSuggestion.js'
@@ -221,6 +222,7 @@ export const initModels = (conn) => {
   conn.model('StoryContent', StoryContentSchema)
 
   conn.model('Link', LinkSchema)
+  conn.model('StoryRevision', StoryRevisionSchema)
 
   conn.model('DemoSuggestion', DemoSuggestionSchema)
   conn.model('AutoRecording', AutoRecordingSchema)
@@ -304,6 +306,7 @@ export const getModels = (conn) => {
     Audio: conn.model('Audio'),
     StoryContent: conn.model('StoryContent'),
     Link: conn.model('Link'),
+    StoryRevision: conn.model('StoryRevision'),
     AutoRecording: conn.model('AutoRecording'),
     AutoRecordingEvent: conn.model('AutoRecordingEvent'),
     DemoSuggestion: conn.model('DemoSuggestion'),

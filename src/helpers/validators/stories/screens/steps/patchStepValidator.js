@@ -28,6 +28,9 @@ function validateBody(body) {
           height: Joi.number().optional(),
         }).optional(),
         placement: Joi.string().optional(),
+        targetMode: Joi.string().valid('pick', 'select', 'none').optional(),
+        tooltipX: Joi.number().optional(),
+        tooltipY: Joi.number().optional(),
       },
       hotspot: {
         frameX: Joi.number().optional(),
@@ -47,7 +50,6 @@ function validateBody(body) {
         embedHtmlContent: Joi.string().allow('', null).optional(),
       },
       placement: Joi.string().optional(),
-      showHeader: Joi.boolean().optional(),
       showFooter: Joi.boolean().optional(),
       hideBackButton: Joi.boolean().optional(),
       showStepNumbers: Joi.boolean().optional(),

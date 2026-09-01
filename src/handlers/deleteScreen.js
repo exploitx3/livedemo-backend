@@ -83,9 +83,12 @@ const handler = function (req, res) {
                 screens: screenId
               }
             }, { new: true })
-            .then(storyDoc => {
+            // Story.screens is in push order, not display order — reindex from
+            // the `index` field, which is what every read path sorts by.
+            .then(() => Models.Screen.find({ storyId }).sort({ index: 1 }).select('_id').lean())
+            .then(sortedScreens => {
               let updateOps = []
-              storyDoc.screens.forEach((screen, index) => {
+              sortedScreens.forEach((screen, index) => {
 
                 updateOps.push({
                   updateOne: {

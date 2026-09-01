@@ -19,9 +19,7 @@ import deleteTransitionHandler from './handlers/deleteTransition.js'
 import patchTransitionHandler from './handlers/patchTransition.js'
 import getStoriesHandler from './handlers/getStories.js'
 import getStoryByIdHandler from './handlers/getStoryById.js'
-import postCustomHeaderUploadImageHandler from './handlers/postCustomHeaderUploadImage.js'
 import postCustomThemeUploadWatermarkImageHandler from './handlers/postCustomThemeUploadWatermarkImage.js'
-import postCustomHeaderHandler from './handlers/postCustomHeader.js'
 import postCustomThemeHandler from './handlers/postCustomTheme.js'
 import postCustomMiscHandler from './handlers/postCustomMisc.js'
 import postCustomSecurityHandler from './handlers/postCustomSecurity.js'
@@ -34,6 +32,7 @@ import deleteCustomVariablesHandler from './handlers/deleteCustomVariables.js'
 import postScreenEditTextHandler from './handlers/postScreenEditText.js'
 import patchScreenHandler from './handlers/patchScreen.js'
 import postStoryUpdateScreenOrderHandler from './handlers/postStoryUpdateScreenOrder.js'
+import postStoryUpdateStepOrderHandler from './handlers/postStoryUpdateStepOrder.js'
 import postScreenCopyHandler from './handlers/postScreenCopy.js'
 import postScreenBaseMergeHandler from './handlers/postScreenBaseMerge.js'
 import postCreateScreenFromFrameHandler from './handlers/postCreateScreenFromFrame.js'
@@ -168,6 +167,12 @@ import getTutorialsSearchHandler from './handlers/getTutorialsSearch.js'
 import postUrlDemosHandler from './handlers/postUrlDemos.js'
 import getUrlDemosHandler from './handlers/getUrlDemos.js'
 
+import postStoryUndoHandler from './handlers/postStoryUndo.js'
+import postStoryRedoHandler from './handlers/postStoryRedo.js'
+import getStoryHistoryHandler from './handlers/getStoryHistory.js'
+import postStoryRevertHandler from './handlers/postStoryRevert.js'
+import captureStoryRevision from './middlewares/captureStoryRevision.js'
+
 import multer from 'multer'
 
 
@@ -228,6 +233,10 @@ function setupMongo(req, res, next) {
     next()
 }
 
+// Story version-history capture: records a pre-image of what the route touches
+// onto the story's undo stack when the handler responds 2xx (see the middleware)
+const rev = captureStoryRevision
+
 // Stripe webhook must receive the raw body before JSON body parsers run
 app.post('/payments/webhook', [setupMongo, express.raw({ type: 'application/json' })], postPaymentsWebhookHandler)
 app.post('/webhooks/sequenzy', [setupMongo, express.raw({ type: 'application/json' })], postWebhooksSequenzyHandler)
@@ -280,24 +289,24 @@ app.post('/stories', [setupMongo, corsMiddleware], postStoriesHandler)
 app.post('/desktopStories', [setupMongo, corsMiddleware], postDesktopStoriesHandler)
 app.post('/emptyStory', [setupMongo, corsMiddleware], postEmptyStoryHandler)
 app.post('/inProgressStory', [setupMongo, corsMiddleware], postInProgressStoryHandler)
-app.patch('/workspaces/:workspaceId/stories/:storyId', [setupMongo], patchStoryHandler)
+app.patch('/workspaces/:workspaceId/stories/:storyId', [setupMongo, rev('story', 'story:update')], patchStoryHandler)
 app.get('/livedemos/:storyId', [setupMongo], getLiveDemoPreviewHandler)
 
 app.delete('/workspaces/:workspaceId/stories/:storyId', [setupMongo], deleteStoryHandler)
 app.post('/workspaces/:workspaceId/stories/:storyId/clone', [setupMongo], postStoryCloneHandler)
 
-app.post('/workspaces/:workspaceId/stories/:storyId/screens', [setupMongo], postScreensHandler)
+app.post('/workspaces/:workspaceId/stories/:storyId/screens', [setupMongo, rev('story', 'screen:add')], postScreensHandler)
 app.post('/workspaces/:workspaceId/stories/:storyId/domRecording/events', [setupMongo], postStoryDomRecordingEventsHandler)
 app.post('/workspaces/:workspaceId/stories/:storyId/domRecording/finish', [setupMongo], postStoryDomRecordingFinishHandler)
 
 
-app.post('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/transitions', [setupMongo], postTransitionsHandler)
+app.post('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/transitions', [setupMongo, rev('screen', 'transition:add')], postTransitionsHandler)
 
 
-app.delete('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/transitions/:transitionId', [setupMongo], deleteTransitionHandler)
+app.delete('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/transitions/:transitionId', [setupMongo, rev('screen', 'transition:delete')], deleteTransitionHandler)
 
 
-app.patch('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/transitions/:transitionId', [setupMongo], patchTransitionHandler)
+app.patch('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/transitions/:transitionId', [setupMongo, rev('screen', 'transition:update')], patchTransitionHandler)
 
 
 app.get('/workspaces', [setupMongo], getWorkspacesHandler)
@@ -418,9 +427,9 @@ app.post('/workspaces/:workspaceId/stories/:storyId/aiVoice', [setupMongo], post
 
 app.post('/workspaces/:workspaceId/stories/:storyId/generateAiVoice', [setupMongo], postGenerateAIVoiceHandler)
 
-app.delete('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/steps/:stepId/audios/:audioId', [setupMongo], deleteStepAudioHandler)
+app.delete('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/steps/:stepId/audios/:audioId', [setupMongo, rev('screen', 'audio:delete')], deleteStepAudioHandler)
 
-app.post('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/steps/:stepId/audios', [setupMongo], postStepAudioHandler)
+app.post('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/steps/:stepId/audios', [setupMongo, rev('screen', 'audio:add')], postStepAudioHandler)
 
 app.post('/workspaces/:workspaceId/stories/:storyId/generateStoryContent', [setupMongo], postGenerateStoryContentHandler)
 
@@ -539,65 +548,67 @@ const uploadScreen = multer({
     },
 })
 
-app.post('/workspaces/:workspaceId/stories/:storyId/custom/header/uploadImage', [setupMongo, uploadImage.single('headerImage')], postCustomHeaderUploadImageHandler)
-
 app.post('/workspaces/:workspaceId/stories/:storyId/custom/theme/uploadWatermarkImage', [setupMongo, uploadImage.single('watermarkImage')], postCustomThemeUploadWatermarkImageHandler)
 
-app.post('/workspaces/:workspaceId/stories/:storyId/screenUpload', [setupMongo, uploadScreen.single('screenUpload')], postScreenUploadHandler)
+app.post('/workspaces/:workspaceId/stories/:storyId/screenUpload', [setupMongo, uploadScreen.single('screenUpload'), rev('story', 'screen:upload')], postScreenUploadHandler)
 
 
-app.post('/workspaces/:workspaceId/stories/:storyId/custom/header', [setupMongo], postCustomHeaderHandler)
+app.post('/workspaces/:workspaceId/stories/:storyId/custom/theme', [setupMongo, rev('story', 'custom:theme')], postCustomThemeHandler)
 
 
-app.post('/workspaces/:workspaceId/stories/:storyId/custom/theme', [setupMongo], postCustomThemeHandler)
+app.post('/workspaces/:workspaceId/stories/:storyId/custom/misc', [setupMongo, rev('story', 'custom:misc')], postCustomMiscHandler)
 
+app.post('/workspaces/:workspaceId/stories/:storyId/custom/security', [setupMongo, rev('story', 'custom:security')], postCustomSecurityHandler)
 
-app.post('/workspaces/:workspaceId/stories/:storyId/custom/misc', [setupMongo], postCustomMiscHandler)
+app.post('/workspaces/:workspaceId/stories/:storyId/custom/background', [setupMongo, rev('story', 'custom:background')], postCustomBackgroundHandler)
 
-app.post('/workspaces/:workspaceId/stories/:storyId/custom/security', [setupMongo], postCustomSecurityHandler)
-
-app.post('/workspaces/:workspaceId/stories/:storyId/custom/background', [setupMongo], postCustomBackgroundHandler)
-
-app.post('/workspaces/:workspaceId/stories/:storyId/custom/backgroundMusic', [setupMongo], postCustomBackgroundMusicHandler)
+app.post('/workspaces/:workspaceId/stories/:storyId/custom/backgroundMusic', [setupMongo, rev('story', 'custom:music')], postCustomBackgroundMusicHandler)
 
 app.post('/workspaces/:workspaceId/stories/:storyId/custom/backgroundMusic/uploadBackgroundMusic', [setupMongo, uploadAudio.single('backgroundMusic')], postCustomBackgroundMusicUploadHandler)
 
-app.post('/workspaces/:workspaceId/stories/:storyId/custom/variables', [setupMongo], postCustomVariablesHandler)
+app.post('/workspaces/:workspaceId/stories/:storyId/custom/variables', [setupMongo, rev('story', 'variables:add')], postCustomVariablesHandler)
 
-app.patch('/workspaces/:workspaceId/stories/:storyId/custom/variables/:varId', [setupMongo], patchCustomVariablesHandler)
+app.patch('/workspaces/:workspaceId/stories/:storyId/custom/variables/:varId', [setupMongo, rev('story', 'variables:update')], patchCustomVariablesHandler)
 
-app.delete('/workspaces/:workspaceId/stories/:storyId/custom/variables/:varId', [setupMongo], deleteCustomVariablesHandler)
+app.delete('/workspaces/:workspaceId/stories/:storyId/custom/variables/:varId', [setupMongo, rev('story', 'variables:delete')], deleteCustomVariablesHandler)
 
 
 app.post('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/editText', [setupMongo], postScreenEditTextHandler)
 
-app.patch('/workspaces/:workspaceId/stories/:storyId/screens/:screenId', [setupMongo], patchScreenHandler)
+app.patch('/workspaces/:workspaceId/stories/:storyId/screens/:screenId', [setupMongo, rev('screen', 'screen:update')], patchScreenHandler)
 
-app.patch('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/popups', [setupMongo], patchScreenPopupsHandler)
+app.patch('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/popups', [setupMongo, rev('screen', 'popups:update')], patchScreenPopupsHandler)
 
-app.post('/workspaces/:workspaceId/stories/:storyId/updateScreenOrder', [setupMongo], postStoryUpdateScreenOrderHandler)
+app.post('/workspaces/:workspaceId/stories/:storyId/updateScreenOrder', [setupMongo, rev('story', 'screens:reorder')], postStoryUpdateScreenOrderHandler)
+
+app.post('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/updateStepOrder', [setupMongo, rev('screen', 'steps:reorder')], postStoryUpdateStepOrderHandler)
+
+app.post('/workspaces/:workspaceId/stories/:storyId/undo', [setupMongo], postStoryUndoHandler)
+app.post('/workspaces/:workspaceId/stories/:storyId/redo', [setupMongo], postStoryRedoHandler)
+app.get('/workspaces/:workspaceId/stories/:storyId/history', [setupMongo], getStoryHistoryHandler)
+app.post('/workspaces/:workspaceId/stories/:storyId/history/:revisionId/revert', [setupMongo], postStoryRevertHandler)
 
 
-app.post('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/copy', [setupMongo], postScreenCopyHandler)
+app.post('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/copy', [setupMongo, rev('story', 'screen:copy')], postScreenCopyHandler)
 
 app.post('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/baseMerge', [setupMongo], postScreenBaseMergeHandler)
 
-app.post('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/createScreenFromFrame', [setupMongo], postCreateScreenFromFrameHandler)
+app.post('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/createScreenFromFrame', [setupMongo, rev('story', 'screen:fromFrame')], postCreateScreenFromFrameHandler)
 
 app.get('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/preview', [setupMongo], getScreenPreviewHandler)
 
 app.get('/workspaces/:workspaceId/stories/:storyId/preview', [setupMongo], getStoryPreviewHandler)
 
 // Step creation
-app.post('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/steps', [setupMongo], postStepsHandler)
+app.post('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/steps', [setupMongo, rev('screen', 'step:add')], postStepsHandler)
 
-app.delete('/workspaces/:workspaceId/stories/:storyId/screens/:screenId', [setupMongo], deleteScreenHandler)
+app.delete('/workspaces/:workspaceId/stories/:storyId/screens/:screenId', [setupMongo, rev('story', 'screen:delete', { fullScreens: true })], deleteScreenHandler)
 
-app.delete('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/steps/:stepId', [setupMongo], deleteStepHandler)
+app.delete('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/steps/:stepId', [setupMongo, rev('screen', 'step:delete')], deleteStepHandler)
 
-app.patch('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/steps/:stepId', [setupMongo], patchStepHandler)
+app.patch('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/steps/:stepId', [setupMongo, rev('screen', 'step:update')], patchStepHandler)
 
-app.post('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/steps/:stepId/uploadAudio', [setupMongo, uploadAudio.single('audioFile')], postStepUploadAudioHandler)
+app.post('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/steps/:stepId/uploadAudio', [setupMongo, uploadAudio.single('audioFile'), rev('screen', 'audio:upload')], postStepUploadAudioHandler)
 
 app.post('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/steps/:stepId/previewImage', [setupMongo, uploadImage.single('previewImage')], postStepPreviewImageHandler)
 
@@ -629,12 +640,12 @@ app.post('/workspaces/:workspaceId/library/uploadScreenshot', [setupMongo], post
 app.post('/workspaces/:workspaceId/library/uploadVideo', [setupMongo], postWorkspaceLibraryUploadVideoHandler)
 app.post('/workspaces/:workspaceId/library/uploadPage', [setupMongo], postWorkspaceLibraryUploadPageHandler)
 
-app.post('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/steps/:stepId/zoomSpans', [setupMongo], postStepZoomSpansHandler)
-app.patch('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/steps/:stepId/zoomSpans/:zoomSpanId', [setupMongo], patchStepZoomSpanHandler)
-app.post('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/zoomSpans', [setupMongo], postZoomSpansHandler)
-app.patch('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/zoomSpans/:zoomSpanId', [setupMongo], patchZoomSpanHandler)
-app.delete('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/zoomSpans/:zoomSpanId', [setupMongo], deleteZoomSpanHandler)
-app.delete('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/steps/:stepId/zoomSpans/:zoomSpanId', [setupMongo], deleteStepZoomSpanHandler)
+app.post('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/steps/:stepId/zoomSpans', [setupMongo, rev('screen', 'stepZoom:add')], postStepZoomSpansHandler)
+app.patch('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/steps/:stepId/zoomSpans/:zoomSpanId', [setupMongo, rev('screen', 'stepZoom:update')], patchStepZoomSpanHandler)
+app.post('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/zoomSpans', [setupMongo, rev('screen', 'zoom:add')], postZoomSpansHandler)
+app.patch('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/zoomSpans/:zoomSpanId', [setupMongo, rev('screen', 'zoom:update')], patchZoomSpanHandler)
+app.delete('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/zoomSpans/:zoomSpanId', [setupMongo, rev('screen', 'zoom:delete')], deleteZoomSpanHandler)
+app.delete('/workspaces/:workspaceId/stories/:storyId/screens/:screenId/steps/:stepId/zoomSpans/:zoomSpanId', [setupMongo, rev('screen', 'stepZoom:delete')], deleteStepZoomSpanHandler)
 
 
 app.post('/workspaces/:workspaceId/stories/:storyId/links', [setupMongo], postStoryLinksHandler)
