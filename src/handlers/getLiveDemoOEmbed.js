@@ -15,34 +15,39 @@ import * as sanitezeLib from '@braintree/sanitize-url'
 
 const sanitize = sanitezeLib.sanitizeUrl
 
-import helpers from '../helpers/livedemoHelpers.js'
 import ResponseCodes from '../constants/ResponseCodes.js'
 import ScreenTypes from '../constants/ScreenTypes.js'
 import ENV from '../envServer.js'
+import { parseOEmbedUrl } from '../helpers/agent/parseOEmbedUrl.js'
+import { CORS_HEADERS, httpError } from '../helpers/agent/http.js'
+
+const DEFAULT_AGENT_WIDTH = 1024
+const DEFAULT_AGENT_HEIGHT = 640
+
+function thumbnailForScreen(screen) {
+  if (!screen) return ''
+  if (screen.type === ScreenTypes.SCREEN_VIDEO) {
+    const playbackId = screen.asset && screen.asset.playback_ids && screen.asset.playback_ids[0] && screen.asset.playback_ids[0].id
+    return playbackId ? `https://image.mux.com/${playbackId}/thumbnail.png` : ''
+  }
+  return screen.imageUrl || ''
+}
+
+function sendOEmbed(res, payload) {
+  res.set(CORS_HEADERS)
+  res.status(ResponseCodes['200_OK'])
+  res.send(JSON.stringify(payload))
+}
 
 const handler = function (req, res) {
-  let { Models, conn } = req.mongo
+  let { Models } = req.mongo
 
-  // let storyId = req.params.storyId
-  let storyId = ""
-  let storyUrl = req.query.url ? req.query.url : null
-
-  let referrer = req.query.referrer ? sanitize(req.query.referrer) : ""
-  let maxWidth = req.query.max_width || 0
-  let maxHeight = req.query.max_height || 0
-
-
-
+  let targetUrl = req.query.url ? req.query.url : null
+  let referrer = req.query.referrer ? sanitize(req.query.referrer) : ''
+  let maxWidth = req.query.maxwidth || req.query.max_width || 0
+  let maxHeight = req.query.maxheight || req.query.max_height || 0
 
   return Promise.resolve()
-    .then(() => {
-
-      return helpers.validateStoryId(storyUrl)
-        .then((storyIdFromUrl) => {
-
-          storyId = storyIdFromUrl
-        })
-    })
     .then(() => {
       let responseMessage = null
 
@@ -68,40 +73,77 @@ const handler = function (req, res) {
         responseMessage = 'Incorrect max_height'
       }
 
-
       if (responseMessage) {
-
-        let newError = new Error('')
-        newError.resultResponse = {
-          statusCode: ResponseCodes['501_NOT_IMPLEMENTED'],
-          headers: {
-            'Access-Control-Max-Age': 600,
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept', // Required for CORS support to work
-            // Required for CORS support to work
-            'Access-Control-Allow-Credentials': true, // Required for cookies, authorization headers with HTTPS
-          },
-          body: responseMessage
-        }
-
-        throw newError
+        httpError(ResponseCodes['501_NOT_IMPLEMENTED'], responseMessage)
       }
 
+      const parsed = parseOEmbedUrl(targetUrl)
+      if (!parsed) {
+        httpError(ResponseCodes['400_BAD_REQUEST'], 'Invalid url param')
+      }
+      return parsed
     })
-    .then(() => {
+    .then(async (parsed) => {
+      if (parsed.kind === 'agent') {
+        const agentQuery = { _id: parsed.id, deletedAt: null }
+        if (parsed.workspaceId) agentQuery.workspaceId = parsed.workspaceId
+        const agent = await Models.AiDemoAgent.findOne(agentQuery).lean()
+        if (!agent) {
+          httpError(ResponseCodes['404_NOT_FOUND'], 'Agent not found')
+        }
 
+        let thumbnailImage = agent.avatarUrl || ''
+        let oEmbedWidth = DEFAULT_AGENT_WIDTH
+        let oEmbedHeight = DEFAULT_AGENT_HEIGHT
 
-      return Models.Story.findOne({
-          _id: storyId,
-          deletedAt: null,
+        if (agent.defaultDemoId) {
+          const story = await Models.Story.findOne({
+            _id: agent.defaultDemoId,
+            deletedAt: null,
+          })
+            .populate({
+              path: 'screens',
+              select: '_id type imageUrl index asset',
+              options: { sort: { index: 1 } },
+            })
+            .lean()
+          const firstScreen = story && story.screens && story.screens[0]
+          if (!thumbnailImage) thumbnailImage = thumbnailForScreen(firstScreen)
+          if (story && story.tabInfo && story.tabInfo.width) oEmbedWidth = story.tabInfo.width
+          if (story && story.tabInfo && story.tabInfo.height) oEmbedHeight = story.tabInfo.height
+        }
+
+        if (maxWidth && maxWidth <= oEmbedWidth) oEmbedWidth = maxWidth
+        if (maxHeight && maxHeight <= oEmbedHeight) oEmbedHeight = maxHeight
+
+        const previewSrc = `${ENV.STORIES_API}/workspaces/${agent.workspaceId}/agents/${agent._id}/preview`
+        sendOEmbed(res, {
+          type: 'rich',
+          version: '1.0',
+          title: agent.name,
+          provider_name: 'LiveDemo',
+          provider_url: 'https://livedemo.ai',
+          thumbnail_url: thumbnailImage,
+          html: `<iframe src="${previewSrc}" allowfullscreen width="${oEmbedWidth}" height="${oEmbedHeight}" title="${agent.name}"></iframe>`,
+          width: oEmbedWidth,
+          height: oEmbedHeight,
+          referrer,
+          cache_age: 60,
         })
+        return
+      }
+
+      const storyQuery = { _id: parsed.id, deletedAt: null }
+      if (parsed.workspaceId) storyQuery.workspaceId = parsed.workspaceId
+
+      const foundStory = await Models.Story.findOne(storyQuery)
         .populate({
           path: 'screens',
           populate: [
             {
               path: 'customTransitions.gotoScreen',
               model: 'Screen',
-              select: '_id name'
+              select: '_id name',
             },
             {
               path: 'steps.view.formId',
@@ -110,73 +152,50 @@ const handler = function (req, res) {
             {
               path: 'steps.stepAudioId',
               model: 'Audio',
-            }
+            },
           ],
           select: '_id name type steps customTransitions imageUrl index imageUrl asset',
-          options: { sort: { 'index': 1 } }
+          options: { sort: { index: 1 } },
         })
         .populate('workspaceId', '_id name')
 
-    })
-    .then((foundStory) => {
-      let firstScreen = foundStory.screens && foundStory.screens.length && foundStory.screens[0]
+      if (!foundStory) {
+        httpError(ResponseCodes['404_NOT_FOUND'], 'Story not found')
+      }
 
-      let thumbnailImage = firstScreen.type === ScreenTypes.SCREEN_VIDEO ? `https://image.mux.com/${firstScreen.asset.playback_ids[0].id}/thumbnail.png` : firstScreen.imageUrl
+      const firstScreen = foundStory.screens && foundStory.screens.length && foundStory.screens[0]
+      const thumbnailImage = thumbnailForScreen(firstScreen)
 
       let oEmbedWidth = maxWidth && maxWidth <= foundStory.tabInfo.width ? maxWidth : foundStory.tabInfo.width
       let oEmbedHeight = maxHeight && maxHeight <= foundStory.tabInfo.height ? maxHeight : foundStory.tabInfo.height
 
-
-      const resultResponse = {
-        statusCode: ResponseCodes['200_OK'],
-        headers: {
-          'Access-Control-Max-Age': 600,
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept', // Required for CORS support to work
-          // Required for CORS support to work
-          'Access-Control-Allow-Credentials': true, // Required for cookies, authorization headers with HTTPS
-        }
-      }
-      res.set(resultResponse.headers)
-      res.status(resultResponse.statusCode)
-      res.send(JSON.stringify(
-        {
-          'type': 'rich',
-          'version': '1.0',
-          'title': foundStory.name,
-          'provider_name': 'LiveDemo',
-          'provider_url': 'https://livedemo.ai',
-          'thumbnail_url': thumbnailImage,
-          'html': `<iframe src="${ENV.STORIES_API}/workspaces/${foundStory.workspaceId._id}/stories/${foundStory._id}/preview?step=1" allowfullscreen width="${oEmbedWidth}" height="${oEmbedHeight}" title="${foundStory.name}"></iframe>`,
-          'width': oEmbedWidth,
-          'height': oEmbedHeight,
-          'referrer': referrer,
-          'cache_age': 60
-        }
-      ))
+      const workspaceId = foundStory.workspaceId._id || foundStory.workspaceId
+      sendOEmbed(res, {
+        type: 'rich',
+        version: '1.0',
+        title: foundStory.name,
+        provider_name: 'LiveDemo',
+        provider_url: 'https://livedemo.ai',
+        thumbnail_url: thumbnailImage,
+        html: `<iframe src="${ENV.STORIES_API}/workspaces/${workspaceId}/stories/${foundStory._id}/preview?step=1" allowfullscreen width="${oEmbedWidth}" height="${oEmbedHeight}" title="${foundStory.name}"></iframe>`,
+        width: oEmbedWidth,
+        height: oEmbedHeight,
+        referrer,
+        cache_age: 60,
+      })
     })
     .catch((error) => {
       console.log(error)
 
       let resultResponse
       if (error.resultResponse) {
-
         resultResponse = error.resultResponse
       } else {
-
-
         resultResponse = {
           statusCode: ResponseCodes['500_INTERNAL_SERVER_ERROR'],
-          headers: {
-            'Access-Control-Max-Age': 600,
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': 'ClientId,Authorization,Content-Type,Accept', // Required for CORS support to work
-            // Required for CORS support to work
-            'Access-Control-Allow-Credentials': true, // Required for cookies, authorization headers with HTTPS
-          },
-          body: ''
+          headers: CORS_HEADERS,
+          body: '',
         }
-
       }
 
       res.set(resultResponse.headers)
@@ -185,5 +204,4 @@ const handler = function (req, res) {
     })
 }
 
-export default  handler
-
+export default handler

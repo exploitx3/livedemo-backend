@@ -3,13 +3,15 @@ import processStoryDemoDom from './processStoryDemoDom.js'
 import processStoryDemoVideo from './processStoryDemoVideo.js'
 import processAutoRecording from './processAutoRecording.js'
 import processDemoActivityEvents from './processDemoActivityEvents.js'
+import processAgentKnowledge from './processAgentKnowledge.js'
 
 const configsArr = [
   // publishLiveDemo
   processStoryDemo,
   processStoryDemoDom,
   processAutoRecording,
-  processDemoActivityEvents
+  processDemoActivityEvents,
+  processAgentKnowledge
 ]
 
 

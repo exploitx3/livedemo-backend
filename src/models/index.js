@@ -70,6 +70,14 @@ import LaunchLinkSchema from './LaunchLink.js'
 import LaunchSubscriberSchema from './LaunchSubscriber.js'
 import LaunchConfigSchema from './LaunchConfig.js'
 
+import AiDemoAgentSchema from './AiDemoAgent.js'
+import AgentKnowledgeSourceSchema from './AgentKnowledgeSource.js'
+import AgentKnowledgeChunkSchema from './AgentKnowledgeChunk.js'
+import AgentRevisionSchema from './AgentRevision.js'
+import AgentSessionSchema from './AgentSession.js'
+import AgentMessageSchema from './AgentMessage.js'
+import AgentSessionEventSchema from './AgentSessionEvent.js'
+
 
 // const ChannelSchema = require('./Channel')
 // const InstantMessagesChannelSchema = require('./InstantMessagesChannel')
@@ -237,6 +245,14 @@ export const initModels = (conn) => {
   conn.model('LaunchSubscriber', LaunchSubscriberSchema)
   conn.model('LaunchConfig', LaunchConfigSchema)
 
+  conn.model('AiDemoAgent', AiDemoAgentSchema)
+  conn.model('AgentKnowledgeSource', AgentKnowledgeSourceSchema)
+  conn.model('AgentKnowledgeChunk', AgentKnowledgeChunkSchema)
+  conn.model('AgentRevision', AgentRevisionSchema)
+  conn.model('AgentSession', AgentSessionSchema)
+  conn.model('AgentMessage', AgentMessageSchema)
+  conn.model('AgentSessionEvent', AgentSessionEventSchema)
+
   // conn.model('Subscriber', SubscriberSchema)
 
   // conn.model('Export', ExportSchema)
@@ -319,6 +335,13 @@ export const getModels = (conn) => {
     LaunchLink: conn.model('LaunchLink'),
     LaunchSubscriber: conn.model('LaunchSubscriber'),
     LaunchConfig: conn.model('LaunchConfig'),
+    AiDemoAgent: conn.model('AiDemoAgent'),
+    AgentKnowledgeSource: conn.model('AgentKnowledgeSource'),
+    AgentKnowledgeChunk: conn.model('AgentKnowledgeChunk'),
+    AgentRevision: conn.model('AgentRevision'),
+    AgentSession: conn.model('AgentSession'),
+    AgentMessage: conn.model('AgentMessage'),
+    AgentSessionEvent: conn.model('AgentSessionEvent'),
 
     // Channel: conn.model('Channel'),
     // InstantMessagesChannel: conn.model('InstantMessagesChannel'),

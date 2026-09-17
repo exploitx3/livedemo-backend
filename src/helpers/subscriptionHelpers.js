@@ -133,6 +133,7 @@ export const PAID_PLAN_USER_FEATURE_FLAGS = {
   'featureFlags.allowForms': true,
   'featureFlags.allowEmbed': true,
   'featureFlags.allowPersonalization': true,
+  'featureFlags.allowAIAgents': true,
 }
 
 /** Enable paid-plan feature flags on the user after any plan purchase. */

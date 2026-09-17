@@ -66,6 +66,15 @@ const handler = function (req, res) {
       )
     })
     .then(() => {
+      // AI Demo Agents: soft-delete the agents and hard-delete their vectors +
+      // sources so no chunk can be retrieved after the workspace is gone
+      return Promise.all([
+        Models.AiDemoAgent.updateMany({ workspaceId }, { $set: { deletedAt: new Date() } }),
+        Models.AgentKnowledgeChunk.deleteMany({ workspaceId }),
+        Models.AgentKnowledgeSource.deleteMany({ workspaceId }),
+      ])
+    })
+    .then(() => {
       // Report event
       return EventReporter.storeInfoEvent(EventNamesEnum.WORKSPACE_DELETED, {
         userId: authUserDoc._id,

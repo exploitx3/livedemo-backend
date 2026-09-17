@@ -1,5 +1,6 @@
 import Joi from '@hapi/joi'
 import validator from 'validator'
+import FooterButtons from '../../../../constants/FooterButtons.js'
 
 function validateBody(body) {
 
@@ -13,6 +14,8 @@ function validateBody(body) {
     // google font family name, e.g. 'Open Sans'
     fontFamily: Joi.string().allow('').regex(/^[A-Za-z0-9 ]{0,50}$/).default(''),
     showTooltipArrow: Joi.boolean().default(true),
+    hoverGlow: Joi.boolean().default(true),
+    footerButtons: Joi.string().valid(...Object.values(FooterButtons)).default(FooterButtons.backAndNext),
     watermarkConfig: {
       isActive: Joi.boolean().required(),
       text: Joi.string().allow('').required(),

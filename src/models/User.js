@@ -68,6 +68,7 @@ const UserSchema = new mongoose.Schema({
       allowForms: { type: Boolean, default: false},
       allowEmbed: { type: Boolean, default: false},
       allowPersonalization: { type: Boolean, default: false},
+      allowAIAgents: { type: Boolean, default: false},
     },
     onboarding: {
       goals: [{

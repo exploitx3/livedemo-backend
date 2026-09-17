@@ -25,6 +25,7 @@ export default {
   'REQUESTS_PER_INTERVAL':  process.env.REQUESTS_PER_INTERVAL ? process.env.REQUESTS_PER_INTERVAL : "",
   'ELEVENLABS_API_KEY':  process.env.ELEVENLABS_API_KEY ? process.env.ELEVENLABS_API_KEY : "",
   'ELEVENLABS_VOICES_COLLECTION':  process.env.ELEVENLABS_VOICES_COLLECTION ? process.env.ELEVENLABS_VOICES_COLLECTION : "",
+  'ELEVENLABS_SCRIBE_MODEL': process.env.ELEVENLABS_SCRIBE_MODEL ? process.env.ELEVENLABS_SCRIBE_MODEL : "scribe_v2_realtime",
   'SES_ACCESS_KEY_ID': process.env.SES_ACCESS_KEY_ID ? process.env.SES_ACCESS_KEY_ID : "",
   'SES_SECRET_ACCESS_KEY': process.env.SES_SECRET_ACCESS_KEY ? process.env.SES_SECRET_ACCESS_KEY : "",
   'GMAIL': {
@@ -64,4 +65,16 @@ export default {
   'ONBOARDING_DEMO_WORKSPACE_ID': process.env.ONBOARDING_DEMO_WORKSPACE_ID ? process.env.ONBOARDING_DEMO_WORKSPACE_ID : "",
   'IPWHO_API_KEY': process.env.IPWHO_API_KEY ? process.env.IPWHO_API_KEY : "",
   'STORY_REVISIONS_MAX': process.env.STORY_REVISIONS_MAX ? process.env.STORY_REVISIONS_MAX : "",
+  'GEMINI_API_KEY': process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY : "",
+  'GEMINI_MODEL': process.env.GEMINI_MODEL ? process.env.GEMINI_MODEL : "gemini-3.5-flash-lite",
+  'GEMINI_EMBED_MODEL': process.env.GEMINI_EMBED_MODEL ? process.env.GEMINI_EMBED_MODEL : "gemini-embedding-2",
+  // gemini-embedding-2 query-side task (see ai.google.dev/gemini-api/docs/embeddings)
+  'GEMINI_EMBED_QUERY_TASK': process.env.GEMINI_EMBED_QUERY_TASK ? process.env.GEMINI_EMBED_QUERY_TASK : "QUESTION_ANSWERING",
+  // Min ms between embed API calls.
+  'GEMINI_EMBED_MIN_INTERVAL_MS': process.env.GEMINI_EMBED_MIN_INTERVAL_MS ? process.env.GEMINI_EMBED_MIN_INTERVAL_MS : "200",
+  'GEMINI_EMBED_MAX_RETRIES': process.env.GEMINI_EMBED_MAX_RETRIES ? process.env.GEMINI_EMBED_MAX_RETRIES : "5",
+  // 'on' (default) = try $vectorSearch (mongot/Atlas), fall back to Node cosine if unavailable.
+  // 'off' = always Node cosine (no mongot needed).
+  'VECTOR_SEARCH': process.env.VECTOR_SEARCH ? process.env.VECTOR_SEARCH : "on",
+  'AGENT_REVISIONS_MAX': process.env.AGENT_REVISIONS_MAX ? process.env.AGENT_REVISIONS_MAX : "",
 }

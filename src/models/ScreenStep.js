@@ -50,6 +50,7 @@ const ScreenStepSchema = new mongoose.Schema({
         gotoScreen: {type: mongoose.Schema.Types.ObjectId, ref: 'Screen'},
         textColor: {type: String, default: null},
         backgroundColor: {type: String, default: null},
+        buttonEffect: {type: String, default: null}, // none | progress | glow | ripple | spinner | pulse
 
       }]
     },

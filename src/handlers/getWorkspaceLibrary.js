@@ -20,8 +20,8 @@ const handler = function (req, res) {
       const foundWorkspace = await Models.Workspace.findOne({
         _id: workspaceId,
       })
-        .populate('library.screenshots', '_id name index imageUrl', null, { sort: { index: 1 } })
-        .populate('library.videos', '_id name index asset.playback_ids', null, { sort: { index: 1 } })
+        .populate('library.screenshots', '_id name index imageUrl createdAt', null, { sort: { createdAt: -1, _id: -1 } })
+        .populate('library.videos', '_id name index asset.playback_ids createdAt', null, { sort: { createdAt: -1, _id: -1 } })
 
       if (!foundWorkspace) {
         const error = new Error('Workspace not found')
@@ -38,13 +38,13 @@ const handler = function (req, res) {
         throw error
       }
 
-      // All Screen_Pages in the workspace (incl. rrweb base/delta), newest first.
+      // All Screen_Pages in the workspace (incl. rrweb base/delta), last created first.
       const allPages = await Models.Screen.find({
         workspaceId,
         type: 'Screen_Page',
       })
-        .select('_id name index imageUrl recordingRole baseScreenId type updatedAt')
-        .sort({ updatedAt: -1 })
+        .select('_id name index imageUrl recordingRole baseScreenId type createdAt updatedAt')
+        .sort({ createdAt: -1, _id: -1 })
         .lean()
 
       const lib = foundWorkspace.library || {}

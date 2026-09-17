@@ -30,6 +30,8 @@ const handler = function (req, res) {
       let buttonTextColor = requestBody.buttonTextColor
       let fontFamily = requestBody.fontFamily || ''
       let showTooltipArrow = !!requestBody.showTooltipArrow
+      let hoverGlow = requestBody.hoverGlow !== false
+      let footerButtons = requestBody.footerButtons || 'backAndNext'
 
       let watermarkConfigIsActive = requestBody.watermarkConfig.isActive
       let watermarkConfigText = requestBody.watermarkConfig.text
@@ -46,6 +48,8 @@ const handler = function (req, res) {
           'custom.theme.buttonTextColor': buttonTextColor,
           'custom.theme.fontFamily': fontFamily,
           'custom.theme.showTooltipArrow': showTooltipArrow,
+          'custom.theme.hoverGlow': hoverGlow,
+          'custom.theme.footerButtons': footerButtons,
           'custom.theme.watermarkConfig.isActive': watermarkConfigIsActive,
           'custom.theme.watermarkConfig.text': watermarkConfigText,
           'custom.theme.watermarkConfig.url': watermarkConfigUrl,

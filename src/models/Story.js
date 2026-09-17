@@ -48,6 +48,8 @@ const Story = new mongoose.Schema({
                 buttonTextColor: {type: String, default: '#FFFFFF'}, // buttonColor
                 fontFamily: {type: String, default: ''}, // google font name, empty = default font
                 showTooltipArrow: {type: Boolean, default: true},
+                hoverGlow: {type: Boolean, default: true},
+                footerButtons: {type: String, default: 'backAndNext'}, // backAndNext | nextArrow
                 watermarkConfig: {
                     imageUrl: {type: String, default: ''},
                     text: {type: String, default: ''},

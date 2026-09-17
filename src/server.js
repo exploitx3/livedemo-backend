@@ -173,12 +173,42 @@ import getStoryHistoryHandler from './handlers/getStoryHistory.js'
 import postStoryRevertHandler from './handlers/postStoryRevert.js'
 import captureStoryRevision from './middlewares/captureStoryRevision.js'
 
+// AI Demo Agents
+import postAgentHandler from './handlers/postAgent.js'
+import getAgentsHandler from './handlers/getAgents.js'
+import getAgentByIdHandler from './handlers/getAgentById.js'
+import patchAgentHandler from './handlers/patchAgent.js'
+import deleteAgentHandler from './handlers/deleteAgent.js'
+import postAgentPublishHandler from './handlers/postAgentPublish.js'
+import postAgentKnowledgeHandler from './handlers/postAgentKnowledge.js'
+import getAgentKnowledgeHandler from './handlers/getAgentKnowledge.js'
+import patchAgentKnowledgeHandler from './handlers/patchAgentKnowledge.js'
+import deleteAgentKnowledgeHandler from './handlers/deleteAgentKnowledge.js'
+import postAgentKnowledgeReindexHandler from './handlers/postAgentKnowledgeReindex.js'
+import postAgentUndoHandler from './handlers/postAgentUndo.js'
+import postAgentRedoHandler from './handlers/postAgentRedo.js'
+import getAgentHistoryHandler from './handlers/getAgentHistory.js'
+import postAgentRevertHandler from './handlers/postAgentRevert.js'
+import postAgentSessionHandler from './handlers/postAgentSession.js'
+import postAgentChatHandler from './handlers/postAgentChat.js'
+import postAgentTtsHandler from './handlers/postAgentTts.js'
+import postAgentTranscribeHandler from './handlers/postAgentTranscribe.js'
+import postAgentAckHandler from './handlers/postAgentAck.js'
+import getAgentPreviewHandler from './handlers/getAgentPreview.js'
+import getAgentPlayerHandler from './handlers/getAgentPlayer.js'
+import getWorkspaceAgentSessionsHandler from './handlers/getWorkspaceAgentSessions.js'
+import getAgentSessionsHandler from './handlers/getAgentSessions.js'
+import getAgentSessionByIdHandler from './handlers/getAgentSessionById.js'
+import captureAgentRevision from './middlewares/captureAgentRevision.js'
+import agentEditorMode, { agentEditorModeOptional } from './middlewares/agentEditorMode.js'
+
 import multer from 'multer'
 
 
 import * as fs from 'fs'
 // import fsp from 'fs/promises.js'
 import {getModels, setupDB} from './models/index.js'
+import ensureAgentVectorIndex from './helpers/agent/ensureAgentVectorIndex.js'
 
 import ResponseCodes from './constants/ResponseCodes.js'
 import * as https from 'https'
@@ -666,6 +696,67 @@ app.post('/workspaces/:workspaceId/demo-suggestions/:demoSuggestionId/generate-l
 
 // app.post('/workspaces/:workspaceId/stories/:storyId/addScreen', [setupMongo], postStoryAddScreenHandler)
 
+// ---------------------------------------------------------------------------
+// AI Demo Agents — workspace-scoped editor routes (auth inside every handler)
+const arev = captureAgentRevision
+
+app.post('/workspaces/:workspaceId/agents', [setupMongo], postAgentHandler)
+app.get('/workspaces/:workspaceId/agents', [setupMongo], getAgentsHandler)
+app.get('/workspaces/:workspaceId/agents/:agentId', [setupMongo], getAgentByIdHandler)
+app.patch('/workspaces/:workspaceId/agents/:agentId', [setupMongo, arev('agent:update')], patchAgentHandler)
+app.delete('/workspaces/:workspaceId/agents/:agentId', [setupMongo], deleteAgentHandler)
+app.post('/workspaces/:workspaceId/agents/:agentId/publish', [setupMongo], postAgentPublishHandler)
+
+const uploadKnowledgeFile = multer({
+    limits: {
+        fileSize: 20 * 1024 * 1024,
+        files: 1,
+    },
+    fileFilter: function (req, file, callback) {
+        const ext = path.extname(file.originalname).toLowerCase()
+        if (!['.pdf', '.md', '.txt', '.html', '.htm'].includes(ext)) {
+            return callback(new Error('Only pdf, md, txt and html files are allowed'))
+        }
+        callback(null, true)
+    },
+})
+
+app.post('/workspaces/:workspaceId/agents/:agentId/knowledge', [setupMongo, uploadKnowledgeFile.single('file'), arev('knowledge:add')], postAgentKnowledgeHandler)
+app.get('/workspaces/:workspaceId/agents/:agentId/knowledge', [setupMongo], getAgentKnowledgeHandler)
+app.patch('/workspaces/:workspaceId/agents/:agentId/knowledge/:sourceId', [setupMongo, arev('knowledge:update')], patchAgentKnowledgeHandler)
+app.delete('/workspaces/:workspaceId/agents/:agentId/knowledge/:sourceId', [setupMongo, arev('knowledge:delete')], deleteAgentKnowledgeHandler)
+app.post('/workspaces/:workspaceId/agents/:agentId/knowledge/reindex', [setupMongo], postAgentKnowledgeReindexHandler)
+app.post('/workspaces/:workspaceId/agents/:agentId/knowledge/:sourceId/reindex', [setupMongo], postAgentKnowledgeReindexHandler)
+
+app.post('/workspaces/:workspaceId/agents/:agentId/undo', [setupMongo], postAgentUndoHandler)
+app.post('/workspaces/:workspaceId/agents/:agentId/redo', [setupMongo], postAgentRedoHandler)
+app.get('/workspaces/:workspaceId/agents/:agentId/history', [setupMongo], getAgentHistoryHandler)
+app.post('/workspaces/:workspaceId/agents/:agentId/history/:revisionId/revert', [setupMongo], postAgentRevertHandler)
+
+// Editor twins of the visitor endpoints — auth + workspace proven, mode 'editor'
+app.post('/workspaces/:workspaceId/agents/:agentId/chat', [setupMongo], postAgentChatHandler)
+app.post('/workspaces/:workspaceId/agents/:agentId/tts', [setupMongo], postAgentTtsHandler)
+app.post('/workspaces/:workspaceId/agents/:agentId/transcribe', [setupMongo], postAgentTranscribeHandler)
+app.post('/workspaces/:workspaceId/agents/:agentId/session', [setupMongo, agentEditorMode], postAgentSessionHandler)
+// Auth-optional: members get editor mode, anonymous gets published (or 401 on drafts)
+app.get('/workspaces/:workspaceId/agents/:agentId/preview', [setupMongo, corsMiddleware, agentEditorModeOptional], getAgentPreviewHandler)
+app.get('/workspaces/:workspaceId/agents/:agentId/player', [setupMongo, corsMiddleware, agentEditorModeOptional], getAgentPlayerHandler)
+
+// Agent analytics (editor)
+app.get('/workspaces/:workspaceId/agent-sessions', [setupMongo], getWorkspaceAgentSessionsHandler)
+app.get('/workspaces/:workspaceId/agents/:agentId/sessions', [setupMongo], getAgentSessionsHandler)
+app.get('/workspaces/:workspaceId/agents/:agentId/sessions/:sessionId', [setupMongo], getAgentSessionByIdHandler)
+
+// Public visitor routes — loadPublicAgent gates all of them (isPublished or member)
+app.get('/agents/:agentId/preview', [setupMongo, corsMiddleware], getAgentPreviewHandler)
+app.get('/agents/:agentId/player', [setupMongo, corsMiddleware], getAgentPlayerHandler)
+app.post('/agents/:agentId/session', [setupMongo, corsMiddleware], postAgentSessionHandler)
+app.post('/agents/:agentId/chat', [setupMongo, corsMiddleware], postAgentChatHandler)
+app.post('/agents/:agentId/tts', [setupMongo, corsMiddleware], postAgentTtsHandler)
+app.post('/agents/:agentId/transcribe', [setupMongo, corsMiddleware], postAgentTranscribeHandler)
+app.post('/agents/:agentId/ack', [setupMongo, corsMiddleware], postAgentAckHandler)
+// ---------------------------------------------------------------------------
+
 // Public tutorial search — no auth required, IP rate-limited (5 req/s/IP)
 // Supports ?q=<term> for search and ?featured=true for carousel data
 app.get('/tutorials/search', [setupMongo, corsMiddleware], getTutorialsSearchHandler)
@@ -685,6 +776,7 @@ if (ENV.ENV === 'dev1') {
 async function setup() {
     conn = await setupDB()
     Models = getModels(conn)
+    await ensureAgentVectorIndex(conn)
 
     await new Promise((resolve) => {
         const port = 3005

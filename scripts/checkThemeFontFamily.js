@@ -15,6 +15,11 @@ function body(fontFamily) {
 
 assert.strictEqual(postCustomThemeValidator(body('Open Sans')).error, undefined)
 assert.strictEqual(postCustomThemeValidator(body('')).error, undefined)
+assert.strictEqual(postCustomThemeValidator(body('Open Sans')).value.hoverGlow, true)
+assert.strictEqual(postCustomThemeValidator({...body('Open Sans'), hoverGlow: false}).value.hoverGlow, false)
+assert.strictEqual(postCustomThemeValidator(body('Open Sans')).value.footerButtons, 'backAndNext')
+assert.strictEqual(postCustomThemeValidator({...body('Open Sans'), footerButtons: 'nextArrow'}).value.footerButtons, 'nextArrow')
+assert.ok(postCustomThemeValidator({...body('Open Sans'), footerButtons: 'nope'}).error)
 
 // the font name is interpolated into the preview HTML, so anything that could break out must be rejected
 assert.ok(postCustomThemeValidator(body("Inter'; } body{display:none} .x{")).error)

@@ -1,6 +1,7 @@
 import Joi from '@hapi/joi'
 import validator from 'validator'
 import mongoose from "mongoose";
+import ButtonEffects from '../../../../../constants/ButtonEffects.js'
 
 function validateBody(body) {
 
@@ -13,6 +14,7 @@ function validateBody(body) {
     gotoScreen: Joi.string().allow(null, '').optional(),
     textColor: Joi.string().allow(null, '').optional(),// buttonColor
     backgroundColor: Joi.string().allow(null, '').optional(),// buttonColor
+    buttonEffect: Joi.string().valid(...Object.values(ButtonEffects)).allow(null, '').optional(),
   })
 
   let schema = Joi.object().keys({
