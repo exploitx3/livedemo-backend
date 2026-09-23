@@ -1,27 +1,31 @@
 import moment from 'moment'
 import aiHelpers from '../aiHelpers.js'
 import retrieve from './retrieve.js'
+import { storyStepList } from './agentKnowledge.js'
 import fastPath from './fastPath.js'
 import speakAgentText from './speakAgentText.js'
 import { getAllowedDemos, resolveDemoAction, validateDemoAction } from './validateActions.js'
+import { makeToolExecutors, runToolLoop } from './agentTools.js'
 
-// One agent turn: retrieve → prompt → parse → validate → SSE. One file, not
-// eight services. `sse(event, data)` writes to the open event-stream.
+// One agent turn: retrieve → prompt → tool loop (model may search more, max
+// MAX_TOOL_ROUNDS Gemini calls) → validate → SSE. `sse(event, data)` writes
+// to the open event-stream.
 //
-// SSE events emitted: text, voice_audio, content_card, suggestions, done, error.
-// ponytail: the answer arrives as one `text` event (generateContent JSON), not
+// SSE events emitted: status, text, voice_audio, content_card, suggestions, done, error.
+// ponytail: the answer arrives as one `text` event (respond tool args), not
 // token-streamed. Upgrade path: genai.models.generateContentStream + a second
-// non-JSON prompt pass.
+// plain-text prompt pass.
 
 const HISTORY_LIMIT = 8
 
-function buildPrompt({ agent, session, history, message, knowledge, demoCandidates, allowedDemos }) {
+function buildPrompt({ agent, session, history, message, knowledge, demoCandidates, allowedDemos, defaultDemoSteps = [] }) {
   const lines = []
 
   lines.push('You are an AI Demo Agent for a product, embedded next to an interactive demo player.')
   lines.push('Answer ONLY from the knowledge context below. If the context does not cover the question, say you do not know and offer what you can show.')
-  lines.push('You can navigate the visitor to a demo step by returning an action. Only use demo ids and step numbers listed below — never invent ids.')
-  lines.push('When the visitor asks how to do something, or to be shown a feature, you MUST set action to the best matching demo step from the list. Do not leave action null if a relevant step is listed — the player jumps there while you talk.')
+  lines.push('If the context below is missing something, call search_knowledge with a standalone query (or get_demo_steps for a demo) before answering. Always finish by calling respond.')
+  lines.push('You can navigate the visitor to a demo step by setting action in respond. Only use demo ids and step numbers listed below or returned by your tools — never invent ids.')
+  lines.push('When the visitor asks how to do something, or to be shown a feature, you MUST set action to the best matching demo step. Do not omit action if a relevant step is known — the player jumps there while you talk.')
   if (agent.systemPrompt) {
     lines.push(`Extra instructions from the author: ${agent.systemPrompt}`)
   }
@@ -48,6 +52,12 @@ function buildPrompt({ agent, session, history, message, knowledge, demoCandidat
     allowedDemos.forEach(d => lines.push(`${d._id} — ${d.name || 'Untitled'}`))
   }
 
+  if (defaultDemoSteps.length) {
+    const demoId = agent.defaultDemoId?._id || agent.defaultDemoId
+    lines.push(`\nEvery step of the default demo (${demoId}). Choose stepNumber from this list:`)
+    defaultDemoSteps.forEach(s => lines.push(`${s.stepNumber}. ${s.text}`))
+  }
+
   if (demoCandidates.length) {
     lines.push('\nMost relevant demo steps for this question (demoId / stepNumber — content):')
     demoCandidates.forEach(c => {
@@ -57,10 +67,6 @@ function buildPrompt({ agent, session, history, message, knowledge, demoCandidat
   }
 
   lines.push(`\nVisitor message: ${message}`)
-  lines.push('\nRespond with a single JSON object, nothing else:')
-  lines.push('{"answer": "<short conversational answer, max 3 sentences>",')
-  lines.push(' "suggestions": ["<up to 3 short follow-up questions the visitor might ask>"],')
-  lines.push(' "action": null | {"type": "open_demo", "demoId": "<id from the list>", "stepNumber": <number>}}')
 
   return lines.join('\n')
 }
@@ -89,6 +95,19 @@ async function emitContentCard(Models, { agent, session, mode, sse, demoId, step
   })
 
   return validated
+}
+
+async function loadDefaultDemoSteps(Models, agent) {
+  const demoId = agent.defaultDemoId?._id || agent.defaultDemoId
+  if (!demoId) return []
+  const story = await Models.Story.findOne({
+    _id: demoId,
+    workspaceId: agent.workspaceId,
+    deletedAt: null,
+  })
+    .populate({ path: 'screens', select: 'steps index' })
+    .lean()
+  return storyStepList(story)
 }
 
 async function emitAnswer(sse, agent, answer, mode, { skipText } = {}) {
@@ -150,12 +169,13 @@ export default async function runAgentTurn(Models, { agent, session, message, so
   }
 
   if (!appliedAction && !answer) {
-    const [history, retrieved, allowedDemos] = await Promise.all([
+    const [history, retrieved, allowedDemos, defaultDemoSteps] = await Promise.all([
       Models.AgentMessage.find({ sessionId: session._id })
         .sort({ _id: -1 }).limit(HISTORY_LIMIT).lean()
         .then(list => list.reverse()),
       retrieve(Models, { agent, queryText: message }),
       getAllowedDemos(Models, agent, mode),
+      loadDefaultDemoSteps(Models, agent),
     ])
 
     const prompt = buildPrompt({
@@ -166,23 +186,30 @@ export default async function runAgentTurn(Models, { agent, session, message, so
       knowledge: retrieved.knowledge,
       demoCandidates: retrieved.demoCandidates,
       allowedDemos,
+      defaultDemoSteps,
     })
 
-    const raw = await aiHelpers.generateAgentAnswer(prompt)
-
-    let parsed
-    try {
-      parsed = JSON.parse(raw)
-    } catch (err) {
-      parsed = { answer: raw, suggestions: [], action: null }
-    }
+    const demoHits = []
+    const exec = makeToolExecutors(Models, {
+      agent,
+      allowedDemos,
+      retrieve,
+      demoHits,
+      seenChunkIds: new Set([...retrieved.knowledge, ...retrieved.demoCandidates].map(c => String(c._id))),
+    })
+    const parsed = await runToolLoop({
+      prompt,
+      exec,
+      generateStep: aiHelpers.generateAgentStep,
+      onStatus: () => sse('status', { text: 'Looking that up…' }),
+    })
 
     answer = String(parsed.answer || '').trim()
     suggestions = Array.isArray(parsed.suggestions) ? parsed.suggestions.slice(0, 3) : []
 
     if (answer) sse('text', { text: answer })
 
-    const action = resolveDemoAction(parsed.action, retrieved.demoCandidates, {
+    const action = resolveDemoAction(parsed.action, [...demoHits, ...retrieved.demoCandidates], {
       answer,
       allowedDemos,
       currentDemoId: session.currentDemoId,

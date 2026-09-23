@@ -130,23 +130,22 @@ async function callEmbedBatch(texts, options = {}) {
     return parseEmbedResponse(res, texts.length)
 }
 
-// RAG answer + tool JSON for one agent turn. responseMimeType makes Gemini
-// return a single parseable JSON object (equivalent of OpenAI json_object).
-async function generateAgentAnswer(prompt) {
+// One round of the agent tool loop (see helpers/agent/agentTools.js). Mode ANY
+// forces a function call; returns the raw response (functionCalls, candidates).
+async function generateAgentStep(contents, { tools, allowedFunctionNames }) {
     if (!genai) {
         throw new Error('GEMINI_API_KEY is not configured')
     }
 
-    const response = await genai.models.generateContent({
+    return genai.models.generateContent({
         model: GEMINI_MODEL,
         config: {
             thinkingConfig: { thinkingLevel: 'MINIMAL' },
-            responseMimeType: 'application/json',
+            tools: [{ functionDeclarations: tools }],
+            toolConfig: { functionCallingConfig: { mode: 'ANY', allowedFunctionNames } },
         },
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        contents,
     })
-
-    return response.text.trim()
 }
 
 // gemini-embedding-2: prompt task prefixes; batch via Content[] per docs.
@@ -378,7 +377,7 @@ export default {
     textToSpeech: textToSpeech,
     elTextToSpeech: elTextToSpeech,
     elGetVoices: elGetVoices,
-    generateAgentAnswer: generateAgentAnswer,
+    generateAgentStep: generateAgentStep,
     embedText: embedText,
     embedTexts: embedTexts,
     embedPdfDocument: embedPdfDocument,

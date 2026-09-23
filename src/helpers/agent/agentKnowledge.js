@@ -81,6 +81,25 @@ export function faqToText(pairs) {
 // Demo-derived chunks from an existing Story (read-only; no schema changes).
 // One summary chunk + one chunk per step, each tagged with demo/step metadata
 // so retrieval can emit content_card { demoId, stepNumber }.
+// Full step list for the prompt. Same screen order and numbering as storyToChunks
+// and the player (screen.index, then steps array order). Text is view.content.
+export function storyStepList(storyDoc) {
+  if (!storyDoc) return []
+  const screens = [...(storyDoc.screens || [])].sort((a, b) => (a.index || 0) - (b.index || 0))
+  const steps = []
+  let stepNumber = 0
+  screens.forEach((screen) => {
+    ;(screen.steps || []).forEach((step) => {
+      stepNumber += 1
+      steps.push({
+        stepNumber,
+        text: stripHtml(step.view && step.view.content),
+      })
+    })
+  })
+  return steps
+}
+
 export function storyToChunks(storyDoc) {
   const chunks = []
   const screens = [...(storyDoc.screens || [])].sort((a, b) => (a.index || 0) - (b.index || 0))

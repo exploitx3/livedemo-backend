@@ -1,6 +1,6 @@
 // Self-check for the pure agent-knowledge logic. Run: node src/helpers/agent/agentKnowledge.check.js
 import assert from 'assert'
-import { chunkText, cosineSim, faqToText, storyToChunks, stripHtml } from './agentKnowledge.js'
+import { chunkText, cosineSim, faqToText, storyStepList, storyToChunks, stripHtml } from './agentKnowledge.js'
 import { allowedDemosQuery, resolveDemoAction } from './validateActions.js'
 import fastPath from './fastPath.js'
 
@@ -64,6 +64,11 @@ assert.strictEqual(demoChunks[1].metadata.stepId, 'st1')
 assert.strictEqual(demoChunks[2].metadata.stepNumber, 2)
 assert.ok(demoChunks[2].text.includes('Save button'))
 assert.ok(!demoChunks[2].text.includes('<b>'), 'html must be stripped')
+assert.deepStrictEqual(storyStepList(story), [
+  { stepNumber: 1, text: 'Step one' },
+  { stepNumber: 2, text: 'Step two' },
+])
+assert.deepStrictEqual(storyStepList(null), [])
 
 // --- fastPath ----------------------------------------------------------------
 assert.deepStrictEqual(fastPath('next'), { type: 'next_step' })
