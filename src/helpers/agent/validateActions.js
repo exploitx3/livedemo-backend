@@ -27,6 +27,16 @@ export async function getAllowedDemos(Models, agent, mode) {
     .lean()
 }
 
+// Client-reported player position from the chat body. Untrusted: shape-checked
+// here; demo access is still enforced by validateDemoAction before any card.
+export function parsePlayerState(body) {
+  const demoId = String(body?.demoId || '')
+  const stepNumber = Number(body?.stepNumber)
+  if (!/^[a-f0-9]{24}$/i.test(demoId)) return null
+  if (!Number.isInteger(stepNumber) || stepNumber < 1 || stepNumber > 10000) return null
+  return { demoId, stepNumber }
+}
+
 function isPlaceholderId(value) {
   const s = String(value || '').trim()
   return !s || s === 'null' || /^<|id from the list|untitled/i.test(s)

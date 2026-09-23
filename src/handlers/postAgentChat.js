@@ -2,13 +2,15 @@ import loadPublicAgent from '../helpers/agent/loadPublicAgent.js'
 import loadAgentInWorkspace from '../helpers/agent/loadAgentInWorkspace.js'
 import helpers from '../helpers/livedemoHelpers.js'
 import runAgentTurn from '../helpers/agent/runAgentTurn.js'
+import { parsePlayerState } from '../helpers/agent/validateActions.js'
 import ResponseCodes from '../constants/ResponseCodes.js'
 import { sendError, httpError, CORS_HEADERS } from '../helpers/agent/http.js'
 
 // POST /agents/:agentId/chat                     (public, isPublished gate)
 // POST /workspaces/:wid/agents/:agentId/chat     (editor twin, auth + workspace)
-// Body: { sessionId, message, source? }. Response: SSE stream
-// (text / content_card / suggestions / done / error).
+// Body: { sessionId, message, source?, demoId?, stepNumber? } (demoId/stepNumber =
+// player's current position). Response: SSE stream
+// (status / text / content_card / suggestions / done / error).
 const handler = async function (req, res) {
   const { Models } = req.mongo
   const body = req.body || {}
@@ -27,12 +29,18 @@ const handler = async function (req, res) {
       mode = 'published'
     }
 
-    const session = await Models.AgentSession.findOne({
+    let session = await Models.AgentSession.findOne({
       _id: body.sessionId,
       agentId: agent._id,
     }).lean()
     if (!session) {
       httpError(ResponseCodes['404_NOT_FOUND'], 'Session not found')
+    }
+
+    // Visitor may have clicked through the player since the last content_card
+    const player = parsePlayerState(body)
+    if (player) {
+      session = { ...session, currentDemoId: player.demoId, currentStepNumber: player.stepNumber }
     }
 
     const message = String(body.message || '').trim().slice(0, 4000)

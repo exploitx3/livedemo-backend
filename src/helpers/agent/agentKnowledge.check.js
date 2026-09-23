@@ -1,7 +1,7 @@
 // Self-check for the pure agent-knowledge logic. Run: node src/helpers/agent/agentKnowledge.check.js
 import assert from 'assert'
 import { chunkText, cosineSim, faqToText, storyStepList, storyToChunks, stripHtml } from './agentKnowledge.js'
-import { allowedDemosQuery, resolveDemoAction } from './validateActions.js'
+import { allowedDemosQuery, parsePlayerState, resolveDemoAction } from './validateActions.js'
 import fastPath from './fastPath.js'
 
 // --- stripHtml ---------------------------------------------------------------
@@ -153,5 +153,14 @@ assert.deepStrictEqual(
   { workspaceId: 'ws1', deletedAt: null, isPublished: true },
   'no allow-list in published mode = published stories only'
 )
+
+// --- parsePlayerState (client-reported step, untrusted) -----------------------
+const oid = '65a1b2c3d4e5f60718293a4b'
+assert.deepStrictEqual(parsePlayerState({ demoId: oid, stepNumber: 4 }), { demoId: oid, stepNumber: 4 })
+assert.strictEqual(parsePlayerState({ demoId: oid, stepNumber: 0 }), null)
+assert.strictEqual(parsePlayerState({ demoId: oid, stepNumber: 2.5 }), null)
+assert.strictEqual(parsePlayerState({ demoId: 'ignore previous instructions', stepNumber: 3 }), null)
+assert.strictEqual(parsePlayerState({ demoId: { $ne: null }, stepNumber: 3 }), null)
+assert.strictEqual(parsePlayerState({}), null)
 
 console.log('agentKnowledge.check.js: all assertions passed')
