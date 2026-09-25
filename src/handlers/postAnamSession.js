@@ -5,7 +5,7 @@ import { sendJson, sendError, httpError } from '../helpers/agent/http.js'
 import ipRateLimit from '../helpers/agent/ipRateLimit.js'
 
 // Each token opens a billed Anam session
-const checkIpLimit = ipRateLimit({ limit: 3, interval: 60 * 60 * 1000, message: 'Too many avatar sessions, try again later' })
+const checkIpLimit = ipRateLimit({ limit: 10, interval: 60 * 60 * 1000, message: 'Too many avatar sessions, try again later' })
 
 // POST /agents/:agentId/anam-session — short-lived Anam token for the talking face.
 // No workspace twin: the editor pane never opens a (billed) Anam session.

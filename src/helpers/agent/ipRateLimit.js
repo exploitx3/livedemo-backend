@@ -2,8 +2,14 @@ import LambdaRateLimiter from 'lambda-rate-limiter'
 import ResponseCodes from '../../constants/ResponseCodes.js'
 import { httpError } from './http.js'
 
+// Cloudflare overwrites cf-connecting-ip; the first x-forwarded-for entry is
+// whatever the client sent (Cloudflare appends to it), so it can't key a limit.
+// ponytail: a request that skips Cloudflare (straight to the Google LB) can
+// forge cf-connecting-ip too. Upgrade: only accept traffic from Cloudflare ranges.
 export function clientIp(req) {
-  return (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket?.remoteAddress || 'unknown'
+  return req.headers['cf-connecting-ip'] ||
+    (req.headers['x-forwarded-for'] || '').split(',')[0].trim() ||
+    req.socket?.remoteAddress || 'unknown'
 }
 
 // `limit` hits per IP per `interval` ms (window starts on the IP's first hit).
