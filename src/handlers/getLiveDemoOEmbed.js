@@ -33,6 +33,11 @@ function thumbnailForScreen(screen) {
   return screen.imageUrl || ''
 }
 
+// Names go into `html` that consumers paste into their own pages
+function escapeAttr(value) {
+  return String(value || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
 function sendOEmbed(res, payload) {
   res.set(CORS_HEADERS)
   res.status(ResponseCodes['200_OK'])
@@ -85,7 +90,8 @@ const handler = function (req, res) {
     })
     .then(async (parsed) => {
       if (parsed.kind === 'agent') {
-        const agentQuery = { _id: parsed.id, deletedAt: null }
+        // Drafts: 404, so an agent id alone doesn't reveal name/thumbnail
+        const agentQuery = { _id: parsed.id, deletedAt: null, isPublished: true }
         if (parsed.workspaceId) agentQuery.workspaceId = parsed.workspaceId
         const agent = await Models.AiDemoAgent.findOne(agentQuery).lean()
         if (!agent) {
@@ -116,7 +122,8 @@ const handler = function (req, res) {
         if (maxWidth && maxWidth <= oEmbedWidth) oEmbedWidth = maxWidth
         if (maxHeight && maxHeight <= oEmbedHeight) oEmbedHeight = maxHeight
 
-        const previewSrc = `${ENV.STORIES_API}/workspaces/${agent.workspaceId}/agents/${agent._id}/preview`
+        // /player is the HTML shell; /preview is the JSON payload it fetches
+        const previewSrc = `${ENV.STORIES_API}/agents/${agent._id}/player`
         sendOEmbed(res, {
           type: 'rich',
           version: '1.0',
@@ -124,7 +131,7 @@ const handler = function (req, res) {
           provider_name: 'LiveDemo',
           provider_url: 'https://livedemo.ai',
           thumbnail_url: thumbnailImage,
-          html: `<iframe src="${previewSrc}" allowfullscreen width="${oEmbedWidth}" height="${oEmbedHeight}" title="${agent.name}"></iframe>`,
+          html: `<iframe src="${previewSrc}" allowfullscreen width="${oEmbedWidth}" height="${oEmbedHeight}" title="${escapeAttr(agent.name)}"></iframe>`,
           width: oEmbedWidth,
           height: oEmbedHeight,
           referrer,
@@ -177,7 +184,7 @@ const handler = function (req, res) {
         provider_name: 'LiveDemo',
         provider_url: 'https://livedemo.ai',
         thumbnail_url: thumbnailImage,
-        html: `<iframe src="${ENV.STORIES_API}/workspaces/${workspaceId}/stories/${foundStory._id}/preview?step=1" allowfullscreen width="${oEmbedWidth}" height="${oEmbedHeight}" title="${foundStory.name}"></iframe>`,
+        html: `<iframe src="${ENV.STORIES_API}/workspaces/${workspaceId}/stories/${foundStory._id}/preview?step=1" allowfullscreen width="${oEmbedWidth}" height="${oEmbedHeight}" title="${escapeAttr(foundStory.name)}"></iframe>`,
         width: oEmbedWidth,
         height: oEmbedHeight,
         referrer,
