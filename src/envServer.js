@@ -25,6 +25,7 @@ export default {
   'REQUESTS_PER_INTERVAL':  process.env.REQUESTS_PER_INTERVAL ? process.env.REQUESTS_PER_INTERVAL : "",
   'ELEVENLABS_API_KEY':  process.env.ELEVENLABS_API_KEY ? process.env.ELEVENLABS_API_KEY : "",
   'ELEVENLABS_VOICES_COLLECTION':  process.env.ELEVENLABS_VOICES_COLLECTION ? process.env.ELEVENLABS_VOICES_COLLECTION : "",
+  'ANAM_API_KEY': process.env.ANAM_API_KEY ? process.env.ANAM_API_KEY : "",
   'ELEVENLABS_SCRIBE_MODEL': process.env.ELEVENLABS_SCRIBE_MODEL ? process.env.ELEVENLABS_SCRIBE_MODEL : "scribe_v2_realtime",
   'SES_ACCESS_KEY_ID': process.env.SES_ACCESS_KEY_ID ? process.env.SES_ACCESS_KEY_ID : "",
   'SES_SECRET_ACCESS_KEY': process.env.SES_SECRET_ACCESS_KEY ? process.env.SES_SECRET_ACCESS_KEY : "",

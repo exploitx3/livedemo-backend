@@ -52,7 +52,7 @@ const handler = function (req, res) {
         {
           $match: {
             workspaceId: new ObjectId(workspaceId),
-            startTimestamp: { $gte: startTimestamp, $lte: endTimestamp }
+            startTimestamp: { $gte: startTimestamp, $lte: endTimestamp }, type: { $ne: 'agent' }
           }
         },
         {
@@ -73,7 +73,7 @@ const handler = function (req, res) {
         {
           $match: {
             workspaceId: new ObjectId(workspaceId),
-            startTimestamp: { $gte: startTimestamp, $lte: endTimestamp }
+            startTimestamp: { $gte: startTimestamp, $lte: endTimestamp }, type: { $ne: 'agent' }
           }
         },
         {
@@ -116,7 +116,7 @@ const handler = function (req, res) {
       const sessionDocs = await Models.Session.find(
         { 
           workspaceId: workspaceId, 
-          startTimestamp: { $gte: startTimestamp, $lte: endTimestamp },
+          startTimestamp: { $gte: startTimestamp, $lte: endTimestamp }, type: { $ne: 'agent' },
           storyId: { $in: paginatedStoryIds }
         },
         '_id storyId workspaceId startTimestamp endTimestamp eventsClickCount createdAt duration  stepsCount didPlay didComplete dropOffStep clientIpData.ip clientIpData.country clientIpData.city clientIpData.region clientIpData.flag')

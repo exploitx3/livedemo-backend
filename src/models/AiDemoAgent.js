@@ -20,6 +20,13 @@ const AiDemoAgent = new mongoose.Schema({
 
   voiceEnabled: { type: Boolean, default: false },
   voiceId: { type: String, default: '' },
+  // Talking Anam face. Off until the author turns it on. Lip-sync still needs a selected avatar.
+  avatarsEnabled: { type: Boolean, default: false },
+  anamAvatarId: { type: String, default: '' }, // stock Anam avatar UUID
+  anamAvatarModel: { type: String, default: '' }, // set server-side from the avatar, e.g. cara-4
+  // Who speaks for the face. Brain is Gemini either way (Anam LLM stays off).
+  avatarVoice: { type: String, enum: ['elevenlabs', 'anam'], default: 'elevenlabs' },
+  anamVoiceId: { type: String, default: '' }, // stock Anam voice UUID, used when avatarVoice === 'anam'
 
   // Imported Stories (same workspace). Not copies. Empty = all published stories in the workspace.
   allowedDemoIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Story' }],

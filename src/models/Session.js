@@ -13,6 +13,11 @@ const Session = new mongoose.Schema({
     //   index: true,
     //   unique: true
     // },
+    // 'livedemo': a standalone demo visit (storyId set).
+    // 'agent': rrweb recording of an AI agent visit — storyId null, agentSessionId set.
+    // Missing type on old docs means 'livedemo'.
+    type: { type: String, enum: ['livedemo', 'agent'], default: 'livedemo' },
+    agentSessionId: { type: mongoose.Schema.Types.ObjectId, ref: 'AgentSession', default: null },
     workspaceId: { type: mongoose.Schema.Types.ObjectId, ref: 'Workspace' },
     storyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Story' },
     clientIpData: {},
@@ -20,11 +25,14 @@ const Session = new mongoose.Schema({
     endTimestamp: { type: Number},
     duration: { type: Number},
     eventsClickCount: {type: Number, default: 0},
+    eventsCount: {type: Number, default: 0}, // agent recordings only, capped server-side
     stepsCount: {type: Number},
     dropOffStep: {type: Number},
     didPlay: {type: Boolean, default: false},
     didComplete: {type: Boolean, default: false},
   }, options
 )
+
+Session.index({ agentSessionId: 1 }, { partialFilterExpression: { agentSessionId: { $type: 'objectId' } } })
 
 export default  Session

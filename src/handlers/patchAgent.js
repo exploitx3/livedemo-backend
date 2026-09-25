@@ -2,6 +2,7 @@ import helpers from '../helpers/livedemoHelpers.js'
 import loadAgentInWorkspace from '../helpers/agent/loadAgentInWorkspace.js'
 import enqueueIndexAgentKnowledge from '../helpers/agent/enqueueIndexJob.js'
 import { getAllowedDemos } from '../helpers/agent/validateActions.js'
+import { findStockAvatar, findStockVoice, pickAvatarModel } from '../helpers/agent/anam.js'
 import ResponseCodes from '../constants/ResponseCodes.js'
 import { sendJson, sendError, httpError } from '../helpers/agent/http.js'
 
@@ -9,7 +10,7 @@ import { sendJson, sendError, httpError } from '../helpers/agent/http.js'
 // Persona fields + allowedDemoIds. Wrapped by captureAgentRevision in server.js.
 const PATCHABLE_FIELDS = [
   'name', 'welcomeMessage', 'starterQuestions', 'systemPrompt', 'avatarUrl',
-  'voiceEnabled', 'voiceId', 'visitorCapture', 'cta',
+  'voiceEnabled', 'voiceId', 'avatarsEnabled', 'avatarVoice', 'visitorCapture', 'cta',
 ]
 
 const handler = async function (req, res) {
@@ -38,6 +39,36 @@ const handler = async function (req, res) {
         updates[field] = body[field]
       }
     })
+
+    // Face pick: stock avatars only. Model + card thumbnail come from Anam, not the client.
+    if (body.anamAvatarId !== undefined && String(body.anamAvatarId || '') !== String(agent.anamAvatarId || '')) {
+      const avatarId = String(body.anamAvatarId || '')
+      if (!avatarId) {
+        updates.anamAvatarId = ''
+        updates.anamAvatarModel = ''
+        updates.avatarUrl = ''
+      } else {
+        const avatar = await findStockAvatar(avatarId)
+        if (!avatar) {
+          httpError(ResponseCodes['400_BAD_REQUEST'], 'anamAvatarId must be a stock Anam avatar')
+        }
+        updates.anamAvatarId = avatar.id
+        updates.anamAvatarModel = pickAvatarModel(avatar)
+        updates.avatarUrl = avatar.imageUrl
+      }
+    }
+
+    if (updates.avatarVoice !== undefined && !['elevenlabs', 'anam'].includes(updates.avatarVoice)) {
+      httpError(ResponseCodes['400_BAD_REQUEST'], 'avatarVoice must be elevenlabs or anam')
+    }
+
+    if (body.anamVoiceId !== undefined && String(body.anamVoiceId || '') !== String(agent.anamVoiceId || '')) {
+      const voiceId = String(body.anamVoiceId || '')
+      if (voiceId && !(await findStockVoice(voiceId))) {
+        httpError(ResponseCodes['400_BAD_REQUEST'], 'anamVoiceId must be a stock Anam voice')
+      }
+      updates.anamVoiceId = voiceId
+    }
 
     // Demos-tab import: every id must be a live Story of THIS workspace
     if (body.allowedDemoIds !== undefined) {

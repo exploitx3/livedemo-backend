@@ -2,6 +2,7 @@ import helpers from '../helpers/livedemoHelpers.js'
 import loadPublicAgent from '../helpers/agent/loadPublicAgent.js'
 import { getAllowedDemos, validateDemoAction } from '../helpers/agent/validateActions.js'
 import { sendJson, sendError } from '../helpers/agent/http.js'
+import { usesAnamVoice } from '../helpers/agent/anam.js'
 
 // Workspace members previewing with auth see draft defaults (editor mode).
 // Anonymous visitors only see published defaults.
@@ -53,6 +54,9 @@ const handler = async function (req, res) {
         starterQuestions: agent.starterQuestions,
         avatarUrl: agent.avatarUrl,
         voiceEnabled: agent.voiceEnabled,
+        avatarsEnabled: !!agent.avatarsEnabled,
+        anamAvatarId: agent.anamAvatarId || '',
+        avatarVoice: usesAnamVoice(agent) ? 'anam' : 'elevenlabs',
         visitorCapture: agent.visitorCapture,
         cta: agent.cta,
         isPublished: agent.isPublished,

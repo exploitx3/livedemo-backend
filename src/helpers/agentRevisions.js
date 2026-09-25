@@ -13,7 +13,8 @@ const MAX_REVISIONS_PER_AGENT =
 // The fields the editor can change. isPublished / links are intentionally absent.
 const EDITABLE_FIELDS = [
   'name', 'welcomeMessage', 'starterQuestions', 'systemPrompt', 'avatarUrl',
-  'voiceEnabled', 'voiceId', 'visitorCapture', 'cta',
+  'voiceEnabled', 'voiceId', 'avatarsEnabled', 'anamAvatarId', 'anamAvatarModel', 'avatarVoice', 'anamVoiceId',
+  'visitorCapture', 'cta',
   'allowedDemoIds', 'knowledgeSourceIds', 'defaultDemoId',
 ]
 

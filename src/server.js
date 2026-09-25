@@ -192,6 +192,9 @@ import postAgentRevertHandler from './handlers/postAgentRevert.js'
 import postAgentSessionHandler from './handlers/postAgentSession.js'
 import postAgentChatHandler from './handlers/postAgentChat.js'
 import postAgentTtsHandler from './handlers/postAgentTts.js'
+import getAnamAvatarsHandler from './handlers/getAnamAvatars.js'
+import getAnamVoicesHandler from './handlers/getAnamVoices.js'
+import postAnamSessionHandler from './handlers/postAnamSession.js'
 import postAgentTranscribeHandler from './handlers/postAgentTranscribe.js'
 import postAgentAckHandler from './handlers/postAgentAck.js'
 import getAgentPreviewHandler from './handlers/getAgentPreview.js'
@@ -199,6 +202,8 @@ import getAgentPlayerHandler from './handlers/getAgentPlayer.js'
 import getWorkspaceAgentSessionsHandler from './handlers/getWorkspaceAgentSessions.js'
 import getAgentSessionsHandler from './handlers/getAgentSessions.js'
 import getAgentSessionByIdHandler from './handlers/getAgentSessionById.js'
+import getAgentSessionRecordingHandler from './handlers/getAgentSessionRecording.js'
+import postAgentRecordingEventsHandler from './handlers/postAgentRecordingEvents.js'
 import captureAgentRevision from './middlewares/captureAgentRevision.js'
 import agentEditorMode, { agentEditorModeOptional } from './middlewares/agentEditorMode.js'
 
@@ -706,6 +711,8 @@ app.get('/workspaces/:workspaceId/agents/:agentId', [setupMongo], getAgentByIdHa
 app.patch('/workspaces/:workspaceId/agents/:agentId', [setupMongo, arev('agent:update')], patchAgentHandler)
 app.delete('/workspaces/:workspaceId/agents/:agentId', [setupMongo], deleteAgentHandler)
 app.post('/workspaces/:workspaceId/agents/:agentId/publish', [setupMongo], postAgentPublishHandler)
+app.get('/workspaces/:workspaceId/anam-avatars', [setupMongo], getAnamAvatarsHandler)
+app.get('/workspaces/:workspaceId/anam-voices', [setupMongo], getAnamVoicesHandler)
 
 const uploadKnowledgeFile = multer({
     limits: {
@@ -746,6 +753,7 @@ app.get('/workspaces/:workspaceId/agents/:agentId/player', [setupMongo, corsMidd
 app.get('/workspaces/:workspaceId/agent-sessions', [setupMongo], getWorkspaceAgentSessionsHandler)
 app.get('/workspaces/:workspaceId/agents/:agentId/sessions', [setupMongo], getAgentSessionsHandler)
 app.get('/workspaces/:workspaceId/agents/:agentId/sessions/:sessionId', [setupMongo], getAgentSessionByIdHandler)
+app.get('/workspaces/:workspaceId/agents/:agentId/sessions/:sessionId/recording', [setupMongo], getAgentSessionRecordingHandler)
 
 // Public visitor routes — loadPublicAgent gates all of them (isPublished or member)
 app.get('/agents/:agentId/preview', [setupMongo, corsMiddleware], getAgentPreviewHandler)
@@ -755,6 +763,8 @@ app.post('/agents/:agentId/chat', [setupMongo, corsMiddleware], postAgentChatHan
 app.post('/agents/:agentId/tts', [setupMongo, corsMiddleware], postAgentTtsHandler)
 app.post('/agents/:agentId/transcribe', [setupMongo, corsMiddleware], postAgentTranscribeHandler)
 app.post('/agents/:agentId/ack', [setupMongo, corsMiddleware], postAgentAckHandler)
+app.post('/agents/:agentId/sessions/:agentSessionId/recording-events', [setupMongo, corsMiddleware], postAgentRecordingEventsHandler)
+app.post('/agents/:agentId/anam-session', [setupMongo, corsMiddleware], postAnamSessionHandler)
 // ---------------------------------------------------------------------------
 
 // Public tutorial search — no auth required, IP rate-limited (5 req/s/IP)

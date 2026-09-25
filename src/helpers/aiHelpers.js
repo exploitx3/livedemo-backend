@@ -301,10 +301,12 @@ function toLegacyAlignment(alignment) {
     }
 }
 
-async function elTextToSpeech(voiceId, text) {
+// outputFormat omitted = ElevenLabs default MP3 (story voice relies on it)
+async function elTextToSpeech(voiceId, text, { outputFormat } = {}) {
 
     return await elevenlabs.textToSpeech.convertWithTimestamps(voiceId, {
         text: text,
+        ...(outputFormat ? { outputFormat } : {}),
     })
         .then(response => {
             let audioBase64 = response.audioBase64
