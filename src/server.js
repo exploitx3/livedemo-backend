@@ -195,6 +195,10 @@ import postAgentTtsHandler from './handlers/postAgentTts.js'
 import getAnamAvatarsHandler from './handlers/getAnamAvatars.js'
 import getAnamVoicesHandler from './handlers/getAnamVoices.js'
 import postAnamSessionHandler from './handlers/postAnamSession.js'
+import getLemonSliceAvatarsHandler from './handlers/getLemonSliceAvatars.js'
+import postLemonSliceAvatarHandler, { IMAGE_TYPES as AVATAR_IMAGE_TYPES } from './handlers/postLemonSliceAvatar.js'
+import deleteLemonSliceAvatarHandler from './handlers/deleteLemonSliceAvatar.js'
+import postLemonSliceSessionHandler from './handlers/postLemonSliceSession.js'
 import postAgentTranscribeHandler from './handlers/postAgentTranscribe.js'
 import postAgentAckHandler from './handlers/postAgentAck.js'
 import getAgentPreviewHandler from './handlers/getAgentPreview.js'
@@ -721,6 +725,13 @@ app.delete('/workspaces/:workspaceId/agents/:agentId', [setupMongo], deleteAgent
 app.post('/workspaces/:workspaceId/agents/:agentId/publish', [setupMongo], postAgentPublishHandler)
 app.get('/workspaces/:workspaceId/anam-avatars', [setupMongo], getAnamAvatarsHandler)
 app.get('/workspaces/:workspaceId/anam-voices', [setupMongo], getAnamVoicesHandler)
+app.get('/workspaces/:workspaceId/lemonslice-avatars', [setupMongo], getLemonSliceAvatarsHandler)
+const uploadAvatarImage = multer({
+    limits: { fileSize: 8 * 1024 * 1024, files: 1 },
+    fileFilter: (req, file, callback) => callback(null, !!AVATAR_IMAGE_TYPES[file.mimetype]),
+})
+app.post('/workspaces/:workspaceId/lemonslice-avatars', [setupMongo, uploadAvatarImage.single('image')], postLemonSliceAvatarHandler)
+app.delete('/workspaces/:workspaceId/lemonslice-avatars/:avatarId([a-f0-9]{24})', [setupMongo], deleteLemonSliceAvatarHandler)
 
 const uploadKnowledgeFile = multer({
     limits: {
@@ -773,6 +784,7 @@ app.post('/agents/:agentId/transcribe', [setupMongo, corsMiddleware], postAgentT
 app.post('/agents/:agentId/ack', [setupMongo, corsMiddleware], postAgentAckHandler)
 app.post('/agents/:agentId/sessions/:agentSessionId/recording-events', [setupMongo, corsMiddleware], postAgentRecordingEventsHandler)
 app.post('/agents/:agentId/anam-session', [setupMongo, corsMiddleware], postAnamSessionHandler)
+app.post('/agents/:agentId/lemonslice-session', [setupMongo, corsMiddleware], postLemonSliceSessionHandler)
 // ---------------------------------------------------------------------------
 
 // Public tutorial search — no auth required, IP rate-limited (5 req/s/IP)

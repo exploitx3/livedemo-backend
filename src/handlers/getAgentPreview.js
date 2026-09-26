@@ -56,6 +56,8 @@ const handler = async function (req, res) {
         voiceEnabled: agent.voiceEnabled,
         avatarsEnabled: !!agent.avatarsEnabled,
         anamAvatarId: agent.anamAvatarId || '',
+        avatarProvider: agent.avatarProvider || 'anam',
+        lemonsliceAvatarId: agent.lemonsliceAvatarId || '',
         avatarVoice: usesAnamVoice(agent) ? 'anam' : 'elevenlabs',
         visitorCapture: agent.visitorCapture,
         cta: agent.cta,

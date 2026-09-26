@@ -165,10 +165,15 @@ export async function createAnamSessionToken(agent) {
   return body.sessionToken
 }
 
+export function isLemonSlice(agent) {
+  return agent.avatarProvider === 'lemonslice'
+}
+
+// Any provider: a live face means speech goes out as 16 kHz PCM.
 export function avatarIsLive(agent) {
-  return !!(agent.avatarsEnabled && agent.anamAvatarId)
+  return !!(agent.avatarsEnabled && (isLemonSlice(agent) ? agent.lemonsliceAvatarId : agent.anamAvatarId))
 }
 
 export function usesAnamVoice(agent) {
-  return avatarIsLive(agent) && agent.avatarVoice === 'anam' && !!agent.anamVoiceId
+  return avatarIsLive(agent) && !isLemonSlice(agent) && agent.avatarVoice === 'anam' && !!agent.anamVoiceId
 }

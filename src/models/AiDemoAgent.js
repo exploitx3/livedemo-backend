@@ -27,6 +27,9 @@ const AiDemoAgent = new mongoose.Schema({
   // Who speaks for the face. Brain is Gemini either way (Anam LLM stays off).
   avatarVoice: { type: String, enum: ['elevenlabs', 'anam'], default: 'elevenlabs' },
   anamVoiceId: { type: String, default: '' }, // stock Anam voice UUID, used when avatarVoice === 'anam'
+  // Who renders the face. LemonSlice always lip-syncs the ElevenLabs voice (no avatarVoice 'anam').
+  avatarProvider: { type: String, enum: ['anam', 'lemonslice'], default: 'anam' },
+  lemonsliceAvatarId: { type: String, default: '' }, // id from helpers/agent/lemonslice.js STOCK_AVATARS
 
   // Imported Stories (same workspace). Not copies. Empty = all published stories in the workspace.
   allowedDemoIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Story' }],

@@ -9,9 +9,13 @@ import { usesAnamVoice } from '../helpers/agent/anam.js'
 // - Anam SDK: REST + signaling; the signaling host comes from the session, so wildcard.
 //   https://anam.ai/docs/security/network
 // - ElevenLabs Scribe realtime (push-to-talk), URL from helpers/elevenlabsScribeRealtime.js
+// - LiveKit (LemonSlice faces): signaling on LIVEKIT_URL; LiveKit Cloud may hop to a regional host.
+const LIVEKIT_URL = String(ENV.LIVEKIT_URL || '').replace(/\/+$/, '')
 const THIRD_PARTY_CONNECT_SRC = [
   'https://api.anam.ai', 'https://*.anam.ai', 'wss://*.anam.ai',
   'wss://api.elevenlabs.io', 'https://api.elevenlabs.io',
+  'wss://*.livekit.cloud', 'https://*.livekit.cloud',
+  ...(LIVEKIT_URL ? [LIVEKIT_URL, LIVEKIT_URL.replace(/^ws/, 'http')] : []),
 ].join(' ')
 
 // GET /agents/:agentId/player — standalone HTML shell for the agent chrome
@@ -45,6 +49,8 @@ const handler = async function (req, res) {
         voiceEnabled: agent.voiceEnabled,
         avatarsEnabled: !!agent.avatarsEnabled,
         anamAvatarId: agent.anamAvatarId || '',
+        avatarProvider: agent.avatarProvider || 'anam',
+        lemonsliceAvatarId: agent.lemonsliceAvatarId || '',
         avatarVoice: usesAnamVoice(agent) ? 'anam' : 'elevenlabs',
         visitorCapture: agent.visitorCapture,
         cta: agent.cta,

@@ -3,6 +3,7 @@ import loadAgentInWorkspace from '../helpers/agent/loadAgentInWorkspace.js'
 import enqueueIndexAgentKnowledge from '../helpers/agent/enqueueIndexJob.js'
 import { getAllowedDemos } from '../helpers/agent/validateActions.js'
 import { findStockAvatar, findStockVoice, pickAvatarModel } from '../helpers/agent/anam.js'
+import { findAvatar as findLemonSliceAvatar } from '../helpers/agent/lemonslice.js'
 import ResponseCodes from '../constants/ResponseCodes.js'
 import { sendJson, sendError, httpError } from '../helpers/agent/http.js'
 
@@ -56,6 +57,24 @@ const handler = async function (req, res) {
         updates.anamAvatarModel = pickAvatarModel(avatar)
         updates.avatarUrl = avatar.imageUrl
       }
+    }
+
+    if (body.avatarProvider !== undefined && !['anam', 'lemonslice'].includes(body.avatarProvider)) {
+      httpError(ResponseCodes['400_BAD_REQUEST'], 'avatarProvider must be anam or lemonslice')
+    }
+    if (body.lemonsliceAvatarId !== undefined && body.lemonsliceAvatarId && !(await findLemonSliceAvatar(Models, workspaceId, body.lemonsliceAvatarId))) {
+      httpError(ResponseCodes['400_BAD_REQUEST'], 'lemonsliceAvatarId must be a LemonSlice avatar of this workspace')
+    }
+    if (body.avatarProvider !== undefined) updates.avatarProvider = body.avatarProvider
+    if (body.lemonsliceAvatarId !== undefined) updates.lemonsliceAvatarId = String(body.lemonsliceAvatarId || '')
+
+    // Card thumbnail follows the active provider's face
+    const provider = updates.avatarProvider ?? agent.avatarProvider ?? 'anam'
+    const providerChanged = provider !== (agent.avatarProvider || 'anam')
+    if (provider === 'lemonslice' && (providerChanged || updates.lemonsliceAvatarId !== undefined || updates.anamAvatarId !== undefined)) {
+      updates.avatarUrl = (await findLemonSliceAvatar(Models, workspaceId, updates.lemonsliceAvatarId ?? agent.lemonsliceAvatarId))?.imageUrl || ''
+    } else if (provider === 'anam' && providerChanged && updates.anamAvatarId === undefined) {
+      updates.avatarUrl = agent.anamAvatarId ? (await findStockAvatar(agent.anamAvatarId))?.imageUrl || '' : ''
     }
 
     if (updates.avatarVoice !== undefined && !['elevenlabs', 'anam'].includes(updates.avatarVoice)) {
