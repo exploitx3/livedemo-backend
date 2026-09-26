@@ -314,6 +314,14 @@ app.get('/', (req, res) => {
     res.send()
 })
 
+// Liveness: must not touch the DB, or a Mongo blip would restart every pod
+app.get('/healthz', (req, res) => res.status(200).send('ok'))
+// Readiness: bufferCommands is off, so with Mongo disconnected every request would fail
+app.get('/readyz', (req, res) => {
+    const ready = conn?.readyState === 1
+    res.status(ready ? 200 : 503).send(ready ? 'ready' : 'db not connected')
+})
+
 function corsMiddleware(req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");

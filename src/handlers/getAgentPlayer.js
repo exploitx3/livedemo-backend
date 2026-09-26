@@ -5,8 +5,14 @@ import { validateDemoAction } from '../helpers/agent/validateActions.js'
 import { sendError } from '../helpers/agent/http.js'
 import { usesAnamVoice } from '../helpers/agent/anam.js'
 
-// Anam SDK signaling (talking avatar). https://anam.ai/docs/security/network
-const ANAM_CONNECT_SRC = 'https://api.anam.ai wss://connect.anam.ai wss://connect-eu.anam.ai wss://connect-us.anam.ai'
+// Third-party hosts the agent bundle talks to directly (WebRTC media is not CSP-governed):
+// - Anam SDK: REST + signaling; the signaling host comes from the session, so wildcard.
+//   https://anam.ai/docs/security/network
+// - ElevenLabs Scribe realtime (push-to-talk), URL from helpers/elevenlabsScribeRealtime.js
+const THIRD_PARTY_CONNECT_SRC = [
+  'https://api.anam.ai', 'https://*.anam.ai', 'wss://*.anam.ai',
+  'wss://api.elevenlabs.io', 'https://api.elevenlabs.io',
+].join(' ')
 
 // GET /agents/:agentId/player — standalone HTML shell for the agent chrome
 // (chat + demo iframe). Clone of the getStoryPreview delivery pattern: emit
@@ -94,7 +100,7 @@ const handler = async function (req, res) {
 
     const CSP =
       `default-src 'self' 'unsafe-eval' 'unsafe-inline' blob: ${ENV.STORIES_API} ${ENV.LIVEDEMO_CDN_URL} https://fonts.googleapis.com; ` +
-      `connect-src 'self' ${ENV.INJECT_BUNDLE_HOST} ${ENV.STORIES_API} ${ANAM_CONNECT_SRC}${devHosts}; ` +
+      `connect-src 'self' ${ENV.INJECT_BUNDLE_HOST} ${ENV.STORIES_API} ${THIRD_PARTY_CONNECT_SRC}${devHosts}; ` +
       `script-src 'self' 'unsafe-eval' 'unsafe-inline' blob: ${ENV.INJECT_BUNDLE_HOST} ${ENV.STORIES_API}${ENV.ENV === 'dev' ? ' http://localhost.mine:8081' : ''}; ` +
       `img-src 'self' data: *; ` +
       `font-src 'self' data: https://fonts.googleapis.com https://fonts.gstatic.com ${ENV.LIVEDEMO_CDN_URL} ${ENV.INJECT_BUNDLE_HOST}${ENV.ENV === 'dev' ? ' http://localhost.mine:8081 http://localhost:*' : ''}; ` +
