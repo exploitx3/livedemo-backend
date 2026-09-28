@@ -29,6 +29,8 @@ const ScreenStepSchema = new mongoose.Schema({
       frameX: { type: Number, default: 200 },
       frameY: { type: Number, default: 200 },
       placement: {type: String, default: 'auto'},
+      // rrweb node the hotspot follows in the player; frameX/Y is the fallback
+      rrwebNodeId: { type: Number, default: null },
     },
     popup: {
       type: {type: String, default: 'popup'}, //popup, form, embed, start, iframe

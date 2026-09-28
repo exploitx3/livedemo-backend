@@ -15,7 +15,7 @@ if (typeof globalThis.File === 'undefined') {
 
 import OpenAI from "openai"
 
-const model = 'gpt-5.2'
+const model = 'gpt-5.6-terra'
 
 const openai = new OpenAI({
     // apiKey: "sk-",

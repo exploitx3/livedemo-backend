@@ -21,7 +21,7 @@ const handler = async function (req, res) {
     let screenId = req.params.screenId
     let stepId = req.params.stepId
 
-    // sourceScreenId: select image from an existing Screenshot screen
+    // sourceScreenId: select image from an existing screen (Screenshot or Page)
     // req.file: upload an image buffer directly
     let sourceScreenId = req.body && req.body.sourceScreenId
     let authUserDoc = null
@@ -36,7 +36,7 @@ const handler = async function (req, res) {
             let previewImageUrl = ''
 
             if (sourceScreenId) {
-                // Use the imageUrl from an existing Screenshot screen
+                // Use the imageUrl from an existing screen
                 const sourceScreen = await Models.Screen.findOne({ _id: sourceScreenId }).lean()
                 if (!sourceScreen) {
                     const err = new Error('Source screen not found')

@@ -20,7 +20,7 @@ function validateBody(body) {
   let schema = Joi.object().keys({
     view: Joi.object().keys({
       viewType: Joi.string().optional(),
-      content: Joi.string().optional(),
+      content: Joi.string().allow('').optional(),
       pointer: {
         selector: Joi.string().allow(null, '').optional(),
         selectorLocation: Joi.object().keys({
