@@ -1,7 +1,7 @@
 // Self-check for the pure agent-knowledge logic. Run: node src/helpers/agent/agentKnowledge.check.js
 import assert from 'assert'
 import { chunkText, cosineSim, faqToText, storyStepList, storyToChunks, stripHtml } from './agentKnowledge.js'
-import { allowedDemosQuery, parsePlayerState, resolveDemoAction } from './validateActions.js'
+import { allowedDemosQuery, appendDemoNarration, parsePlayerState, resolveDemoAction } from './validateActions.js'
 import fastPath from './fastPath.js'
 
 // --- stripHtml ---------------------------------------------------------------
@@ -81,61 +81,64 @@ assert.strictEqual(fastPath(''), null)
 // --- resolveDemoAction -------------------------------------------------------
 const interviewStep = { metadata: { demoId: 'easyenv', stepId: 'st4', stepNumber: 4 } }
 const cover = { metadata: { demoId: 'easyenv', stepNumber: 1 } }
-assert.deepStrictEqual(
-  resolveDemoAction(null, [cover, interviewStep]),
-  { demoId: 'easyenv', stepNumber: 4 },
-  'null LLM action uses the retrieved step, not the cover'
+const say = 'And on your right you can see it.'
+const act = (a) => ({ narration: say, ...a })
+const res = (demoId, stepNumber) => ({ demoId, stepNumber, narration: say })
+assert.strictEqual(resolveDemoAction(null, [cover, interviewStep]), null, 'no LLM action = no navigation, even with a retrieved step')
+assert.strictEqual(
+  resolveDemoAction(null, [], { answer: 'Navigating you to step 3.', defaultDemoId: 'demo1' }),
+  null,
+  '"step N" in the answer alone does not navigate'
+)
+assert.strictEqual(
+  resolveDemoAction({ demoId: 'easyenv', stepNumber: 4 }, [interviewStep]),
+  null,
+  'action without model narration does not navigate'
 )
 assert.deepStrictEqual(
-  resolveDemoAction({ demoId: 'easyenv', stepNumber: 1 }, [interviewStep]),
-  { demoId: 'easyenv', stepNumber: 4 },
+  resolveDemoAction(act({ demoId: 'easyenv', stepNumber: 1 }), [interviewStep]),
+  res('easyenv', 4),
   'LLM cover-step is upgraded to the retrieved step of the same demo'
 )
 assert.deepStrictEqual(
-  resolveDemoAction({ demoId: 'easyenv', stepNumber: 7 }, [interviewStep]),
-  { demoId: 'easyenv', stepNumber: 7 },
+  resolveDemoAction(act({ demoId: 'easyenv', stepNumber: 7 }), [interviewStep]),
+  res('easyenv', 7),
   'explicit later step is kept'
 )
-assert.strictEqual(resolveDemoAction(null, [cover]), null, 'summary-only retrieval does not navigate')
-assert.strictEqual(resolveDemoAction(null, []), null)
 
 const allowed = [{ _id: 'demo1', name: 'EasyEnv' }]
 assert.deepStrictEqual(
-  resolveDemoAction({ type: 'open_demo', stepNumber: 3 }, [], {
-    currentDemoId: 'demo1', allowedDemos: allowed,
-  }),
-  { demoId: 'demo1', stepNumber: 3 },
+  resolveDemoAction(act({ type: 'open_demo', stepNumber: 3 }), [], { currentDemoId: 'demo1', allowedDemos: allowed }),
+  res('demo1', 3),
   'step-only action uses the open demo'
 )
 assert.deepStrictEqual(
-  resolveDemoAction({ demoId: 'EasyEnv', stepNumber: 3 }, [], { allowedDemos: allowed }),
-  { demoId: 'demo1', stepNumber: 3 },
+  resolveDemoAction(act({ demoId: 'EasyEnv', stepNumber: 3 }), [], { allowedDemos: allowed }),
+  res('demo1', 3),
   'demo name maps to allowed id'
 )
 assert.deepStrictEqual(
-  resolveDemoAction(null, [], {
-    answer: 'Navigating you to step 3 of the EasyEnv demo.',
-    defaultDemoId: 'demo1',
-    allowedDemos: allowed,
-  }),
-  { demoId: 'demo1', stepNumber: 3 },
-  'step mentioned in the answer still emits an action'
-)
-assert.deepStrictEqual(
-  resolveDemoAction({ demoId: '<id from the list>', stepNumber: 3 }, [], {
-    defaultDemoId: 'demo1', allowedDemos: allowed,
-  }),
-  { demoId: 'demo1', stepNumber: 3 },
+  resolveDemoAction(act({ demoId: '<id from the list>', stepNumber: 3 }), [], { defaultDemoId: 'demo1', allowedDemos: allowed }),
+  res('demo1', 3),
   'placeholder demoId falls back to the default demo'
 )
 assert.deepStrictEqual(
-  resolveDemoAction(null, [], {
-    answer: 'I will take you to step four of the demo now.',
-    currentDemoId: 'demo1',
-    allowedDemos: allowed,
-  }),
-  { demoId: 'demo1', stepNumber: 4 },
-  'word step numbers in the answer still emit an action'
+  resolveDemoAction(act({ demoId: 'demo1' }), [], { answer: 'I will take you to step four now.', allowedDemos: allowed }),
+  res('demo1', 4),
+  'missing stepNumber repaired from "step four" in the answer'
+)
+
+// --- appendDemoNarration -------------------------------------------------------
+const narration = 'And in the demo on your right, you can see how you can review AI responses from your meetings.'
+assert.strictEqual(
+  appendDemoNarration('Meetings get AI summaries.', narration),
+  `Meetings get AI summaries.\n\n${narration}`,
+  'model narration is the last sentence'
+)
+assert.strictEqual(
+  appendDemoNarration(`Meetings get AI summaries. ${narration}`, narration),
+  `Meetings get AI summaries. ${narration}`,
+  'narration already in answer is not duplicated'
 )
 
 const draftAgent = {

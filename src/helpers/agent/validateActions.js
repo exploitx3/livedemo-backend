@@ -63,8 +63,9 @@ function normalizeParsedAction(raw) {
   if (!raw || typeof raw !== 'object') return null
   const demoId = raw.demoId || raw.demo_id || raw.storyId || raw.demo || raw.id || null
   const stepNumber = parseStepNumber(raw.stepNumber ?? raw.step_number ?? raw.step)
-  if (isPlaceholderId(demoId) && stepNumber == null) return null
-  return { demoId: isPlaceholderId(demoId) ? null : demoId, stepNumber }
+  const narration = String(raw.narration || '').trim()
+  if (!narration || (isPlaceholderId(demoId) && stepNumber == null)) return null
+  return { demoId: isPlaceholderId(demoId) ? null : demoId, stepNumber, narration }
 }
 
 function matchAllowedDemo(idOrName, allowedDemos) {
@@ -86,15 +87,17 @@ function idFromCandidate(meta, allowedDemos) {
   return matchAllowedDemo(meta.demoId, allowedDemos) || (!allowedDemos?.length ? meta.demoId : null)
 }
 
-// LLM action, retrieved step, or "step N" in the answer — plus session/default demo
-// when Gemini names the product instead of the id. Summary chunks have no stepId.
+// Only the model decides to navigate, and only with its own narration sentence.
+// Retrieved step / "step N" in the answer / session/default demo just repair a
+// sloppy action (Gemini names the product instead of the id). Summary chunks have no stepId.
 export function resolveDemoAction(parsedAction, demoCandidates, ctx = {}) {
   const action = normalizeParsedAction(parsedAction)
+  if (!action) return null
   const stepped = (demoCandidates || []).find(c => c.metadata?.stepId && c.metadata?.demoId)
   const allowed = ctx.allowedDemos || []
   const stepFromText = parseStepFromText(ctx.answer)
 
-  const demoId = (action?.demoId && (matchAllowedDemo(action.demoId, allowed) || (!allowed.length && action.demoId)))
+  const demoId = (action.demoId && (matchAllowedDemo(action.demoId, allowed) || (!allowed.length && action.demoId)))
     || idFromCandidate(stepped?.metadata, allowed)
     || ctx.currentDemoId
     || ctx.defaultDemoId
@@ -103,15 +106,22 @@ export function resolveDemoAction(parsedAction, demoCandidates, ctx = {}) {
 
   if (!demoId) return null
 
-  const explicitStep = action?.stepNumber
   const retrievedStep = stepped ? (stepped.metadata.stepNumber || 1) : null
-  let stepNumber = explicitStep
+  let stepNumber = action.stepNumber
   if (stepNumber == null || stepNumber <= 1) {
     stepNumber = retrievedStep || stepFromText || stepNumber || 1
   }
 
-  if (!action && !stepped && !stepFromText) return null
-  return { demoId, stepNumber }
+  return { demoId, stepNumber, narration: action.narration }
+}
+
+// Model narration becomes the last sentence. Only called once the card is
+// actually emitted, so the text never points at a dropped card.
+export function appendDemoNarration(answer, narration) {
+  const text = String(answer || '').trim()
+  const line = String(narration || '').trim()
+  if (!line || text.toLowerCase().includes(line.toLowerCase())) return text
+  return text ? `${text}\n\n${line}` : line
 }
 
 // Validates a proposed { demoId, stepNumber } action. Returns the story doc

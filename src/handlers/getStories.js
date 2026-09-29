@@ -1,6 +1,8 @@
 import helpers from '../helpers/livedemoHelpers.js'
 import ResponseCodes from '../constants/ResponseCodes.js'
 
+const PAGE_SIZE = 50
+
 const handler = function (req, res) {
   let { Models, conn } = req.mongo
 
@@ -17,17 +19,30 @@ const handler = function (req, res) {
       helpers.validateUserHasAccessToWorkspace(authUserDoc, workspaceId)
     })
     .then(async () => {
-
-
-      return Models.Story.find({
+      const filter = {
         // userId: authUserDoc.id,
         workspaceId: workspaceId,
         deletedAt: null
-      })
-      .populate({
+      }
+      const populate = {
         path: 'screens',
         select: '_id type imageUrl'
-      })
+      }
+
+      if (req.query.page === undefined) {
+        return Models.Story.find(filter).populate(populate)
+      }
+
+      const page = Math.max(1, parseInt(req.query.page, 10) || 1)
+      const [stories, total] = await Promise.all([
+        Models.Story.find(filter)
+          .sort({ _id: -1 })
+          .skip((page - 1) * PAGE_SIZE)
+          .limit(PAGE_SIZE)
+          .populate(populate),
+        Models.Story.countDocuments(filter)
+      ])
+      return { stories, total, page, pageSize: PAGE_SIZE }
     })
     .then((foundStories) => {
 

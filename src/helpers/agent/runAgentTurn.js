@@ -4,7 +4,7 @@ import retrieve from './retrieve.js'
 import { storyStepList } from './agentKnowledge.js'
 import fastPath from './fastPath.js'
 import speakAgentText from './speakAgentText.js'
-import { getAllowedDemos, resolveDemoAction, validateDemoAction } from './validateActions.js'
+import { appendDemoNarration, getAllowedDemos, resolveDemoAction, validateDemoAction } from './validateActions.js'
 import { makeToolExecutors, runToolLoop } from './agentTools.js'
 
 // One agent turn: retrieve → prompt → tool loop (model may search more, max
@@ -25,7 +25,8 @@ function buildPrompt({ agent, session, history, message, knowledge, demoCandidat
   lines.push('Answer ONLY from the knowledge context below. If the context does not cover the question, say you do not know and offer what you can show.')
   lines.push('If the context below is missing something, call search_knowledge with a standalone query (or get_demo_steps for a demo) before answering. Always finish by calling respond.')
   lines.push('You can navigate the visitor to a demo step by setting action in respond. Only use demo ids and step numbers listed below or returned by your tools — never invent ids.')
-  lines.push('When the visitor asks how to do something, or to be shown a feature, you MUST set action to the best matching demo step. Do not omit action if a relevant step is known — the player jumps there while you talk.')
+  lines.push('Set action only when showing a specific demo step genuinely helps the visitor (e.g. they ask how to do something or to see a feature). Greetings, pricing, general or follow-up questions usually need no action — then omit it.')
+  lines.push('Whenever you set action, you must also write action.narration: one natural, conversational sentence in your own words that points the visitor to the demo on their right and says what that step shows (e.g. "And in the demo on your right, you can see how you can review AI responses from your meetings."). Vary the wording. It is appended as your last sentence, so do not repeat it in answer.')
   if (agent.systemPrompt) {
     lines.push(`Extra instructions from the author: ${agent.systemPrompt}`)
   }
@@ -207,8 +208,6 @@ export default async function runAgentTurn(Models, { agent, session, message, so
     answer = String(parsed.answer || '').trim()
     suggestions = Array.isArray(parsed.suggestions) ? parsed.suggestions.slice(0, 3) : []
 
-    if (answer) sse('text', { text: answer })
-
     const action = resolveDemoAction(parsed.action, [...demoHits, ...retrieved.demoCandidates], {
       answer,
       allowedDemos,
@@ -235,8 +234,9 @@ export default async function runAgentTurn(Models, { agent, session, message, so
         console.log('agent turn: content_card dropped', action)
       }
     }
+    if (appliedAction) answer = appendDemoNarration(answer, action.narration)
 
-    await emitAnswer(sse, agent, answer, mode, { skipText: true })
+    await emitAnswer(sse, agent, answer, mode)
 
     if (suggestions.length) {
       sse('suggestions', { suggestions })

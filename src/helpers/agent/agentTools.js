@@ -42,11 +42,16 @@ export const TOOL_DECLARATIONS = [
         suggestions: { type: 'array', items: { type: 'string' }, description: 'Up to 3 short follow-up questions the visitor might ask.' },
         action: {
           type: 'object',
-          description: 'Open a demo step. Omit when no listed step is relevant.',
+          description: 'Open a demo step. Only when showing that step helps; omit otherwise.',
           properties: {
             demoId: { type: 'string', description: 'Id from the allowed demo list.' },
             stepNumber: { type: 'integer' },
+            narration: {
+              type: 'string',
+              description: 'One natural sentence in your own words, appended as the last sentence of the answer, pointing the visitor to the demo on their right and what this step shows. E.g. "And in the demo on your right, you can see how you can review AI responses from your meetings."',
+            },
           },
+          required: ['narration'],
         },
       },
       required: ['answer'],
