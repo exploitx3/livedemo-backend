@@ -56,6 +56,7 @@ const SUBSCRIPTION_TYPE_TO_WORKSPACE_TYPE = {
   [SubscriptionTypes.TRIAL_PRO_MONTHLY]: WorkspaceTypes.PRO,
   [SubscriptionTypes.PRO_ANNUALLY]: WorkspaceTypes.PRO,
   [SubscriptionTypes.GROWTH_MONTHLY]: WorkspaceTypes.GROWTH,
+  [SubscriptionTypes.TRIAL_GROWTH_MONTHLY]: WorkspaceTypes.GROWTH,
   [SubscriptionTypes.GROWTH_ANNUALLY]: WorkspaceTypes.GROWTH,
 }
 
@@ -119,9 +120,12 @@ const handler = async function (req, res) {
     // Derive subscription type from product
     const productId = session.line_items.data[0]?.price?.product?.id
     
+    const productSubscriptionType = PRODUCT_TO_SUBSCRIPTION_TYPE[productId]
+    const isGrowthProduct = productSubscriptionType === SubscriptionTypes.GROWTH_MONTHLY
+      || productSubscriptionType === SubscriptionTypes.GROWTH_ANNUALLY
     let subscriptionType = isFreeTrial
-      ? SubscriptionTypes.TRIAL_PRO_MONTHLY
-      : PRODUCT_TO_SUBSCRIPTION_TYPE[productId]
+      ? (isGrowthProduct ? SubscriptionTypes.TRIAL_GROWTH_MONTHLY : SubscriptionTypes.TRIAL_PRO_MONTHLY)
+      : productSubscriptionType
 
     if (!subscriptionType) {
       return res.status(ResponseCodes['500_INTERNAL_SERVER_ERROR']).json({
@@ -221,7 +225,7 @@ const handler = async function (req, res) {
     }).save()
 
     await setActiveUserSubscription(Models, authUserDoc._id, subscription._id)
-    await enablePaidPlanUserFeatureFlags(Models, authUserDoc._id)
+    await enablePaidPlanUserFeatureFlags(Models, authUserDoc._id, subscriptionType)
 
     if (isFreeTrial) {
       await Models.User.findOneAndUpdate(

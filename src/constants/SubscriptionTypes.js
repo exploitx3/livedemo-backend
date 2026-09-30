@@ -3,5 +3,6 @@ export default  {
   'TRIAL_PRO_MONTHLY': 'trial_pro_monthly',
   'PRO_ANNUALLY': 'pro_annually',
   'GROWTH_MONTHLY': 'growth_monthly',
+  'TRIAL_GROWTH_MONTHLY': 'trial_growth_monthly',
   'GROWTH_ANNUALLY': 'growth_annually',
 }

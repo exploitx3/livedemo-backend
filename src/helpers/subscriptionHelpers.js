@@ -1,3 +1,5 @@
+import SubscriptionTypes from '../constants/SubscriptionTypes.js'
+
 function toIdString(id) {
   if (!id) return null
   return (id._id ?? id).toString()
@@ -133,17 +135,27 @@ export const PAID_PLAN_USER_FEATURE_FLAGS = {
   'featureFlags.allowForms': true,
   'featureFlags.allowEmbed': true,
   'featureFlags.allowPersonalization': true,
-  'featureFlags.allowAIAgents': true,
 }
 
-/** Enable paid-plan feature flags on the user after any plan purchase. */
-export async function enablePaidPlanUserFeatureFlags(Models, userId) {
+const AI_AGENTS_SUBSCRIPTION_TYPES = new Set([
+  SubscriptionTypes.GROWTH_MONTHLY,
+  SubscriptionTypes.GROWTH_ANNUALLY,
+  SubscriptionTypes.TRIAL_GROWTH_MONTHLY,
+])
+
+/** Enable paid-plan feature flags on the user after any plan purchase. AI agents are Growth-only. */
+export async function enablePaidPlanUserFeatureFlags(Models, userId, subscriptionType) {
   if (!userId) return
 
   const userObjectId = userId._id ?? userId
 
   await Models.User.findOneAndUpdate(
     { _id: userObjectId },
-    { $set: PAID_PLAN_USER_FEATURE_FLAGS }
+    {
+      $set: {
+        ...PAID_PLAN_USER_FEATURE_FLAGS,
+        'featureFlags.allowAIAgents': AI_AGENTS_SUBSCRIPTION_TYPES.has(subscriptionType),
+      },
+    }
   )
 }

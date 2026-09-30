@@ -146,7 +146,7 @@ async function handleSubscriptionUpdated(stripeSubscription, Models) {
     if (updatedSub && subscriptionCustomer.userId) {
       await setActiveUserSubscription(Models, subscriptionCustomer.userId, updatedSub._id)
       console.log(`[webhook] subscription.updated — deactivated other subscriptions for userId=${subscriptionCustomer.userId}`)
-      await enablePaidPlanUserFeatureFlags(Models, subscriptionCustomer.userId)
+      await enablePaidPlanUserFeatureFlags(Models, subscriptionCustomer.userId, updatedSub.type)
       console.log(`[webhook] subscription.updated — feature flags ensured for userId=${subscriptionCustomer.userId}`)
     }
   } else if (ACTIVE_STATUSES.has(status) && cancelAtPeriodEnd) {

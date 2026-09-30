@@ -66,7 +66,7 @@ const handler = function (req, res) {
         })
     })
     .then(({ chargeDoc, subDoc }) => {
-      return enablePaidPlanUserFeatureFlags(Models, subDoc.userId)
+      return enablePaidPlanUserFeatureFlags(Models, subDoc.userId, subDoc.type)
         .then(() => ({ chargeDoc, subDoc }))
     })
     .then(() => {

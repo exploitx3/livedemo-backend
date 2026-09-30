@@ -79,7 +79,7 @@ const handler = function (req, res) {
       }).save()
 
       await setActiveUserSubscription(Models, authUserDoc._id, subscription._id)
-      await enablePaidPlanUserFeatureFlags(Models, authUserDoc._id)
+      await enablePaidPlanUserFeatureFlags(Models, authUserDoc._id, subscription.type)
 
       await linkSubscriptionToCustomer(
         Models,
