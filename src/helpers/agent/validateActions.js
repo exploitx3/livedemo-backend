@@ -126,10 +126,11 @@ export function appendDemoNarration(answer, narration) {
 
 // Validates a proposed { demoId, stepNumber } action. Returns the story doc
 // (with steps counted) or null when the action must be dropped.
-export async function validateDemoAction(Models, agent, mode, demoId, stepNumber) {
+// allowedDemos: pass getAllowedDemos() output when already loaded to skip the query.
+export async function validateDemoAction(Models, agent, mode, demoId, stepNumber, allowedDemos = null) {
   if (!demoId) return null
 
-  const allowed = await getAllowedDemos(Models, agent, mode)
+  const allowed = allowedDemos || await getAllowedDemos(Models, agent, mode)
   const isAllowed = allowed.some(s => String(s._id) === String(demoId))
   if (!isAllowed) return null
 

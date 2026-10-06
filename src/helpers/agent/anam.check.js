@@ -5,7 +5,7 @@ import assert from 'assert'
 import ENV from '../../envServer.js'
 import aiHelpers from '../aiHelpers.js'
 import { avatarIsLive, createAnamSessionToken, listStockAvatars, listStockVoices, pickAvatarModel, usesAnamVoice } from './anam.js'
-import speakAgentText from './speakAgentText.js'
+import speakAgentText, { streamAgentPcm } from './speakAgentText.js'
 
 assert.strictEqual(pickAvatarModel({ activeVersion: 'cara-3', availableVersions: ['cara-3'] }), 'cara-3')
 assert.strictEqual(pickAvatarModel({ activeVersion: 'cara-4-latest', availableVersions: ['cara-4-latest', 'cara-4'] }), 'cara-4')
@@ -54,14 +54,15 @@ assert.deepStrictEqual(JSON.parse(calls[5].options.body).personaConfig,
   'Anam voice must keep the Anam LLM off and skip passthrough')
 
 const ttsCalls = []
-aiHelpers.elTextToSpeech = async (voiceId, text, opts) => {
+aiHelpers.elStreamTextToSpeech = async (voiceId, text, opts) => {
   ttsCalls.push(opts)
-  return { buffer: Buffer.from([1, 0, 2, 0]) }
+  return [Buffer.from([1, 0]), Buffer.from([2, 0])]
 }
 const voiced = { voiceEnabled: true, voiceId: 'v1' }
 
 const mp3 = await speakAgentText({ ...voiced, avatarsEnabled: false, anamAvatarId: 'stock1' }, 'hi')
 assert.strictEqual(mp3.mimeType, 'audio/mpeg')
+assert.strictEqual(mp3.audioBase64, Buffer.from([1, 0, 2, 0]).toString('base64'), 'stream parts joined')
 assert.deepStrictEqual(ttsCalls[0], {})
 
 const pcm = await speakAgentText({ ...voiced, avatarsEnabled: true, anamAvatarId: 'stock1' }, 'hi')
@@ -72,6 +73,25 @@ assert.deepStrictEqual(ttsCalls[1], { outputFormat: 'pcm_16000' })
 const silent = await speakAgentText({ ...voiced, ...anamVoiceAgent }, 'hi')
 assert.strictEqual(silent, null, 'Anam voice must not call ElevenLabs')
 assert.strictEqual(ttsCalls.length, 2)
+
+// Streamed avatar PCM: odd network chunk sizes in, 6-byte-aligned chunks out,
+// base64 strings concat back to the exact audio, only the last one is final.
+const audio = Buffer.from(Array.from({ length: 10001 }, (_, i) => i % 251))
+aiHelpers.elStreamTextToSpeech = async (voiceId, text, opts) => {
+  assert.deepStrictEqual(opts, { outputFormat: 'pcm_16000' })
+  return [audio.subarray(0, 1001), audio.subarray(1001, 4500), audio.subarray(4500, 4501), audio.subarray(4501)]
+}
+const chunks = []
+assert.strictEqual(await streamAgentPcm({ ...voiced, avatarsEnabled: true, anamAvatarId: 'stock1' }, 'hi', c => chunks.push(c)), true)
+assert.ok(chunks.length > 1, 'should stream more than one chunk')
+chunks.slice(0, -1).forEach(c => {
+  assert.strictEqual(c.final, false)
+  assert.strictEqual(Buffer.from(c.audioBase64, 'base64').length % 6, 0)
+})
+assert.strictEqual(chunks[chunks.length - 1].final, true)
+assert.ok(Buffer.from(chunks.map(c => c.audioBase64).join(''), 'base64').equals(audio), 'joined base64 must equal the audio')
+assert.strictEqual(await streamAgentPcm({ ...voiced, avatarsEnabled: false }, 'hi', () => {}), false, 'no avatar → not streamed')
+assert.strictEqual(await streamAgentPcm({ ...voiced, ...anamVoiceAgent }, 'hi', () => {}), false, 'Anam voice → not streamed')
 
 globalThis.fetch = async () => ({
   ok: false,

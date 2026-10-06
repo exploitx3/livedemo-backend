@@ -3,7 +3,7 @@ import aiHelpers from '../aiHelpers.js'
 import retrieve from './retrieve.js'
 import { storyStepList } from './agentKnowledge.js'
 import fastPath from './fastPath.js'
-import speakAgentText from './speakAgentText.js'
+import speakAgentText, { streamAgentPcm } from './speakAgentText.js'
 import { appendDemoNarration, getAllowedDemos, resolveDemoAction, validateDemoAction } from './validateActions.js'
 import { makeToolExecutors, runToolLoop } from './agentTools.js'
 
@@ -72,8 +72,9 @@ function buildPrompt({ agent, session, history, message, knowledge, demoCandidat
   return lines.join('\n')
 }
 
-async function emitContentCard(Models, { agent, session, mode, sse, demoId, stepNumber }) {
-  const validated = await validateDemoAction(Models, agent, mode, demoId, stepNumber)
+// The session write goes into `pending` (awaited at turn end) so it never delays the answer/TTS
+async function emitContentCard(Models, { agent, session, mode, sse, demoId, stepNumber, allowedDemos, pending }) {
+  const validated = await validateDemoAction(Models, agent, mode, demoId, stepNumber, allowedDemos)
   if (!validated) return null
 
   sse('content_card', {
@@ -85,7 +86,7 @@ async function emitContentCard(Models, { agent, session, mode, sse, demoId, step
   })
 
   const isNewDemo = String(session.currentDemoId || '') !== String(validated.demoId)
-  await Models.AgentSession.updateOne({ _id: session._id }, {
+  pending.push(Models.AgentSession.updateOne({ _id: session._id }, {
     $set: {
       currentDemoId: validated.demoId,
       currentStepNumber: validated.stepNumber,
@@ -93,7 +94,7 @@ async function emitContentCard(Models, { agent, session, mode, sse, demoId, step
     },
     $addToSet: { viewedDemoIds: validated.demoId },
     ...(isNewDemo ? { $inc: { demosOpenedCount: 1 } } : {}),
-  })
+  }))
 
   return validated
 }
@@ -111,24 +112,39 @@ async function loadDefaultDemoSteps(Models, agent) {
   return storyStepList(story)
 }
 
-async function emitAnswer(sse, agent, answer, mode, { skipText } = {}) {
+// Text is held until its audio is ready (first streamed chunk, or the whole
+// clip) so the words and the voice land together. TTS off/failed: text alone.
+async function emitAnswer(sse, agent, answer, mode) {
   if (!answer) return
-  if (!skipText) sse('text', { text: answer })
-  if (mode === 'editor') return
-  if (agent.voiceEnabled && agent.voiceId) {
+  let textSent = false
+  const sendText = () => {
+    if (textSent) return
+    textSent = true
+    sse('text', { text: answer })
+  }
+  const sendAudio = (audio) => {
+    sendText()
+    if (audio) sse('voice_audio', audio)
+  }
+
+  if (mode !== 'editor' && agent.voiceEnabled && agent.voiceId) {
     try {
-      const audio = await speakAgentText(agent, answer)
-      if (audio) sse('voice_audio', audio)
+      if (!(await streamAgentPcm(agent, answer, sendAudio))) {
+        sendAudio(await speakAgentText(agent, answer))
+      }
     } catch (err) {
       console.log('agent TTS failed', err)
     }
   }
+  sendText()
 }
 
 export default async function runAgentTurn(Models, { agent, session, message, source, mode, sse }) {
   const now = moment().valueOf()
 
-  await Models.AgentMessage.create({
+  // Bookkeeping writes run alongside retrieval + Gemini instead of before them;
+  // all are awaited before the turn's own writes and `done`.
+  const userMessage = new Models.AgentMessage({
     sessionId: session._id,
     workspaceId: agent.workspaceId,
     agentId: agent._id,
@@ -136,17 +152,22 @@ export default async function runAgentTurn(Models, { agent, session, message, so
     content: message,
     source: source || 'text',
   })
-  await Models.AgentSessionEvent.create({
-    sessionId: session._id,
-    workspaceId: agent.workspaceId,
-    agentId: agent._id,
-    type: source === 'suggestion' ? 'suggestion_clicked' : 'message_sent',
-    timestamp: now,
-    data: { message },
-  })
-  await Models.AgentSession.updateOne({ _id: session._id }, {
-    $inc: { messageCount: 1, ...(source === 'suggestion' ? { suggestionClickCount: 1 } : {}) },
-  })
+  const pending = [
+    userMessage.save(),
+    Models.AgentSessionEvent.create({
+      sessionId: session._id,
+      workspaceId: agent.workspaceId,
+      agentId: agent._id,
+      type: source === 'suggestion' ? 'suggestion_clicked' : 'message_sent',
+      timestamp: now,
+      data: { message },
+    }),
+    Models.AgentSession.updateOne({ _id: session._id }, {
+      $inc: { messageCount: 1, ...(source === 'suggestion' ? { suggestionClickCount: 1 } : {}) },
+    }),
+  ]
+  // Surface a failed write at the final await, not as an unhandled rejection meanwhile
+  pending.forEach(p => p.catch(() => {}))
 
   let answer = ''
   let suggestions = []
@@ -161,7 +182,7 @@ export default async function runAgentTurn(Models, { agent, session, message, so
       : 1
 
     appliedAction = await emitContentCard(Models, {
-      agent, session, mode, sse,
+      agent, session, mode, sse, pending,
       demoId: session.currentDemoId,
       stepNumber: target,
     })
@@ -171,7 +192,8 @@ export default async function runAgentTurn(Models, { agent, session, message, so
 
   if (!appliedAction && !answer) {
     const [history, retrieved, allowedDemos, defaultDemoSteps] = await Promise.all([
-      Models.AgentMessage.find({ sessionId: session._id })
+      // This message may or may not be saved yet; it's in the prompt as "Visitor message" anyway
+      Models.AgentMessage.find({ sessionId: session._id, _id: { $ne: userMessage._id } })
         .sort({ _id: -1 }).limit(HISTORY_LIMIT).lean()
         .then(list => list.reverse()),
       retrieve(Models, { agent, queryText: message }),
@@ -216,7 +238,7 @@ export default async function runAgentTurn(Models, { agent, session, message, so
     })
     if (action) {
       appliedAction = await emitContentCard(Models, {
-        agent, session, mode, sse,
+        agent, session, mode, sse, allowedDemos, pending,
         demoId: action.demoId,
         stepNumber: action.stepNumber,
       })
@@ -224,7 +246,7 @@ export default async function runAgentTurn(Models, { agent, session, message, so
         const fallbackId = session.currentDemoId || agent.defaultDemoId?._id || agent.defaultDemoId
         if (fallbackId && String(fallbackId) !== String(action.demoId)) {
           appliedAction = await emitContentCard(Models, {
-            agent, session, mode, sse,
+            agent, session, mode, sse, allowedDemos, pending,
             demoId: fallbackId,
             stepNumber: action.stepNumber,
           })
@@ -243,24 +265,27 @@ export default async function runAgentTurn(Models, { agent, session, message, so
     }
   }
 
-  await Models.AgentMessage.create({
-    sessionId: session._id,
-    workspaceId: agent.workspaceId,
-    agentId: agent._id,
-    role: 'assistant',
-    content: answer,
-    source: 'text',
-    actions: appliedAction ? [appliedAction] : [],
-  })
-  await Models.AgentSessionEvent.create({
-    sessionId: session._id,
-    workspaceId: agent.workspaceId,
-    agentId: agent._id,
-    type: 'message_answered',
-    timestamp: moment().valueOf(),
-    data: appliedAction ? { demoId: appliedAction.demoId, stepNumber: appliedAction.stepNumber } : {},
-  })
-  await Models.AgentSession.updateOne({ _id: session._id }, { $inc: { messageCount: 1 } })
+  await Promise.all(pending)
+  await Promise.all([
+    Models.AgentMessage.create({
+      sessionId: session._id,
+      workspaceId: agent.workspaceId,
+      agentId: agent._id,
+      role: 'assistant',
+      content: answer,
+      source: 'text',
+      actions: appliedAction ? [appliedAction] : [],
+    }),
+    Models.AgentSessionEvent.create({
+      sessionId: session._id,
+      workspaceId: agent.workspaceId,
+      agentId: agent._id,
+      type: 'message_answered',
+      timestamp: moment().valueOf(),
+      data: appliedAction ? { demoId: appliedAction.demoId, stepNumber: appliedAction.stepNumber } : {},
+    }),
+    Models.AgentSession.updateOne({ _id: session._id }, { $inc: { messageCount: 1 } }),
+  ])
 
   sse('done', {})
 }

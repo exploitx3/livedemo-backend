@@ -37,14 +37,16 @@ const MIXED_LIMIT = 20
 // Returns { knowledge: [...], demoCandidates: [...] } (the spec's
 // "knowledge top 5 + demos top 5" from one index, split in code).
 export default async function retrieve(Models, { agent, queryText, limit = MIXED_LIMIT }) {
-  const queryVector = await aiHelpers.embedText(queryText, {
-    taskType: ENV.GEMINI_EMBED_QUERY_TASK || 'QUESTION_ANSWERING',
-  })
-
-  const enabledSources = await Models.AgentKnowledgeSource
-    .find({ agentId: agent._id, enabled: true })
-    .select('_id')
-    .lean()
+  const [queryVector, enabledSources] = await Promise.all([
+    aiHelpers.embedText(queryText, {
+      taskType: ENV.GEMINI_EMBED_QUERY_TASK || 'QUESTION_ANSWERING',
+      live: true,
+    }),
+    Models.AgentKnowledgeSource
+      .find({ agentId: agent._id, enabled: true })
+      .select('_id')
+      .lean(),
+  ])
   const enabledSourceIds = enabledSources.map(s => s._id)
 
   const rankArgs = { agent, queryVector, enabledSourceIds, limit }

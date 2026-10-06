@@ -188,7 +188,8 @@ async function embedText(text, options = {}) {
     }
 
     for (let attempt = 0; attempt <= EMBED_MAX_RETRIES; attempt++) {
-        await throttleEmbed()
+        // live = a visitor is waiting on this query; the throttle is for indexing jobs
+        if (!options.live || attempt > 0) await throttleEmbed()
         try {
             return await callEmbed(text, options)
         } catch (err) {
@@ -246,6 +247,8 @@ async function embedTexts(texts, options = {}) {
 const elevenlabs = new ElevenLabsClient({
     apiKey: ENV.ELEVENLABS_API_KEY
 });
+// Every backend TTS call. Lowest latency; the API default (multilingual_v2) is several times slower.
+const ELEVENLABS_TTS_MODEL = 'eleven_flash_v2_5'
 
 function query3_5(message) {
     return openai.chat.completions.create({
@@ -306,6 +309,7 @@ async function elTextToSpeech(voiceId, text, { outputFormat } = {}) {
 
     return await elevenlabs.textToSpeech.convertWithTimestamps(voiceId, {
         text: text,
+        modelId: ELEVENLABS_TTS_MODEL,
         ...(outputFormat ? { outputFormat } : {}),
     })
         .then(response => {
@@ -337,6 +341,15 @@ async function elTextToSpeech(voiceId, text, { outputFormat } = {}) {
 
             console.log(err)
         })
+}
+
+// ReadableStream<Uint8Array> of audio, delivered while ElevenLabs is still generating
+async function elStreamTextToSpeech(voiceId, text, { outputFormat } = {}) {
+    return await elevenlabs.textToSpeech.stream(voiceId, {
+        text: text,
+        modelId: ELEVENLABS_TTS_MODEL,
+        ...(outputFormat ? { outputFormat } : {}),
+    })
 }
 
 function toLegacyVoice(voice) {
@@ -378,6 +391,7 @@ export default {
     query3_5: query3_5,
     textToSpeech: textToSpeech,
     elTextToSpeech: elTextToSpeech,
+    elStreamTextToSpeech: elStreamTextToSpeech,
     elGetVoices: elGetVoices,
     generateAgentStep: generateAgentStep,
     embedText: embedText,
