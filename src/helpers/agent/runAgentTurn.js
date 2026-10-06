@@ -86,7 +86,7 @@ async function emitContentCard(Models, { agent, session, mode, sse, demoId, step
   })
 
   const isNewDemo = String(session.currentDemoId || '') !== String(validated.demoId)
-  pending.push(Models.AgentSession.updateOne({ _id: session._id }, {
+  const write = Models.AgentSession.updateOne({ _id: session._id }, {
     $set: {
       currentDemoId: validated.demoId,
       currentStepNumber: validated.stepNumber,
@@ -94,7 +94,9 @@ async function emitContentCard(Models, { agent, session, mode, sse, demoId, step
     },
     $addToSet: { viewedDemoIds: validated.demoId },
     ...(isNewDemo ? { $inc: { demosOpenedCount: 1 } } : {}),
-  }))
+  }).exec()
+  write.catch(() => {})
+  pending.push(write)
 
   return validated
 }
@@ -164,9 +166,10 @@ export default async function runAgentTurn(Models, { agent, session, message, so
     }),
     Models.AgentSession.updateOne({ _id: session._id }, {
       $inc: { messageCount: 1, ...(source === 'suggestion' ? { suggestionClickCount: 1 } : {}) },
-    }),
+    }).exec(),
   ]
-  // Surface a failed write at the final await, not as an unhandled rejection meanwhile
+  // Surface a failed write at the final await, not as an unhandled rejection meanwhile.
+  // Entries must be real Promises (.exec()): .catch() on a Mongoose Query runs it again.
   pending.forEach(p => p.catch(() => {}))
 
   let answer = ''
