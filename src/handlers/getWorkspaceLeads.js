@@ -35,10 +35,14 @@ const handler = function (req, res) {
     })
     .then(() => {
       return Models.Lead.find({ workspaceId: workspaceId, createdAt: { $gte: startTimestamp, $lte: endTimestamp }, },
-        '_id storyId workspaceId createdAt sessionId data')
+        '_id storyId agentId workspaceId createdAt sessionId data')
         .populate({
           path: 'storyId',
           select: '_id name ',
+        })
+        .populate({
+          path: 'agentId',
+          select: '_id name',
         })
         .populate({
           path: 'sessionId',

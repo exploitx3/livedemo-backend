@@ -14,7 +14,7 @@ const MAX_REVISIONS_PER_AGENT =
 const EDITABLE_FIELDS = [
   'name', 'welcomeMessage', 'starterQuestions', 'systemPrompt', 'avatarUrl',
   'voiceEnabled', 'voiceId', 'avatarsEnabled', 'anamAvatarId', 'anamAvatarModel', 'avatarVoice', 'anamVoiceId',
-  'avatarProvider', 'lemonsliceAvatarId',
+  'avatarProvider', 'lemonsliceAvatarId', 'theme',
   'visitorCapture', 'cta',
   'allowedDemoIds', 'knowledgeSourceIds', 'defaultDemoId',
 ]

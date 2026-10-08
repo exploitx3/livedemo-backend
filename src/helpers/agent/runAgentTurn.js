@@ -6,6 +6,7 @@ import fastPath from './fastPath.js'
 import speakAgentText, { streamAgentPcm } from './speakAgentText.js'
 import { appendDemoNarration, getAllowedDemos, resolveDemoAction, validateDemoAction } from './validateActions.js'
 import { makeToolExecutors, runToolLoop } from './agentTools.js'
+import CONVERSATION_STYLE_PROMPT from './conversationStylePrompt.js'
 
 // One agent turn: retrieve → prompt → tool loop (model may search more, max
 // MAX_TOOL_ROUNDS Gemini calls) → validate → SSE. `sse(event, data)` writes
@@ -20,15 +21,20 @@ const HISTORY_LIMIT = 8
 
 function buildPrompt({ agent, session, history, message, knowledge, demoCandidates, allowedDemos, defaultDemoSteps = [] }) {
   const lines = []
+  const authorPrompt = String(agent.systemPrompt || '').trim()
 
-  lines.push('You are an AI Demo Agent for a product, embedded next to an interactive demo player.')
+  // The author's own prompt replaces the default persona/style, never the navigation rules
+  lines.push(authorPrompt
+    ? 'You are an AI Demo Agent for a product, embedded next to an interactive demo player.'
+    : CONVERSATION_STYLE_PROMPT)
+  lines.push('\n# KNOWLEDGE AND DEMO NAVIGATION')
   lines.push('Answer ONLY from the knowledge context below. If the context does not cover the question, say you do not know and offer what you can show.')
   lines.push('If the context below is missing something, call search_knowledge with a standalone query (or get_demo_steps for a demo) before answering. Always finish by calling respond.')
   lines.push('You can navigate the visitor to a demo step by setting action in respond. Only use demo ids and step numbers listed below or returned by your tools — never invent ids.')
   lines.push('Set action only when showing a specific demo step genuinely helps the visitor (e.g. they ask how to do something or to see a feature). Greetings, pricing, general or follow-up questions usually need no action — then omit it.')
   lines.push('Whenever you set action, you must also write action.narration: one natural, conversational sentence in your own words that points the visitor to the demo on their right and says what that step shows (e.g. "And in the demo on your right, you can see how you can review AI responses from your meetings."). Vary the wording. It is appended as your last sentence, so do not repeat it in answer.')
-  if (agent.systemPrompt) {
-    lines.push(`Extra instructions from the author: ${agent.systemPrompt}`)
+  if (authorPrompt) {
+    lines.push(`Extra instructions from the author: ${authorPrompt}`)
   }
 
   if (session.summary) {

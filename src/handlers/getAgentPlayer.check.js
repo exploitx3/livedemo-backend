@@ -47,5 +47,6 @@ const cfg = JSON.parse(sentBody.match(/window\.config = (.*?)<\/script>/)[1])
 assert.strictEqual(cfg.agent._id, 'agent1')
 assert.strictEqual(cfg.mode, 'published')
 assert.strictEqual(cfg.sessionId, null)
+assert.strictEqual(cfg.agent.theme, 'light', 'theme should default to light')
 
 console.log('getAgentPlayer.check OK')

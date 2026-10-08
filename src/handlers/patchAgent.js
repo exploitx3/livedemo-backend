@@ -11,7 +11,7 @@ import { sendJson, sendError, httpError } from '../helpers/agent/http.js'
 // Persona fields + allowedDemoIds. Wrapped by captureAgentRevision in server.js.
 const PATCHABLE_FIELDS = [
   'name', 'welcomeMessage', 'starterQuestions', 'systemPrompt', 'avatarUrl',
-  'voiceEnabled', 'voiceId', 'avatarsEnabled', 'avatarVoice', 'visitorCapture', 'cta',
+  'voiceEnabled', 'voiceId', 'avatarsEnabled', 'avatarVoice', 'visitorCapture', 'cta', 'theme',
 ]
 
 const handler = async function (req, res) {
@@ -79,6 +79,9 @@ const handler = async function (req, res) {
 
     if (updates.avatarVoice !== undefined && !['elevenlabs', 'anam'].includes(updates.avatarVoice)) {
       httpError(ResponseCodes['400_BAD_REQUEST'], 'avatarVoice must be elevenlabs or anam')
+    }
+    if (updates.theme !== undefined && !['light', 'dark', 'dark-blur', 'light-blur'].includes(updates.theme)) {
+      httpError(ResponseCodes['400_BAD_REQUEST'], 'theme must be light, dark, dark-blur or light-blur')
     }
 
     if (body.anamVoiceId !== undefined && String(body.anamVoiceId || '') !== String(agent.anamVoiceId || '')) {

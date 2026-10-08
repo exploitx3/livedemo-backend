@@ -17,6 +17,7 @@ const AiDemoAgent = new mongoose.Schema({
   starterQuestions: { type: [String], default: [] },
   systemPrompt: { type: String, default: '' },
   avatarUrl: { type: String, default: '' },
+  theme: { type: String, enum: ['light', 'dark', 'dark-blur', 'light-blur'], default: 'light' },
 
   voiceEnabled: { type: Boolean, default: false },
   voiceId: { type: String, default: '' },

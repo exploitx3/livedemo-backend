@@ -53,6 +53,7 @@ const handler = async function (req, res) {
         welcomeMessage: agent.welcomeMessage,
         starterQuestions: agent.starterQuestions,
         avatarUrl: agent.avatarUrl,
+        theme: agent.theme || 'light',
         voiceEnabled: agent.voiceEnabled,
         avatarsEnabled: !!agent.avatarsEnabled,
         anamAvatarId: agent.anamAvatarId || '',
